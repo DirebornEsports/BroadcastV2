@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Direborn Cam</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h1>Direborn Cam</h1>
+
+<section id="cek" hidden>
+  <h2>Cek kebutuhan</h2>
+  <p id="cek-msg">Mengecek ffmpeg...</p>
+  <div id="cek-missing" hidden>
+    <p>Direborn Cam butuh <b>ffmpeg</b> untuk mengirim kamera ke studio, dan di PC ini belum ada. Klik tombol di bawah untuk memasang (lewat winget, butuh internet, kira-kira 1-3 menit).</p>
+    <button id="install">Install ffmpeg</button>
+    <button id="recheck">Cek lagi</button>
+    <pre id="install-out" hidden></pre>
+  </div>
+</section>
+
+<section id="kamera" hidden>
+  <h2>Kamera &amp; mic</h2>
+  <label>Kamera <select id="cam"></select></label>
+  <div id="preview"><video id="video" autoplay muted playsinline></video><span id="preview-msg"></span></div>
+  <label>Mic <select id="mic"></select></label>
+  <div id="meter"><div id="level"></div></div>
+  <p>Encoder: <span id="enc">mengecek...</span></p>
+  <button id="to-pin">Lanjut</button>
+  <button id="refresh-dev">Muat ulang daftar</button>
+</section>
+
+<section id="pin" hidden>
+  <h2>PIN</h2>
+  <label>PIN dari operator <input id="pin-in" inputmode="numeric" maxlength="4" autocomplete="off"></label>
+  <p id="studio-msg">Mencari studio...</p>
+  <label>IP studio <input id="addr" placeholder="mis. 192.168.1.10"></label>
+  <p class="small">Biasanya terisi sendiri. Kalau tidak, ketik IP PC studio (tanya operator).</p>
+  <p id="pin-msg"></p>
+  <button id="go">Masuk &amp; kirim</button>
+  <button id="find">Cari studio lagi</button>
+  <button id="back-cam">Kembali</button>
+</section>
+
+<section id="live" hidden>
+  <h2 id="who"></h2>
+  <p>Status: <b id="state"></b></p>
+  <p>Encoder: <span id="live-enc"></span> · Studio: <span id="live-addr"></span></p>
+  <p class="small">Pesan ffmpeg terakhir:</p>
+  <pre id="log"></pre>
+  <button id="stop">Stop</button>
+  <button id="again" hidden>Kirim lagi</button>
+  <button id="back-pin" hidden>Kembali</button>
+</section>
+
+<script src="app.js"></script>
+</body>
+</html>

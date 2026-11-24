@@ -1,0 +1,18 @@
+/* barebone on purpose until the design phase: no animations, transitions, icons, gradients or shadows */
+* { box-sizing: border-box; }
+body { margin: 0; padding: 12px 16px; font: 14px system-ui, sans-serif; background: #f4f4f4; color: #111; }
+h1 { font-size: 16px; margin: 0 0 12px; }
+h2 { font-size: 15px; margin: 0 0 10px; }
+section { background: #fff; border: 1px solid #ccc; padding: 12px; }
+label { display: block; margin: 8px 0; }
+select, input { display: block; width: 100%; margin-top: 4px; padding: 5px; font: inherit; border: 1px solid #999; background: #fff; }
+button { font: inherit; padding: 6px 12px; margin: 8px 6px 0 0; border: 1px solid #888; background: #eee; cursor: pointer; }
+button:disabled { color: #999; cursor: default; }
+pre { white-space: pre-wrap; word-break: break-all; font: 12px Consolas, monospace; background: #f8f8f8; border: 1px solid #ddd; padding: 6px; max-height: 220px; overflow: auto; margin: 6px 0; }
+#preview { position: relative; height: 230px; border: 1px solid #ccc; background: #ddd; }
+#preview video { width: 100%; height: 100%; object-fit: contain; display: block; }
+#preview-msg { position: absolute; left: 8px; top: 8px; }
+#meter { height: 10px; border: 1px solid #999; background: #fff; }
+#level { height: 100%; width: 0; background: #3a3; }
+.small { font-size: 12px; color: #555; margin: 4px 0; }
+.err { color: #b00; }
