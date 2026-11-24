@@ -1,0 +1,3 @@
+{
+  "bundle": { "resources": { "../res/": "res/" } }
+}

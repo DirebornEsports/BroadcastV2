@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Direborn Studio</title>
+<style>
+  /* barebone until the design phase: no animations, transitions, icons, gradients or shadows */
+  body { margin: 0; padding: 24px; background: #f4f4f4; color: #111; font: 14px system-ui, "Segoe UI", sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 16px; }
+  .box { background: #fff; border: 1px solid #ccc; padding: 12px 16px; margin-bottom: 12px; max-width: 900px; }
+  .box h2 { font-size: 15px; margin: 0 0 6px; }
+  .ok { color: #176c2a; }
+  .no { color: #a11; }
+  button { font: inherit; background: #fff; border: 1px solid #888; padding: 4px 14px; cursor: pointer; }
+  button:disabled { color: #999; border-color: #ccc; cursor: default; }
+  pre { background: #fafafa; border: 1px solid #ddd; padding: 8px; max-height: 320px; overflow: auto; white-space: pre-wrap; font: 12px Consolas, monospace; }
+  p { margin: 6px 0; }
+</style>
+</head>
+<body>
+<h1>Direborn Studio</h1>
+<div id="main"></div>
+<script>
+const { invoke, Channel } = window.__TAURI__.core;
+const main = document.getElementById('main');
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+const NEEDS = {
+  node: { title: 'Node.js', why: 'Dipakai buat jalanin hub (draft, GSI, stats, overlay OBS) dan bridge kamera.' },
+  ffmpeg: { title: 'ffmpeg', why: 'Dipakai receiver kamera buat ngirim video pemain ke OBS.' },
+};
+let busy = false;
+
+async function run() {
+  const c = await invoke('check');
+  const missing = Object.keys(NEEDS).filter((k) => !c[k]);
+  main.innerHTML = '<div class="box"><h2>Cek kebutuhan</h2>' + Object.keys(NEEDS).map((k) => {
+    const n = NEEDS[k];
+    if (c[k]) return `<p><b>${n.title}</b>: <span class="ok">ada</span> (${esc(c[k])})</p>`;
+    return `<p><b>${n.title}</b>: <span class="no">belum ada</span>. ${n.why}</p>` +
+      (c.winget ? `<p><button data-install="${k}">Install ${n.title}</button></p>`
+                : `<p>winget nggak ada di PC ini, jadi install ${n.title} manual dulu, lalu klik Cek lagi.</p>`);
+  }).join('') + (missing.length ? '<p><button id="recheck">Cek lagi</button></p><pre id="out" hidden></pre>' : '') + '</div>';
+  if (missing.length) {
+    document.getElementById('recheck').onclick = run;
+    for (const b of main.querySelectorAll('[data-install]')) b.onclick = () => install(b.dataset.install);
+    return;
+  }
+  main.innerHTML += '<div class="box"><p>Semua siap. Lagi nyalain hub + bridge kamera, tunggu sebentar...</p></div>';
+  try { await invoke('start'); }                       // on success the app opens the control panel
+  catch (f) { showFail(f); }
+}
+
+async function install(what) {
+  if (busy) return;
+  busy = true;
+  for (const b of main.querySelectorAll('button')) b.disabled = true;
+  const out = document.getElementById('out');
+  out.hidden = false;
+  const add = (l) => { out.textContent += l + '\n'; out.scrollTop = out.scrollHeight; };
+  add(`Install ${NEEDS[what].title}... (bisa beberapa menit, kalau Windows nanya izin klik Yes)`);
+  const ch = new Channel();
+  ch.onmessage = add;
+  let ok = true;
+  try { await invoke('install', { what, out: ch }); add('Selesai.'); }
+  catch (e) { ok = false; add('Gagal: ' + (e.msg || e)); }
+  busy = false;
+  const log = out.textContent;
+  await run();                                         // re-check
+  const o = document.getElementById('out');
+  if (o) { o.hidden = false; o.textContent = log + (ok ? 'Kalau masih "belum ada", tutup Direborn Studio lalu buka lagi.\n' : ''); }
+}
+
+function showFail(f) {
+  main.innerHTML = `<div class="box"><h2 class="no">Ada masalah</h2><p>${esc(f.msg || f)}</p>` +
+    (f.log ? `<p>Log terakhir:</p><pre>${esc(f.log)}</pre>` : '') +
+    '<p><button id="retry">Coba lagi</button></p></div>';
+  document.getElementById('retry').onclick = () => { main.innerHTML = ''; run(); };
+}
+
+(async () => {
+  const err = await invoke('last_error');              // set when a child died after the panel was open
+  if (err) showFail(err); else run();
+})();
+</script>
+</body>
+</html>
