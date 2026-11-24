@@ -2,14 +2,28 @@
 # The Tauri app will run the same ffmpeg command; this script is the stand-in until then.
 #   .\sender\kirim.ps1 -Name Dreamocel -Camera "OsmoPocket4"
 #   .\sender\kirim.ps1 -Name Test -Camera test          (test pattern, no camera)
+#   .\sender\kirim.ps1 -Name Dreamocel -Camera "OsmoPocket4" -Mic "Microphone (USB)"
+#   .\sender\kirim.ps1 -List                             (camera and mic names on this PC)
 param(
-  [Parameter(Mandatory)][string]$Name,
+  [string]$Name,
+  [switch]$List,
   [string]$Camera = 'test',
+  [string]$Mic = '',          # empty = no sound; 'test' = a beep every second (with -Camera test)
   [string]$Bridge = 'http://127.0.0.1:8787',
   [int]$Kbps = 4500,
   [string]$Size = '1920x1080',
   [int]$Fps = 30
 )
+if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) { throw 'ffmpeg belum terpasang: jalankan  winget install Gyan.FFmpeg  lalu buka jendela baru' }
+if ($List) {
+  $dev = & ffmpeg -hide_banner -list_devices true -f dshow -i dummy 2>&1 | ForEach-Object { "$_" }
+  foreach ($k in @(@('video', 'Kamera'), @('audio', 'Mic'))) {
+    Write-Host "$($k[1]) di PC ini:"
+    $dev | Where-Object { $_ -match "\($($k[0])\)$" } | ForEach-Object { '  ' + ($_ -replace '^.*\] ', '' -replace " \($($k[0])\)$", '') }
+  }
+  exit
+}
+if (-not $Name) { throw 'Isi -Name (nama pemain), atau -List untuk melihat kamera' }
 
 # first encoder that opens on this PC wins: NVIDIA, AMD, Intel, then software
 $encoders = [ordered]@{
@@ -24,17 +38,30 @@ foreach ($e in $encoders.Keys) {
   if ($LASTEXITCODE -eq 0) { $enc = $e; break }
 }
 if (-not $enc) { throw 'Tidak ada encoder H.264 yang bisa dibuka' }
-Write-Host "Encoder: $enc ($(if ($enc -eq 'libx264') { 'software / CPU' } else { 'GPU' }))"
+Write-Host "Encoder: $enc ($(if ($enc -eq 'libx264') { 'software / CPU' } else { 'GPU' }))   Mic: $(if ($Mic) { $Mic } else { 'tidak ada' })"
 
-$input = if ($Camera -eq 'test') { @('-re', '-f', 'lavfi', '-i', "testsrc2=s=${Size}:r=${Fps}") }
-         else { @('-f', 'dshow', '-rtbufsize', '256M', '-vcodec', 'mjpeg', '-video_size', $Size, '-framerate', "$Fps", '-i', "video=$Camera") }
+if ($Camera -eq 'test') {
+  # test pattern; with -Mic test the picture flashes white while a beep plays, every 2 s (A/V sync check)
+  $input = @('-re', '-f', 'lavfi', '-i', "testsrc2=s=${Size}:r=${Fps},drawbox=c=white:t=fill:enable='lt(mod(t,2),0.1)'")
+  if ($Mic -eq 'test') { $input += @('-re', '-f', 'lavfi', '-i', "aevalsrc='if(lt(mod(t,2),0.1),0.5*sin(2*PI*1000*t),0)':s=48000") }
+} else {
+  # one dshow input for camera and mic keeps their timestamps on the same clock
+  $dev = "video=$Camera" + $(if ($Mic) { ":audio=$Mic" } else { '' })
+  # 20 ms mic chunks: with the default (~0.5 s) the muxer sends video and sound in bursts and ~70% of the
+  # packets never reached the bridge
+  $input = @('-f', 'dshow', '-rtbufsize', '256M', '-audio_buffer_size', '20', '-vcodec', 'mjpeg', '-video_size', $Size, '-framerate', "$Fps", '-i', $dev)
+}
+$audio = if ($Mic) { @('-c:a', 'libopus', '-b:a', '64k', '-ar', '48000', '-ac', '2', '-application', 'lowdelay') } else { @('-an') }
 $rate = @('-rc', 'cbr', '-b:v', "${Kbps}k", '-maxrate', "${Kbps}k", '-bufsize', "$($Kbps / 2)k")
 if ($enc -eq 'libx264') { $rate = @('-b:v', "${Kbps}k", '-maxrate', "${Kbps}k", '-bufsize', "$($Kbps / 2)k") }
+# AMD ignores the buffer size on keyframes: a 1080p keyframe came out as one burst big enough that packets
+# were lost before the bridge. Cap every frame at 4x the average frame (keyframes are the only ones that hit it).
+if ($enc -eq 'h264_amf') { $rate += @('-enforce_hrd', '1', '-max_au_size', [int]($Kbps * 1000 / $Fps * 4)) }
 
 # keyframe every 2 s: a viewer (or the delay buffer after a lost packet) never waits longer than that
 $url = "$Bridge/whip/$([uri]::EscapeDataString($Name))"
 while ($true) {
-  & ffmpeg -hide_banner -loglevel warning @input -an -pix_fmt nv12 -c:v $enc @($encoders[$enc]) @rate -g ($Fps * 2) -bf 0 -ts_buffer_size 1048576 -f whip $url   # 1 MB UDP buffer: a 1080p keyframe burst otherwise fails with "UDP send blocked" and ends the sender
+  & ffmpeg -hide_banner -loglevel warning @input @audio -pix_fmt nv12 -c:v $enc @($encoders[$enc]) @rate -g ($Fps * 2) -bf 0 -ts_buffer_size 1048576 -f whip $url   # 1 MB UDP buffer: a 1080p keyframe burst otherwise fails with "UDP send blocked" and ends the sender
   Write-Host 'Koneksi putus, sambung ulang dalam 3 detik...'
   Start-Sleep -Seconds 3
 }

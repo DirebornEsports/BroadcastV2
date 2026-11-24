@@ -1,5 +1,6 @@
 // studio-recv --bridge http://127.0.0.1:8787 --name Test --delay 10 --out "udp://127.0.0.1:5000?pkt_size=1316"
-// stdin: `delay <seconds>` changes the delay at runtime. stdout: one status JSON line every 2 s.
+// stdin: `delay <seconds>` changes the delay at runtime; or --delay-file <path> (one number, shared by all cams).
+// stdout: one status JSON line every 2 s.
 use studio_recv::{Config, MAX_DELAY, run};
 
 fn main() {
@@ -8,6 +9,7 @@ fn main() {
         name: String::new(),
         delay: 10.0,
         out: "udp://127.0.0.1:5000?pkt_size=1316".into(),
+        delay_file: None,
     };
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
@@ -17,6 +19,7 @@ fn main() {
             "--name" => cfg.name = v,
             "--out" => cfg.out = v,
             "--delay" => cfg.delay = v.parse().unwrap_or_else(|_| usage("bad --delay")),
+            "--delay-file" => cfg.delay_file = Some(v),
             _ => usage(&format!("unknown option {a}")),
         }
     }
@@ -33,6 +36,6 @@ fn main() {
 }
 
 fn usage(msg: &str) -> ! {
-    eprintln!("studio-recv: {msg}\nusage: studio-recv --name <cam> [--bridge URL] [--delay S] [--out URL]");
+    eprintln!("studio-recv: {msg}\nusage: studio-recv --name <cam> [--bridge URL] [--delay S] [--delay-file PATH] [--out URL]");
     std::process::exit(2);
 }

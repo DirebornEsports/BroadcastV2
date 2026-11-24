@@ -15,7 +15,7 @@ const PORT = Number(process.env.PORT) || 8787;
 const KEY = process.env.KEY || '';
 const CF = process.env.CF_APP_ID && process.env.CF_APP_SECRET;
 const NAME_RE = /^[\p{L}\p{N}_.\- ]{1,24}$/u;
-const localSfu = CF ? null : (await import('./localsfu.mjs')).localSfu;
+const { localSfu = null, localSfuIdle = null, localSfuLost = null } = CF ? {} : await import('./localsfu.mjs');
 
 async function sfu(method, path, body) {
   let status, j;
@@ -33,19 +33,32 @@ async function sfu(method, path, body) {
 }
 
 const cams = new Map();   // lower-case name -> { name, sessionId, since }
-// the mid of the first m=video section of an offer
-const videoMid = (sdp) => (/m=video[\s\S]*?a=mid:(\S+)/.exec(sdp) || [])[1];
+// LAN: forget a cam whose sender stopped (no media for 5 s; 10 s grace after it connects), so a receiver
+// retries until the player's next publish instead of pulling a dead session.
+// shortcut: Cloudflare mode keeps dead cams until the same name publishes again; check session state there when the bridge moves to a Worker.
+function prune() {
+  if (!localSfuIdle) return;
+  for (const [k, c] of cams) if (Date.now() - c.since > 10000 && localSfuIdle(c.sessionId) > 5000) {
+    cams.delete(k); console.log(`[whip] ${c.name} offline`);
+    localSfu('PUT', `/sessions/${c.sessionId}/tracks/close`, {}).catch(() => {});
+  }
+}
+// the mid of the first m=video / m=audio section of an offer
+const mid = (sdp, kind) => (new RegExp(`m=${kind}[^]*?a=mid:(\\S+)`).exec(sdp) || [])[1];
 
 async function route(req, url, body) {
   const p = url.pathname.split('/').filter(Boolean).map(decodeURIComponent);
-  if (req.method === 'GET' && p[0] === 'cams') return [200, 'application/json', JSON.stringify([...cams.values()].map(({ name, since }) => ({ name, since })))];
+  prune();
+  if (req.method === 'GET' && p[0] === 'cams') return [200, 'application/json', JSON.stringify([...cams.values()].map(({ name, since, sessionId }) => ({ name, since, ...(localSfuLost ? { lostFromPlayer: localSfuLost(sessionId) } : {}) })))];
   if (p[0] === 'whip' && req.method === 'POST' && p.length === 2) {
     const name = p[1]; if (!NAME_RE.test(name)) return [400, 'text/plain', 'nama tidak valid'];
-    const mid = videoMid(body); if (!mid) return [400, 'text/plain', 'offer tanpa video'];
+    const vmid = mid(body, 'video'), amid = mid(body, 'audio');
+    if (!vmid) return [400, 'text/plain', 'offer tanpa video'];
     const s = await sfu('POST', '/sessions/new');
-    const t = await sfu('POST', `/sessions/${s.sessionId}/tracks/new`, { sessionDescription: { type: 'offer', sdp: body }, tracks: [{ location: 'local', mid, trackName: 'cam' }] });
-    cams.set(name.toLowerCase(), { name, sessionId: s.sessionId, since: Date.now() });
-    console.log(`[whip] ${name} live (session ${s.sessionId.slice(0, 8)})`);
+    const t = await sfu('POST', `/sessions/${s.sessionId}/tracks/new`, { sessionDescription: { type: 'offer', sdp: body },
+      tracks: [{ location: 'local', mid: vmid, trackName: 'cam' }, ...(amid ? [{ location: 'local', mid: amid, trackName: 'mic' }] : [])] });
+    cams.set(name.toLowerCase(), { name, sessionId: s.sessionId, since: Date.now(), mic: !!amid });
+    console.log(`[whip] ${name} live${amid ? ' + mic' : ''} (session ${s.sessionId.slice(0, 8)})`);
     return [201, 'application/sdp', t.sessionDescription.sdp, { location: `/whip/${encodeURIComponent(name)}/${s.sessionId}` }];
   }
   if (p[0] === 'whip' && req.method === 'DELETE' && p.length === 3) {
@@ -56,7 +69,7 @@ async function route(req, url, body) {
   if (p[0] === 'pull' && req.method === 'POST' && p.length === 2) {
     const cam = cams.get(p[1].toLowerCase()); if (!cam) return [404, 'text/plain', 'cam offline'];
     const s = await sfu('POST', '/sessions/new');
-    const t = await sfu('POST', `/sessions/${s.sessionId}/tracks/new`, { tracks: [{ location: 'remote', sessionId: cam.sessionId, trackName: 'cam' }] });
+    const t = await sfu('POST', `/sessions/${s.sessionId}/tracks/new`, { tracks: ['cam', ...(cam.mic ? ['mic'] : [])].map((trackName) => ({ location: 'remote', sessionId: cam.sessionId, trackName })) });
     return [200, 'application/json', JSON.stringify({ sessionId: s.sessionId, sdp: t.sessionDescription.sdp })];
   }
   if (p[0] === 'pull' && req.method === 'POST' && p.length === 3 && p[2] === 'answer') {

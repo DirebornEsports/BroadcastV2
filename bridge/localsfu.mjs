@@ -7,6 +7,11 @@
 //   PUT  /sessions/:id/tracks/close
 // Media is forwarded packet by packet (no re-encoding); keyframe requests from a viewer go back to the sender.
 import crypto from 'node:crypto';
+import dgram from 'node:dgram';
+// A 1080p keyframe from a GPU encoder arrives as one burst of 100+ packets; Windows' default 64 KB UDP buffer
+// drops part of it and the keyframe never completes. werift calls dgram.createSocket at runtime, so this reaches it.
+const createSocket = dgram.createSocket;
+dgram.createSocket = (o, cb) => createSocket({ recvBufferSize: 8 << 20, sendBufferSize: 8 << 20, ...(typeof o === 'string' ? { type: o } : o) }, cb);
 import { RTCPeerConnection, RTCRtpCodecParameters, useH264, useVP8, useOPUS, useTWCC, useSdesMid, useTransportWideCC } from 'werift';
 
 // from a sender: transport-wide congestion feedback, without it Chrome never raises its bitrate above a few hundred kbps
@@ -45,6 +50,10 @@ async function publish(s, id, offer, tracks) {
     s.pub.set(name, p);
     // the codec the browser really sends (it may list several): the payload type of its first packet
     const sub = track.onReceiveRtp.subscribe((rtp) => {
+      s.lastRtp = Date.now();
+      // packets missing between the player and this bridge (vs. between here and the studio receiver)
+      const q = rtp.header.sequenceNumber, d = p.seq === undefined ? 1 : (q - p.seq) & 0xffff;
+      if (d < 0x8000) { if (d > 1) s.lost = (s.lost || 0) + d - 1; p.seq = q; }
       if (p.codec) return;
       p.codec = transceiver.codecs.find((c) => c.payloadType === rtp.header.payloadType) || transceiver.codecs[0];
     });
@@ -71,6 +80,8 @@ async function pull(s, id, tracks) {
   const out = [];
   for (const { t, src } of srcs) {
     const tr = pc.addTransceiver(src.kind, { direction: 'sendonly' });
+    // an a=msid line per track (cam + mic as one stream): without it a viewer only sees the first track
+    tr.sender.streamId = t.sessionId;
     const fwd = src.track.onReceiveRtp.subscribe((rtp) => { tr.sender.sendRtp(rtp).catch(() => {}); });
     // a viewer asking for a keyframe (PLI / FIR): ask the sender
     const fb = tr.sender.onRtcp.subscribe((pkt) => { if (pkt && pkt.type === 206 && src.track.ssrc) src.transceiver.receiver.sendRtcpPLI(src.track.ssrc).catch(() => {}); });
@@ -103,4 +114,7 @@ export async function localSfu(method, path, body) {
   } catch (e) { return [500, { errorCode: 'local_sfu', errorDescription: e.message }]; }
   return [404, { errorCode: 'not_found' }];
 }
-export const localSfuStats = () => ({ sessions: sessions.size, publishers: [...sessions.values()].filter((s) => s.pub.size).length });
+// ms since a publisher session's last media packet (Infinity when it's gone): an ICE-lite SFU never notices a killed sender
+export const localSfuLost = (id) => sessions.get(id)?.lost || 0;
+export const localSfuIdle =(id) => { const s = sessions.get(id); return s && s.lastRtp ? Date.now() - s.lastRtp : Infinity; };
+export const localSfuStats =() => ({ sessions: sessions.size, publishers: [...sessions.values()].filter((s) => s.pub.size).length });
