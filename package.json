@@ -1,0 +1,11 @@
+{
+  "name": "direborn-broadcast-2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bridge": "node bridge/server.mjs"
+  },
+  "dependencies": {
+    "werift": "0.28.0"
+  }
+}
