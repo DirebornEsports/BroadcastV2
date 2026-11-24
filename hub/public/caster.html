@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<script src="/vendor/anime.umd.min.js"></script><script src="/ui/motion.js"></script>
+<script src="/theme.js"></script>
+<title>Caster</title>
+<!-- OBS: Browser source 1920 x 1080 over the caster cam frames. Text only: one name per frame, fitted to the frame's
+     name plate (x, y, width, height in 1920 x 1080 px). Every few seconds each name rolls out and back in, letter by
+     letter (Draft control -> On air -> Caster). -->
+<style>
+  @font-face { font-family: "Teko"; src: url(/fonts/Teko.woff) format("woff"); font-weight: 300 700; font-display: block; }
+  :root { --c-name: #ffffff; --ease: cubic-bezier(.16,1,.3,1); }
+  html[data-theme="uprising"] { --c-name: #f5efdc; }
+  html[data-theme="direborn"] { --c-name: #1d1d1f; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; }
+  body.bg { background: #3b4a3f; }
+  body.bg .slot { outline: 1px dashed rgba(255,255,255,.35); }       /* ?bg=1: shows each plate box to line it up */
+  #fit { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; transform: scale(var(--k, 1)); }
+  /* grid: the leaving name and the incoming one share one centred cell, so neither pushes the other sideways */
+  .slot { position: absolute; display: grid; place-items: center; overflow: hidden; opacity: 0; transition: opacity .3s ease; }
+  .slot > .nm { grid-area: 1 / 1; }
+  .slot.in { opacity: 1; }
+  .nm { white-space: nowrap; font-family: "Teko", sans-serif; font-weight: 600; line-height: 1; letter-spacing: .02em; color: var(--c-name);
+    text-shadow: 0 2px 8px rgba(0,0,0,.45); padding-top: .12em; }
+  .nm i { display: inline-block; font-style: normal; white-space: pre; transform: translateY(110%); opacity: 0;
+    transition: transform .55s var(--ease), opacity .3s ease; transition-delay: calc(var(--d, 0ms) + var(--i) * 35ms); }
+  .nm.show i { transform: none; opacity: 1; }
+  .nm.leave i { transform: translateY(-110%); opacity: 0; transition-duration: .35s, .25s; transition-timing-function: cubic-bezier(.7,0,.84,0), ease; }
+</style>
+</head>
+<body>
+<div id="fit"></div>
+<script>
+(() => {
+  const fit = document.getElementById('fit');
+  if (new URLSearchParams(location.search).get('bg') === '1') document.body.classList.add('bg');
+  const resize = () => fit.style.setProperty('--k', Math.min(innerWidth / 1920, innerHeight / 1080));
+  addEventListener('resize', resize); resize();
+  let C = null, sig = '', timer = null, slots = [];
+  function word(text, d) {                 // one span per letter, so they roll one after another
+    const el = document.createElement('div'); el.className = 'nm'; el.style.setProperty('--d', d + 'ms');
+    [...text].forEach((ch, k) => { const s = document.createElement('i'); s.textContent = ch; s.style.setProperty('--i', k); el.appendChild(s); });
+    return el;
+  }
+  function fitText(slot, el, h, w) {       // as tall as the plate allows, smaller if the name is too wide
+    let size = Math.round(h * 0.86);
+    el.style.fontSize = size + 'px';
+    while (el.scrollWidth > w - 12 && size > 10) { size -= 2; el.style.fontSize = size + 'px'; }
+  }
+  function roll(s, i) {                    // the name leaves upward, then rolls back in from below
+    const old = s.cur, d = i * 150;
+    if (old) { old.style.setProperty('--d', d + 'ms'); old.classList.remove('show'); old.classList.add('leave'); setTimeout(() => old.remove(), 600 + d); }
+    const el = word(s.name, old ? d + 380 : d); s.el.appendChild(el); fitText(s.el, el, s.h, s.w); s.cur = el;
+    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+  }
+  function build() {
+    fit.textContent = ''; slots = [];
+    for (const [i, x] of ((C && C.slots) || []).entries()) {
+      const el = document.createElement('div'); el.className = 'slot';
+      Object.assign(el.style, { left: x.x + 'px', top: x.y + 'px', width: x.w + 'px', height: x.h + 'px' });
+      fit.appendChild(el);
+      const s = { el, name: x.name, w: x.w, h: x.h, cur: null }; slots.push(s); roll(s, i);
+    }
+    clearInterval(timer);
+    timer = setInterval(() => slots.forEach(roll), Math.max(2, Number(C && C.seconds) || 6) * 1000);
+  }
+  function apply() {
+    const s2 = JSON.stringify([C && C.slots, C && C.seconds]);
+    if (s2 !== sig) { sig = s2; build(); }
+    const show = !!C && C.visible !== false;
+    slots.forEach((s) => s.el.classList.toggle('in', show));
+  }
+  function connect() {
+    const es = new EventSource('/events');
+    es.onmessage = (e) => { C = JSON.parse(e.data).caster || null; apply(); };
+    es.onerror = () => { es.close(); setTimeout(connect, 2000); };
+  }
+  connect();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+/* Operator panels: one light design in the Apple style for every tournament. Linked from every operator page and login.
+   The page's own <style> keeps layout; this file sets colour, type and controls. Overlays never load it.
+   The active tournament only shows in --tour (sidebar dot and active marker). */
+html body {
+  --bg: #f5f5f7; --panel: #ffffff; --panel2: #ffffff; --panel3: #f5f5f7;
+  --bg-rgb: 245,245,247; --shade-rgb: 232,232,237; --panel-rgb: 255,255,255; --panel2-rgb: 255,255,255;
+  --line-rgb: 0,113,227; --hi-rgb: 255,255,255;
+  --line: rgba(0,0,0,.08); --line-hi: rgba(0,0,0,.14);
+  --text: #1d1d1f; --muted: #6e6e73; --gold: #1d1d1f; --gold-hi: #1d1d1f; --gold-lo: #86868b;
+  --accent: #0071e3; --accent-hover: #0077ed;
+  --ok: #248a3d; --warn: #b25000; --danger: #d70015; --danger-txt: #d70015; --live: #d70015; --bad: #d70015;
+  --left: #d6336c; --right: #0071e3;
+  --tour: #248a3d;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --ease: cubic-bezier(.16,1,.3,1);          /* one fast ease-out that settles, as on the OBS overlays */
+  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.05);
+  color-scheme: light;
+}
+html[data-theme="direborn"] body { --tour: #d70015; }
+html[data-theme="uprising"] body { --tour: #0a8a7d; }
+
+html body { background: var(--bg); color: var(--text); font: 400 14px/1.47 var(--font); -webkit-font-smoothing: antialiased; }
+html body b, html body strong { font-weight: 600; }
+html body ::selection { background: rgba(0,113,227,.2); }
+
+/* type: one large confident title per page, quiet everything else */
+html body :is(h1, h2, h3, h4, label, th, small, legend, .pill, .badge, .tag, button, summary) { text-transform: none; letter-spacing: 0; }
+html body > header {
+  background: rgba(251,251,253,.82); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--line); box-shadow: none; padding-top: 14px; padding-bottom: 14px; gap: 12px;
+}
+html body > header h1, html body h1 { font: 700 24px/1.15 var(--display); letter-spacing: -.02em; color: var(--text); }
+html body > header img { display: none; }
+html body h2, html body .card h2 { font: 600 17px/1.3 var(--display); letter-spacing: -.01em; color: var(--text); margin-bottom: 16px; }
+html body h2::after, html body .card h2::after { display: none; }
+html body h3 { font-weight: 600; }
+html body legend { float: left; width: 100%; font: 600 13px var(--font); color: var(--text); padding: 0; margin: 0 0 4px; }
+html body fieldset { background: var(--panel3); border: 0; border-radius: 14px; padding: 16px; }
+html body .hint, html body p.hint { color: var(--muted); }
+html body .hint code, html body code { background: var(--panel3); color: var(--text); border: 0; border-radius: 6px; padding: 1px 6px; font: 500 12px ui-monospace, "SF Mono", Consolas, monospace; }
+html body hr { border: 0; border-top: 1px solid var(--line); margin: 20px 0; }
+html body a { color: var(--accent); }
+
+/* surfaces: white cards on soft grey, soft shadow, no borders */
+html body main { gap: 20px; }
+html body main > * { min-width: 0; }             /* wide tables scroll inside their card instead of widening the page */
+html body .card { background: var(--panel); border: 0; border-radius: 18px; padding: 24px; box-shadow: var(--shadow); }
+
+/* controls */
+html body button {
+  background: rgba(0,0,0,.05); color: var(--text); border: 1px solid transparent; border-radius: 8px;
+  font: 500 14px var(--font); padding: 7px 14px; cursor: pointer;
+  transition: background-color .2s var(--ease), color .2s var(--ease), box-shadow .2s var(--ease), transform .1s var(--ease);
+}
+html body button:hover { background: rgba(0,0,0,.08); border-color: transparent; color: var(--text); }
+html body button:active { transform: scale(.97); }
+html body button:disabled { opacity: .4; cursor: default; transform: none; }
+html body button.primary { background: var(--accent); color: #fff; border-color: transparent; }
+html body button.primary:hover { background: var(--accent-hover); color: #fff; }
+html body button.on { background: rgba(0,113,227,.1); color: var(--accent); border-color: transparent; }
+html body button.on:hover { background: rgba(0,113,227,.15); color: var(--accent); }
+html body button.danger, html body button.hide { background: rgba(215,0,21,.07); color: var(--danger); border-color: transparent; }
+html body button.danger:hover, html body button.hide:hover { background: rgba(215,0,21,.12); color: var(--danger); }
+
+/* segmented control, like iOS */
+html body .seg { display: inline-flex; gap: 2px; padding: 2px; background: rgba(118,118,128,.12); border: 0; border-radius: 9px; overflow: visible; }
+html body .seg button { background: transparent; border: 0; border-radius: 7px; padding: 5px 14px; color: var(--text); }
+html body .seg button:hover { background: rgba(255,255,255,.5); }
+html body .seg button.on { border-color: transparent; background: #fff; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.12), 0 1px 1px rgba(0,0,0,.04); }
+
+html body :is(input, select, textarea) {
+  background: #fff; color: var(--text); border: 1px solid var(--line-hi); border-radius: 8px;
+  transition: border-color .2s var(--ease), box-shadow .2s var(--ease);
+}
+html body :is(input, textarea)::placeholder { color: #a1a1a6; font-style: normal; }
+html body select option { background: #fff; color: var(--text); }
+html body :is(input, select, textarea):focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,113,227,.25); }
+html body input[type=checkbox], html body input[type=radio], html body input[type=range] { accent-color: var(--accent); box-shadow: none; }
+html body :is(button, a, summary):focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0,113,227,.4); }
+
+/* status: quiet text and dots */
+html body :is(.pill, .badge) { background: var(--panel3); border: 0; border-radius: 980px; font-weight: 500; color: var(--muted); }
+html body .pill.ok { color: var(--ok); background: rgba(36,138,61,.1); }
+html body .pill.bad { color: var(--danger); background: rgba(215,0,21,.08); }
+html body .dot.live, html body .w::before { box-shadow: none; }
+html body .w.err { background: rgba(215,0,21,.07); border-color: rgba(215,0,21,.2); color: #a3000f; }
+html body .w.warn { background: rgba(178,80,0,.08); border-color: rgba(178,80,0,.2); color: #8a3d00; }
+html body .w.info { background: var(--panel3); border-color: transparent; color: var(--muted); }
+
+/* tables */
+html body th { color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--line); }
+html body td { border-color: var(--line); }
+html body tr:hover td { background: rgba(0,0,0,.02); }
+
+/* tabs inside a page (Draft control): an iOS segmented control in the header */
+html body .tabs { display: inline-flex; gap: 2px; padding: 2px; background: rgba(118,118,128,.12); border-radius: 9px; }
+html body .tabs button { background: transparent; border-radius: 7px; padding: 6px 16px; font-weight: 500; }
+html body .tabs button:hover { background: rgba(255,255,255,.5); }
+html body .tabs button.on { border-color: transparent; background: #fff; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.12), 0 1px 1px rgba(0,0,0,.04); }
+body[data-tab] [data-pane] { display: none; }
+body[data-tab="draft"] [data-pane~="draft"], body[data-tab="setup"] [data-pane~="setup"],
+body[data-tab="air"] [data-pane~="air"], body[data-tab="check"] [data-pane~="check"] { display: block; }
+
+/* toasts some pages use */
+html body .toast { background: rgba(29,29,31,.92) !important; color: #fff !important; border: 0 !important; border-radius: 12px !important; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
+
+/* motion: one short fade-and-rise when a page or a Draft control tab opens, staggered per card */
+@keyframes dbRise { from { opacity: 0; transform: translateY(10px); } }
+html body main > *, html body [data-pane] { animation: dbRise .5s var(--ease) backwards; }   /* backwards: no transform left behind */
+html body main > :nth-child(2), html body .lower > :nth-child(2) { animation-delay: .05s; }
+html body main > :nth-child(3) { animation-delay: .1s; }
+html body main > :nth-child(n+4) { animation-delay: .15s; }
+html body main > .lower { animation: none; }       /* its panes animate themselves */
+@media (prefers-reduced-motion: reduce) { html body * { transition: none !important; animation: none !important; } }

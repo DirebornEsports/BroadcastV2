@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<script src="/vendor/anime.umd.min.js"></script><script src="/ui/motion.js"></script>
+<script src="/theme.js"></script>
+<script src="/ui/shell.js" defer></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mix Draw Control</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a1a12; --panel: #10291c; --panel2: #173d29; --panel3: #1f5236; --line: rgba(214,189,134,.28); --line-hi: rgba(214,189,134,.6);
+    --text: #f4e8c6; --muted: #b3bea9; --gold: #d6bd86; --gold-hi: #f3e4b8; --ok: #8fdc8f; --warn: #f0b94d; --danger: #e5604a; --danger-txt: #f6b1a4;
+    --L: #e0303d; --R: #2f7cf0;
+    --font: Montserrat, "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; color: var(--text); font: 500 14px var(--font); min-height: 100vh;
+    background: linear-gradient(180deg, rgba(var(--bg-rgb),.88), rgba(var(--bg-rgb),.97)), url(/assets/clouds.jpg) center top / 1400px auto fixed, var(--bg); }
+  button, input, select { font: inherit; color: inherit; }
+  button { background: linear-gradient(180deg, var(--panel3), var(--panel2)); border: 1px solid var(--line-hi); border-radius: 7px; padding: 7px 13px; cursor: pointer; font-weight: 600; color: var(--text); }
+  button:hover { border-color: var(--gold-hi); color: var(--gold-hi); }
+  button.primary, button.on { background: linear-gradient(180deg, var(--gold-hi), var(--gold)); color: var(--panel); border-color: var(--gold-hi); }
+  button.danger { border-color: rgba(229,96,74,.7); color: var(--danger-txt); }
+  button:disabled { opacity: .45; cursor: default; }
+  input, select { width: 100%; background: rgba(var(--shade-rgb),.75); border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; min-width: 0; color: var(--text); }
+  select option { background: var(--panel); }
+  input:focus, select:focus, button:focus-visible { outline: 2px solid var(--gold); outline-offset: -1px; }
+  label { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: 12px; font-weight: 600; color: var(--muted); }
+  label.check { flex-direction: row; align-items: center; gap: 8px; font-size: 13px; color: var(--text); }
+  label.check input { width: auto; accent-color: var(--gold); }
+  header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 18px; position: sticky; top: 0; z-index: 5;
+    background: linear-gradient(180deg, var(--panel2), var(--panel)); border-bottom: 2px solid var(--gold); }
+  header h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: 0; color: var(--gold-hi); }
+  .hdr-link { color: var(--gold); font-weight: 600; text-decoration: none; border: 1px solid var(--line-hi); padding: 7px 13px; border-radius: 7px; }
+  .sp { flex: 1; }
+  main { max-width: 1400px; margin: 0 auto; padding: 18px; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+  .card { background: linear-gradient(180deg, rgba(var(--panel2-rgb),.86), rgba(var(--panel-rgb),.92)); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 12px; align-content: start; }
+  h2 { margin: 0; font-size: 12.5px; letter-spacing: 0; color: var(--gold); display: flex; align-items: center; gap: 10px; }
+  h2::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line-hi), transparent); }
+  .row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+  .hint { color: var(--muted); font-size: 12px; line-height: 1.55; margin: 0; }
+  .c-ok { color: var(--ok); } .c-bad { color: var(--danger-txt); } .c-warn { color: var(--warn); }
+  code { background: rgba(0,0,0,.35); padding: 1px 6px; border-radius: 4px; color: var(--gold-hi); }
+  .seg { display: inline-flex; border: 1px solid var(--line-hi); border-radius: 8px; overflow: hidden; }
+  .seg button { border: 0; border-radius: 0; background: transparent; }
+  .seg button.on { background: linear-gradient(180deg, var(--gold-hi), var(--gold)); color: var(--panel); }
+
+  .counts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .cnt { padding: 7px 8px; border-radius: 8px; background: rgba(var(--shade-rgb),.5); border: 1px solid var(--line); text-align: center; font-weight: 600; font-size: 12px; }
+  .cnt b { display: block; font-size: 18px; }
+  .cnt.bad { border-color: var(--danger); color: var(--danger-txt); }
+  .pl { display: grid; grid-template-columns: 48px minmax(0, 1fr) 150px 70px 34px; gap: 8px; align-items: center; padding: 6px 8px; border-radius: 8px; background: rgba(var(--shade-rgb),.45); }
+  .pl.off { opacity: .5; }
+  .pl .ph { width: 48px; height: 48px; border-radius: 6px; background: #1a1d28 center 20% / cover; border: 1px dashed var(--line-hi); display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--muted); cursor: pointer; font-size: 11px; text-align: center; }
+  .pl .ph.has { border-style: solid; }
+  .pl .x { padding: 6px 0; }
+  .plist { display: grid; gap: 6px; }
+  .plist .head { display: grid; grid-template-columns: 48px minmax(0, 1fr) 150px 70px 34px; gap: 8px; padding: 0 8px; font-size: 11px; font-weight: 600; letter-spacing: 0; color: var(--muted); }
+  .add { display: grid; grid-template-columns: minmax(0, 1fr) 150px auto; gap: 8px; align-items: end; }
+
+  .teams { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .teams label.l input { border-color: var(--L); } .teams label.r input { border-color: var(--R); }
+  .mixbtn { font-size: 22px; font-weight: 600; letter-spacing: 0; padding: 16px; width: 100%; }
+  .prev { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; border: 1px solid var(--line-hi); background: #000; }
+  .prev iframe { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; }
+  .res { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .res > div { border-radius: 8px; padding: 10px 12px; background: rgba(var(--shade-rgb),.5); }
+  .res .L { border-left: 4px solid var(--L); } .res .R { border-left: 4px solid var(--R); }
+  .res h4 { margin: 0 0 6px; font-size: 14px; font-weight: 600; }
+  .res p { margin: 3px 0; font-size: 13px; } .res p span { color: var(--muted); display: inline-block; width: 120px; }
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%) translateY(80px); background: #3a1b14; border: 1px solid var(--danger); padding: 10px 18px; border-radius: 8px; font-weight: 600; transition: transform .25s; z-index: 9; }
+  .toast.ok { background: #183a24; border-color: var(--ok); }
+  .toast.show { transform: translateX(-50%); }
+  @media (max-width: 1100px) { main { grid-template-columns: 1fr; } }
+  @media (max-width: 640px) { .pl, .plist .head { grid-template-columns: 44px minmax(0, 1fr) 110px 34px; } .pl .act, .plist .head .act { display: none; } .add { grid-template-columns: 1fr; } .counts { grid-template-columns: repeat(3, 1fr); } }
+</style>
+<link rel="stylesheet" href="/ui/panel.css">
+</head>
+<body>
+<header>
+  <h1>Mix Draw</h1>
+  <a href="/control" class="hdr-link">← Control panel</a>
+  <a href="/logout" class="hdr-link">Logout</a>
+  <span class="sp"></span>
+  <span class="hint">OBS: <code id="obsCode">/mixdraw</code> (1920 × 1080)</span>
+  <button id="copyObs">Copy OBS URL</button>
+</header>
+<main>
+  <div style="display:grid;gap:16px">
+    <section class="card">
+      <h2>Draw</h2>
+      <div class="teams">
+        <label class="l">Tim kiri (P1)<input id="left" maxlength="30"></label>
+        <label class="r">Tim kanan (P2)<input id="right" maxlength="30"></label>
+      </div>
+      <div class="row">
+        <label style="flex:1;min-width:180px">Judul<input id="title" maxlength="40"></label>
+        <label>Kecepatan reveal<div class="seg" id="speed"><button data-s="slow">Pelan</button><button data-s="normal">Sedang</button><button data-s="fast">Cepat</button></div></label>
+      </div>
+      <div class="row" style="align-items:center">
+        <label class="check"><input type="checkbox" id="sound"> Sound effect</label>
+        <button id="vis">Sembunyikan overlay</button>
+      </div>
+      <button class="primary mixbtn" id="mix">MIX</button>
+      <div class="row">
+        <button id="all">Reveal semua sekarang</button>
+        <button id="reset" class="danger">Reset</button>
+        <span class="sp"></span>
+        <button id="copyRes" disabled>Copy hasil</button>
+        <button id="toDraft" disabled title="Isi tim kiri/kanan di overlay draft dengan hasil mix">Pakai di overlay draft</button>
+      </div>
+      <p class="hint" id="drawInfo"></p>
+      <div class="res" id="res" hidden></div>
+    </section>
+    <section class="card">
+      <h2>Preview</h2>
+      <div class="prev" id="prev"><iframe id="frame" src="/mixdraw?mute=1&bg=1" title="Preview mix draw"></iframe></div>
+      <p class="hint">Preview tanpa suara. Di OBS centang <b>Control audio via OBS</b> pada Browser source <code>/mixdraw</code> supaya sound effect masuk mixer.</p>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Pemain mix</h2>
+    <div class="counts" id="counts"></div>
+    <p class="hint">Tiap posisi butuh minimal 2 pemain aktif — satu untuk tiap tim. Pemain lebih dibagi ke tim yang lebih sedikit. Hapus centang <b>Ikut</b> untuk pemain yang tidak hadir.</p>
+    <div class="plist" id="plist"></div>
+    <div class="add">
+      <label>Nama pemain<input id="newName" maxlength="24" placeholder="Nama"></label>
+      <label>Posisi<select id="newPos"></select></label>
+      <button class="primary" id="addBtn">Tambah</button>
+    </div>
+    <input type="file" id="pfile" accept="image/*" hidden>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const POS = { 1: 'Carry', 2: 'Mid', 3: 'Offlane', 4: 'Soft Support', 5: 'Hard Support' };
+  const posOpts = (v) => [1, 2, 3, 4, 5].map((p) => `<option value="${p}" ${p === v ? 'selected' : ''}>${p} · ${POS[p]}</option>`).join('');
+  $('newPos').innerHTML = posOpts(1);
+  let S = null, M = null, toastT, photoFor = null;
+  function toast(m, ok) { const t = $('toast'); t.textContent = m; t.className = 'toast show' + (ok ? ' ok' : ''); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600); }
+  async function mix(op, p = {}) {
+    try {
+      const r = await fetch('/api/action', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type: 'mix', op, ...p }) });
+      const j = await r.json().catch(() => ({}));
+      if (!j.ok) toast(j.error || 'Gagal'); return j.ok;
+    } catch { toast('Server tidak bisa dihubungi'); return false; }
+  }
+  const keep = (id, v) => { if (document.activeElement !== $(id)) $(id).value = v ?? ''; };
+
+  // ---------- draw controls ----------
+  $('left').onchange = (e) => mix('settings', { left: e.target.value });
+  $('right').onchange = (e) => mix('settings', { right: e.target.value });
+  $('title').onchange = (e) => mix('settings', { title: e.target.value });
+  document.querySelectorAll('#speed [data-s]').forEach((b) => b.onclick = () => mix('settings', { speed: b.dataset.s }));
+  $('sound').onchange = (e) => mix('settings', { sound: e.target.checked });
+  $('vis').onclick = () => mix('settings', { visible: M.visible === false });
+  $('mix').onclick = async () => {
+    if (M.draw && !confirm('Mix ulang? Hasil sekarang akan diganti.')) return;
+    if (await mix('draw')) toast('Mix dimulai — lihat OBS', true);
+  };
+  $('all').onclick = () => mix('revealAll');
+  $('reset').onclick = () => { if (confirm('Reset hasil mix?')) mix('reset'); };
+  $('toDraft').onclick = async () => { if (await mix('toDraft')) toast('Tim hasil mix dipasang di overlay draft', true); };
+  $('copyObs').onclick = async () => { const u = location.origin + '/mixdraw'; try { await navigator.clipboard.writeText(u); toast('OBS URL di-copy', true); } catch { prompt('Copy:', u); } };
+  $('obsCode').textContent = location.origin + '/mixdraw';
+  function resultText() {
+    const d = M.draw; if (!d) return '';
+    const lines = (sd) => d.picks.filter((p) => p.side === sd).sort((a, b) => a.pos - b.pos).map((p) => `${p.pos}. ${d.players.find((x) => x.id === p.id).name} (${POS[p.pos]})`).join('\n');
+    return `${d.title || 'MIX DRAW'}\n\n${d.left}\n${lines('left')}\n\n${d.right}\n${lines('right')}`;
+  }
+  $('copyRes').onclick = async () => { try { await navigator.clipboard.writeText(resultText()); toast('Hasil di-copy', true); } catch { prompt('Copy:', resultText()); } };
+
+  // ---------- players ----------
+  $('addBtn').onclick = async () => {
+    const name = $('newName').value.trim(); if (!name) { $('newName').focus(); return; }
+    if (await mix('add', { name, pos: Number($('newPos').value) })) { $('newName').value = ''; $('newName').focus(); }
+  };
+  $('newName').onkeydown = (e) => { if (e.key === 'Enter') $('addBtn').click(); };
+  $('plist').onchange = (e) => {
+    const row = e.target.closest('.pl'); if (!row) return;
+    const id = row.dataset.id;
+    if (e.target.classList.contains('nm')) mix('update', { id, name: e.target.value });
+    else if (e.target.classList.contains('ps')) mix('update', { id, pos: Number(e.target.value) });
+    else if (e.target.classList.contains('ac')) mix('update', { id, active: e.target.checked });
+  };
+  $('plist').onclick = (e) => {
+    const row = e.target.closest('.pl'); if (!row) return;
+    const id = row.dataset.id, p = M.players.find((x) => x.id === id);
+    if (e.target.closest('.x')) { if (confirm('Hapus ' + p.name + '?')) mix('remove', { id }); return; }
+    if (e.target.closest('.ph')) {
+      if (p.photo && e.shiftKey) { mix('update', { id, photo: '' }); return; }
+      photoFor = id; $('pfile').value = ''; $('pfile').click();
+    }
+  };
+  $('plist').oncontextmenu = (e) => {
+    const ph = e.target.closest('.ph'); if (!ph) return;
+    const id = ph.closest('.pl').dataset.id, p = M.players.find((x) => x.id === id);
+    if (p.photo) { e.preventDefault(); if (confirm('Hapus foto ' + p.name + '?')) mix('update', { id, photo: '' }); }
+  };
+  $('pfile').onchange = async (e) => {
+    const f = e.target.files[0]; if (!f || !photoFor) return;
+    try {
+      const r = await fetch('/api/upload-logo', { method: 'POST', headers: { 'x-filename': encodeURIComponent(f.name), 'content-type': 'application/octet-stream' }, body: f }).then((x) => x.json());
+      if (!r.ok) throw new Error(r.error || 'Upload gagal');
+      await mix('update', { id: photoFor, photo: r.path }); toast('Foto disimpan', true);
+    } catch (err) { toast(err.message); }
+  };
+
+  // ---------- render ----------
+  function render() {
+    if (!M) return;
+    keep('left', M.left); keep('right', M.right); keep('title', M.title);
+    document.querySelectorAll('#speed [data-s]').forEach((b) => b.classList.toggle('on', b.dataset.s === M.speed));
+    $('sound').checked = M.sound !== false;
+    $('vis').textContent = M.visible === false ? 'Tampilkan overlay' : 'Sembunyikan overlay'; $('vis').classList.toggle('on', M.visible === false);
+    // counts
+    const act = M.players.filter((p) => p.active !== false);
+    $('counts').innerHTML = [1, 2, 3, 4, 5].map((p) => { const n = act.filter((x) => x.pos === p).length; return `<div class="cnt ${n < 2 ? 'bad' : ''}"><b>${n}</b>${p} · ${POS[p]}</div>`; }).join('');
+    const short = [1, 2, 3, 4, 5].filter((p) => act.filter((x) => x.pos === p).length < 2);
+    $('mix').disabled = short.length > 0;
+    $('mix').title = short.length ? 'Posisi ' + short.join(', ') + ' butuh minimal 2 pemain aktif' : '';
+    // players list (sorted by position)
+    const list = [...M.players].sort((a, b) => a.pos - b.pos || a.name.localeCompare(b.name));
+    const html = '<div class="head"><span>FOTO</span><span>NAMA</span><span>POSISI</span><span class="act">IKUT</span><span></span></div>' + list.map((p) => `<div class="pl ${p.active === false ? 'off' : ''}" data-id="${p.id}">
+      <div class="ph ${p.photo ? 'has' : ''}" title="${p.photo ? 'Klik: ganti foto · klik kanan: hapus foto' : 'Klik: upload foto'}" ${p.photo ? `style="background-image:url('${esc(p.photo)}')"` : ''}>${p.photo ? '' : '+ foto'}</div>
+      <input class="nm" value="${esc(p.name)}" maxlength="24">
+      <select class="ps">${posOpts(p.pos)}</select>
+      <label class="check act"><input type="checkbox" class="ac" ${p.active === false ? '' : 'checked'}> Ikut</label>
+      <button class="x danger" title="Hapus">✕</button></div>`).join('');
+    const focused = document.activeElement && document.activeElement.closest && document.activeElement.closest('#plist');
+    if ($('plist')._h !== html && !focused) { $('plist').innerHTML = html; $('plist')._h = html; }
+    // result
+    const d = M.draw;
+    $('copyRes').disabled = $('toDraft').disabled = !d;
+    $('res').hidden = !d;
+    if (d) {
+      const col = (sd) => d.picks.filter((p) => p.side === sd).sort((a, b) => a.pos - b.pos).map((p) => `<p><span>${p.pos} · ${POS[p.pos]}</span><b>${esc(d.players.find((x) => x.id === p.id).name)}</b></p>`).join('');
+      $('res').innerHTML = `<div class="L"><h4>${esc(d.left)}</h4>${col('left')}</div><div class="R"><h4>${esc(d.right)}</h4>${col('right')}</div>`;
+      const dur = { slow: 6500, normal: 4800, fast: 3200 }[d.speed] || 6500;
+      const total = 3200 + d.picks.length * dur, left = Math.max(0, d.at + total - (Date.now() + skew));
+      $('drawInfo').innerHTML = d.all || !left ? '<span class="c-ok">Semua sudah ter-reveal di overlay.</span>' : `<span class="c-warn">Reveal berjalan di overlay — selesai ±${Math.ceil(left / 1000)} detik lagi.</span> Hasil di bawah sudah final (jangan dibocorkan dulu 😉).`;
+    } else $('drawInfo').textContent = short.length ? 'Lengkapi pemain dulu: posisi ' + short.map((p) => p + ' ' + POS[p]).join(', ') + ' masih kurang.' : 'Siap. Tekan MIX — overlay akan mengacak satu per satu.';
+  }
+  let skew = 0;
+  setInterval(() => { if (M && M.draw) render(); }, 1000);
+  // scale the preview
+  const fitPrev = () => { const w = $('prev').clientWidth; $('frame').style.transform = `scale(${w / 1920})`; };
+  addEventListener('resize', fitPrev); new ResizeObserver(fitPrev).observe($('prev')); fitPrev();
+
+  function connect() {
+    const es = new EventSource('/events');
+    es.onmessage = (e) => { S = JSON.parse(e.data); if (S.serverNow) skew = S.serverNow - Date.now(); M = S.mix; render(); };
+    es.onerror = () => { es.close(); setTimeout(connect, 2000); };
+  }
+  connect();
+})();
+</script>
+</body>
+</html>

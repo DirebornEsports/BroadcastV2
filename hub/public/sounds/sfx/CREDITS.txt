@@ -1,0 +1,18 @@
+SOUND EFFECT CREDITS (sounds/sfx/*.wav)
+Real recordings from Freesound via Openverse, cut and leveled for the overlay.
+CC0 sounds need no credit; CC BY sounds must be credited, e.g. in the stream or video description.
+
+pick.wav         CC0  "Impact Hit at soft but big material" by doudar41 is marked with CC0 1.0. To view the terms, visit https://creativecommons.org/publicdomain/zero/1.0/.  https://freesound.org/people/doudar41/sounds/728515
+ban.wav          BY   "Dry impact hit metal plate" by jorickhoofd is licensed under CC BY 4.0. To view a copy of this license, visit https://creativecommons.org/licenses/by/4.0/.  https://freesound.org/people/jorickhoofd/sounds/176669
+overlay-in.wav   CC0  "Big Punch with whoosh" by Paul368 is marked with CC0 1.0. To view the terms, visit https://creativecommons.org/publicdomain/zero/1.0/.  https://freesound.org/people/Paul368/sounds/322250
+overlay-out.wav  CC0  "whoosh.wav" by LloydEvans09 is marked with CC0 1.0. To view the terms, visit https://creativecommons.org/publicdomain/zero/1.0/.  https://freesound.org/people/LloydEvans09/sounds/332003
+player.wav       CC0  "Swipe Whoosh" by qubodup is marked with CC0 1.0. To view the terms, visit https://creativecommons.org/publicdomain/zero/1.0/.  https://freesound.org/people/qubodup/sounds/60007
+photo.wav        CC0  "Transition Swoosh" by adh.dreaming is marked with CC0 1.0. To view the terms, visit https://creativecommons.org/publicdomain/zero/1.0/.  https://freesound.org/people/adh.dreaming/sounds/632763
+score.wav        CC0  "Chime Notification" by Jofae is marked with CC0 1.0. To view the terms, visit https://creativecommons.org/publicdomain/zero/1.0/.  https://freesound.org/people/Jofae/sounds/380482
+turn.wav         CC0  "Button Clicking 3 (Single)" by Sheyvan is marked with CC0 1.0. To view the terms, visit https://creativecommons.org/publicdomain/zero/1.0/.  https://freesound.org/people/Sheyvan/sounds/494489
+popup.wav        CC0  "Swosh swoosh whoosh air sound, free, high quality" by qubodup is marked with CC0 1.0. To view the terms, visit https://creativecommons.org/publicdomain/zero/1.0/.  https://freesound.org/people/qubodup/sounds/60026
+popup-out.wav    CC0  "swosh-02.flac" by qubodup is marked with CC0 1.0. To view the terms, visit https://creativecommons.org/publicdomain/zero/1.0/.  https://freesound.org/people/qubodup/sounds/59989
+card-in.wav      BY   "Sci Fi Glitch Transition Swoosh" by miksmusic is licensed under CC BY 3.0. To view a copy of this license, visit https://creativecommons.org/licenses/by/3.0/.  https://freesound.org/people/miksmusic/sounds/497712
+bars.wav         CC0  "Energy Riser" by magnuswaker is marked with CC0 1.0. To view the terms, visit https://creativecommons.org/publicdomain/zero/1.0/.  https://freesound.org/people/magnuswaker/sounds/522095
+card-out.wav     BY   "VS_Short Whoosh 4.mp3" by Vilkas_Sound is licensed under CC BY 4.0. To view a copy of this license, visit https://creativecommons.org/licenses/by/4.0/.  https://freesound.org/people/Vilkas_Sound/sounds/460469
+ingame.wav       BY   "VS_Short Whoosh 1.mp3" by Vilkas_Sound is licensed under CC BY 4.0. To view a copy of this license, visit https://creativecommons.org/licenses/by/4.0/.  https://freesound.org/people/Vilkas_Sound/sounds/460472

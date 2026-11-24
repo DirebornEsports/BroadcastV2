@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<script src="/vendor/anime.umd.min.js"></script><script src="/ui/motion.js"></script>
+<script src="/theme.js"></script>
+<title>Karakter chat</title>
+<!-- OBS: Browser source 1920 x 1080 over the game/caster scene. Every YouTube live chatter gets a little blob that walks along
+     one ground line (Draft control -> On air -> Karakter live chat), says their message in a bubble, and walks off after a
+     few quiet minutes. ?bg=1 shows the ground line. -->
+<style>
+  @font-face { font-family: "Teko"; src: url(/fonts/Teko.woff) format("woff"); font-weight: 300 700; font-display: block; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; }
+  body.bg { background: #3b4a3f; }
+  body.bg #ground { border-top: 1px dashed rgba(255,255,255,.5); }
+  #fit { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; transform: scale(var(--k, 1)); transition: opacity .4s ease; }
+  #fit.off { opacity: 0; }
+  #ground { position: absolute; left: 0; right: 0; height: 0; }
+  /* one walker: the box sits on the ground line, anime moves it along x */
+  .w { position: absolute; left: -32px; bottom: 0; width: 64px; height: 64px; }
+  .w .b { position: absolute; inset: 0; transform-origin: 50% 100%; }
+  .w svg { width: 64px; height: 64px; display: block; overflow: visible; filter: drop-shadow(0 3px 3px rgba(0,0,0,.35)); }
+  .w.left svg { transform: scaleX(-1); }
+  .w.walk .b { animation: bob .36s ease-in-out infinite alternate; }
+  .w.walk .f1 { animation: step .36s ease-in-out infinite alternate; }
+  .w.walk .f2 { animation: step .36s ease-in-out infinite alternate-reverse; }
+  .w.hop .b { animation: hop .5s cubic-bezier(.3,1.6,.5,1) 2; }
+  .w .eyes { transform-origin: 50% 28px; animation: blink 4.2s infinite; animation-delay: var(--blink, 0s); }
+  @keyframes bob { from { transform: translateY(0) scale(1, 1); } to { transform: translateY(-5px) scale(.97, 1.04); } }
+  @keyframes step { from { transform: translateY(0); } to { transform: translateY(-4px); } }
+  @keyframes hop { 0% { transform: translateY(0) scale(1.1, .88); } 45% { transform: translateY(-26px) scale(.92, 1.1); } 100% { transform: translateY(0) scale(1, 1); } }
+  @keyframes blink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
+  .nm { position: absolute; left: 50%; bottom: 66px; transform: translateX(-50%); white-space: nowrap; font: 600 22px/1 "Teko", sans-serif;
+    letter-spacing: .02em; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,.8), 0 0 2px #000; padding-top: .12em; }
+  .say { position: absolute; left: 50%; bottom: 92px; width: max-content; max-width: 260px; padding: 6px 10px 4px; border-radius: 10px; background: #fff;
+    color: #1d1d1f; font: 500 21px/1.05 "Teko", sans-serif; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,.3);
+    opacity: 0; transform: translate(-50%, 8px) scale(.8); transform-origin: 50% 100%; transition: opacity .25s ease, transform .35s cubic-bezier(.3,1.5,.5,1); }
+  .say::after { content: ""; position: absolute; left: 50%; bottom: -6px; margin-left: -6px; border: 6px solid transparent; border-bottom: 0; border-top-color: #fff; }
+  .say.on { opacity: 1; transform: translate(-50%, 0) scale(1); }
+</style>
+</head>
+<body>
+<div id="fit"><div id="ground"></div></div>
+<script>
+(() => {
+  const fit = document.getElementById('fit'), ground = document.getElementById('ground');
+  if (new URLSearchParams(location.search).get('bg') === '1') document.body.classList.add('bg');
+  const resize = () => fit.style.setProperty('--k', Math.min(innerWidth / 1920, innerHeight / 1080));
+  addEventListener('resize', resize); resize();
+  const IDLE = 4 * 60000, SPEED = 70;               // a quiet chatter walks off after 4 min; px per second
+  const walkers = new Map();
+  let C = { max: 12 };
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const hash = (s) => {                              // FNV-1a + a final mix, so near-identical ids still get far-apart colours
+    let h = [...String(s)].reduce((h, ch) => Math.imul(h ^ ch.charCodeAt(0), 16777619), 2166136261);
+    h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909);
+    return (h ^ (h >>> 16)) >>> 0;
+  };
+  const xOf = (w) => parseFloat(anime.utils.get(w.el, 'x')) || 0;
+
+  function body(h) {                                  // the same chatter always gets the same colour and headgear
+    const hue = h % 360, top = ['', '<circle cx="18" cy="12" r="7"/><circle cx="46" cy="12" r="7"/>',
+      '<path d="M32 10 Q30 0 36 -2" fill="none" stroke-width="2.5" stroke="hsl(' + hue + ' 55% 32%)"/><circle cx="36" cy="-2" r="4" fill="#ffd34d"/>',
+      '<path d="M17 14 L14 0 L25 10 Z M47 14 L50 0 L39 10 Z" fill="#ff5a4f"/>'][(h >> 9) % 4];
+    return `<svg viewBox="0 0 64 64"><g fill="hsl(${hue} 55% 32%)"><ellipse class="f1" cx="22" cy="60" rx="8" ry="4.5"/><ellipse class="f2" cx="42" cy="60" rx="8" ry="4.5"/></g>
+      <g fill="hsl(${hue} 70% 58%)">${top}</g>
+      <rect x="6" y="8" width="52" height="52" rx="24" fill="hsl(${hue} 70% 58%)"/><ellipse cx="32" cy="44" rx="16" ry="11" fill="hsl(${hue} 80% 75%)"/>
+      <g class="eyes"><ellipse cx="38" cy="28" rx="5" ry="6.5" fill="#fff"/><ellipse cx="50" cy="28" rx="4.5" ry="6" fill="#fff"/>
+      <circle cx="40" cy="29" r="2.8" fill="#1d1d1f"/><circle cx="51.5" cy="29" r="2.5" fill="#1d1d1f"/></g>
+      <circle cx="31" cy="37" r="3.5" fill="#ff8fa3" opacity=".7"/><path d="M41 38 Q45 42 49 38" fill="none" stroke="#1d1d1f" stroke-width="2" stroke-linecap="round"/></svg>`;
+  }
+
+  function wander(w) {                                // walk somewhere nearby, stand a moment, repeat
+    if (w.gone || w.talking) return;
+    const x = xOf(w), to = Math.max(40, Math.min(1880, x + (Math.random() < .5 ? -1 : 1) * rnd(120, 520)));
+    go(w, to, () => { w.t = setTimeout(() => wander(w), rnd(600, 3500)); });
+  }
+  function go(w, to, done, speed = SPEED) {
+    const x = xOf(w);
+    w.el.classList.toggle('left', to < x); w.el.classList.add('walk');
+    if (w.anim) w.anim.pause();
+    w.anim = anime.animate(w.el, { x: to, duration: Math.abs(to - x) / speed * 1000, ease: 'linear',
+      onComplete: () => { w.el.classList.remove('walk'); done(); } });
+  }
+  function stop(w) { clearTimeout(w.t); if (w.anim) w.anim.pause(); w.el.classList.remove('walk'); }
+
+  function leave(w) {
+    if (w.gone) return;
+    w.gone = true; stop(w); clearTimeout(w.bye); clearTimeout(w.quiet); walkers.delete(w.id);
+    go(w, xOf(w) < 960 ? -80 : 2000, () => w.el.remove(), SPEED * 2);
+  }
+
+  function say(m) {
+    let w = walkers.get(m.id);
+    if (!w) {
+      const h = hash(m.id), el = document.createElement('div');
+      el.className = 'w';
+      el.innerHTML = `<div class="say"></div><div class="nm"></div><div class="b">${body(h)}</div>`;
+      el.querySelector('.nm').textContent = m.name;
+      el.style.setProperty('--blink', -(h % 40) / 10 + 's');
+      const from = Math.random() < .5 ? -60 : 1980;
+      anime.utils.set(el, { x: from });
+      ground.appendChild(el);
+      w = { id: m.id, el, gone: false };
+      walkers.set(m.id, w);
+      // too many on screen: the one quiet the longest walks off
+      if (walkers.size > (C.max || 12)) leave([...walkers.values()].sort((a, b) => a.last - b.last)[0]);
+      go(w, rnd(120, 1800), () => wander(w), SPEED * 3);   // run in, then stroll
+    }
+    w.last = Date.now();
+    clearTimeout(w.quiet); w.quiet = setTimeout(() => leave(w), IDLE);
+    const bubble = w.el.querySelector('.say');
+    bubble.textContent = m.text.length > 70 ? m.text.slice(0, 68) + '…' : m.text;
+    bubble.classList.add('on'); w.el.style.zIndex = String(Date.now() % 1e7);
+    if (w.anim && w.el.classList.contains('walk')) { stop(w); w.talking = true; }   // stop to talk, then carry on
+    w.el.classList.remove('hop'); void w.el.offsetWidth; w.el.classList.add('hop');
+    clearTimeout(w.bye);
+    w.bye = setTimeout(() => { bubble.classList.remove('on'); w.el.classList.remove('hop'); if (w.talking) { w.talking = false; wander(w); } }, 6000);
+  }
+
+  function apply() {
+    ground.style.top = (Number(C.ground) || 785) + 'px';
+    fit.classList.toggle('off', C.visible === false);
+  }
+  function connect() {
+    const es = new EventSource('/events');
+    es.onmessage = (e) => { C = JSON.parse(e.data).chat || C; apply(); };
+    // one poll brings a batch: spread it over the next few seconds instead of all at once
+    es.addEventListener('chat', (e) => { const list = JSON.parse(e.data); list.forEach((m, i) => setTimeout(() => say(m), i * Math.min(1500, 10000 / list.length))); });
+    es.onerror = () => { es.close(); setTimeout(connect, 2000); };
+  }
+  connect();
+})();
+</script>
+</body>
+</html>

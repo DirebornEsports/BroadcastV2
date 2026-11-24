@@ -1,0 +1,22 @@
+{
+  // Direborn broadcast — one Worker + one Durable Object + one R2 bucket.
+  // Runs on the free plan for testing (10 ms CPU per request: draft, GSI and overlays fit; stat cards,
+  // Excel export and OpenDota sync can hit the limit). For broadcasts use Workers Paid ($5/month).
+  // Secrets (Cloudflare dashboard → this Worker → Settings → Variables and Secrets, type "Secret"):
+  //   ADMIN_PASSWORD   operator login for the control panel
+  //   GSI_TOKEN        token in the Dota .cfg (auth → token)
+  //   CF_APP_ID, CF_APP_SECRET   Realtime → Serverless SFU app (player cams)
+  //   PUSH_KEY, VIEW_KEY         player links / OBS cam overlay
+  //   TURN_KEY_ID, TURN_KEY_TOKEN (optional) Realtime → TURN
+  "name": "direborn-broadcast",
+  "main": "src/worker.mjs",
+  "compatibility_date": "2025-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true },
+  "durable_objects": { "bindings": [{ "name": "HUB", "class_name": "Hub" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Hub"] }],
+  // Optional: keep uploaded logos/photos in R2 instead of the Durable Object (needs R2 enabled on the account).
+  // Create a bucket "direborn-uploads" and uncomment:
+  // "r2_buckets": [{ "binding": "UPLOADS", "bucket_name": "direborn-uploads" }],
+  "observability": { "enabled": true }
+}

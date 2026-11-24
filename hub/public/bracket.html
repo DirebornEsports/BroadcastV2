@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<script src="/vendor/anime.umd.min.js"></script><script src="/ui/motion.js"></script>
+<script src="/theme.js"></script>
+<script src="/ui/shell.js" defer></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bracket Editor</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a1a12; --panel: #10291c; --panel2: #173d29; --panel3: #1f5236; --line: rgba(214,189,134,.28); --line-hi: rgba(214,189,134,.6);
+    --text: #f4e8c6; --muted: #a9b59f; --gold: #d6bd86; --gold-hi: #f3e4b8; --ok: #9fd67a; --warn: #f0b94d; --live: #e5604a;
+    --font: Montserrat, "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--text); font: 500 14px var(--font); min-height: 100vh;
+    background: linear-gradient(180deg, rgba(var(--bg-rgb),.88), rgba(var(--bg-rgb),.97)), url(/assets/clouds.jpg) center top / 1400px auto fixed, var(--bg); }
+  button, input, select { font: inherit; color: inherit; }
+  button { background: linear-gradient(180deg, var(--panel3), var(--panel2)); border: 1px solid var(--line-hi); border-radius: 7px; padding: 7px 13px; cursor: pointer; font-weight: 600; }
+  button:hover { border-color: var(--gold-hi); color: var(--gold-hi); }
+  button.primary { background: linear-gradient(180deg, var(--gold-hi), var(--gold)); color: var(--panel); border-color: var(--gold-hi); }
+  button:disabled { opacity: .5; cursor: default; }
+  input, select { background: rgba(var(--shade-rgb),.75); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; min-width: 0; width: 100%; }
+  input:focus, select:focus { outline: 2px solid var(--gold); outline-offset: -1px; }
+  input::placeholder { color: #7f8c77; font-style: italic; }
+  select option { background: var(--panel); }
+  header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 18px; position: sticky; top: 0; z-index: 5;
+    background: linear-gradient(180deg, var(--panel2), var(--panel)); border-bottom: 2px solid var(--gold); box-shadow: 0 4px 16px rgba(0,0,0,.4); }
+  header h1 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: 0; color: var(--gold-hi); }
+  .hdr-link { color: var(--gold); font-weight: 600; text-decoration: none; border: 1px solid var(--line-hi); padding: 7px 13px; border-radius: 7px; }
+  .sp { flex: 1; }
+  #saveState { font-size: 12px; font-weight: 600; color: var(--muted); }
+  #saveState.dirty { color: var(--warn); } #saveState.ok { color: var(--ok); }
+  main { padding: 18px; display: grid; gap: 18px; max-width: 1500px; margin: 0 auto; }
+  .card { background: linear-gradient(180deg, rgba(var(--panel2-rgb),.86), rgba(var(--panel-rgb),.92)); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  h2 { margin: 0 0 12px; font-size: 13px; letter-spacing: 0; color: var(--gold); display: flex; align-items: center; gap: 10px; }
+  h2::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line-hi), transparent); }
+  .hint { color: var(--muted); font-size: 12px; line-height: 1.55; margin: 0; }
+  .opts { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; }
+  .opts label { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+  .opts input[type=checkbox] { width: auto; }
+  .opts .small { width: 80px; }
+  .tbl { overflow-x: auto; }
+  table { border-collapse: separate; border-spacing: 0 6px; width: 100%; min-width: 1040px; }
+  th { text-align: left; font-size: 11px; letter-spacing: 0; color: var(--gold); padding: 0 6px; }
+  td { padding: 4px 5px; vertical-align: middle; background: rgba(var(--shade-rgb),.35); }
+  td:first-child { border-radius: 8px 0 0 8px; padding-left: 10px; } td:last-child { border-radius: 0 8px 8px 0; padding-right: 10px; }
+  tr.rnd td { background: none; padding: 16px 6px 2px; font-size: 13px; font-weight: 600; letter-spacing: 0; color: var(--muted); }
+  .mid { font-weight: 600; color: var(--gold-hi); white-space: nowrap; }
+  .sc { display: flex; align-items: center; gap: 4px; }
+  .sc input { width: 46px; text-align: center; font-weight: 600; font-size: 16px; padding: 5px 2px; }
+  .sc button { padding: 3px 8px; font-size: 13px; }
+  .vs { color: var(--muted); font-weight: 600; text-align: center; }
+  .team input { font-weight: 600; min-width: 120px; }
+  .team.win input { border-color: var(--accent); color: var(--accent); background: rgba(0,113,227,.06); }
+  .chip { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 10.5px; font-weight: 600; letter-spacing: 0; white-space: nowrap; border: 1px solid var(--line); color: var(--muted); }
+  .chip.done { color: var(--ok); border-color: rgba(159,214,122,.45); }
+  .chip.next { background: linear-gradient(180deg, var(--gold-hi), var(--gold)); color: var(--panel); border-color: transparent; }
+  .chip.live { background: var(--live); color: #fff; border-color: transparent; }
+  .quick { display: flex; gap: 4px; }
+  .quick button { padding: 3px 6px; font-size: 12px; white-space: nowrap; }
+  .preview { position: relative; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); background: var(--bg); }
+  .preview iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .pv { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%) translateY(80px); background: #3a1b14; border: 1px solid var(--live); padding: 10px 18px; border-radius: 8px; font-weight: 600; transition: transform .25s; z-index: 9; }
+  .toast.ok { background: #183a24; border-color: var(--ok); }
+  .toast.show { transform: translateX(-50%); }
+  .tsel { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--muted); }
+  .tsel select { width: auto; min-width: 200px; font-weight: 600; color: var(--gold-hi); }
+  .empty { text-align: center; padding: 26px 10px; }
+  .empty p { margin: 0 0 14px; color: var(--muted); }
+  .fmt { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .fmt select { width: auto; min-width: 260px; }
+  button.danger { border-color: rgba(229,96,74,.6); color: #f3b3a8; }
+  .del { padding: 3px 8px; }
+  @media (max-width: 900px) { .pv { grid-template-columns: 1fr; } }
+</style>
+<link rel="stylesheet" href="/ui/panel.css">
+</head>
+<body>
+<header>
+  <h1>Bracket</h1>
+  <a href="/cards" class="hdr-link">← Stats cards</a>
+  <a href="/control" class="hdr-link">Control panel</a>
+  <label class="tsel">Turnamen <select id="tour" title="Bracket yang diedit = turnamen aktif"></select></label>
+  <span class="sp"></span>
+  <span id="saveState">Loading…</span>
+  <button id="undo" disabled>Undo changes</button>
+  <button id="save" class="primary" disabled>Save bracket</button>
+</header>
+
+<main>
+  <section class="card" id="emptyCard" hidden>
+    <h2>Bracket</h2>
+    <div class="empty">
+      <p><b id="emptyName"></b> belum punya bracket. Pilih formatnya, nanti semua match dibuat otomatis (nama tim bisa diisi setelahnya).</p>
+      <div class="fmt" style="justify-content:center"><select id="newFmt"></select><button class="primary" id="create">Buat bracket</button></div>
+    </div>
+  </section>
+
+  <section class="card" id="setCard">
+    <h2>Pengaturan</h2>
+    <div class="fmt" style="margin-bottom:12px">
+      <span class="hint" style="font-weight: 600">Format:</span><b id="fmtName"></b>
+      <select id="fmtSel"></select><button id="remake" title="Buat ulang semua match dengan format ini (skor & nama hilang)">Buat ulang dengan format ini</button>
+      <button id="removeBr" class="danger">Hapus bracket</button>
+    </div>
+    <div class="opts">
+      <label><input type="checkbox" id="autoAdvance"> Pemenang & yang kalah otomatis masuk ke match berikutnya</label>
+      <label><input type="checkbox" id="autoScores"> Isi skor kosong dari statistik (OpenDota / GSI)</label>
+      <label>Tahun <input id="year" class="small" inputmode="numeric"></label>
+      <label>Zona waktu <input id="tz" class="small"></label>
+    </div>
+    <p class="hint" style="margin-top:10px">Yang kamu ketik selalu dipakai. Kotak tim yang kosong menunjukkan tim yang masuk otomatis (tulisan miring); ketik nama tim untuk menggantinya. Skor: pakai + / − atau tombol cepat 2–0, 2–1. Centang <b>Live</b> untuk menandai series yang sedang main. Tekan <b>Save bracket</b> (atau Ctrl+S): kartu Bracket dan Rundown langsung ikut berubah.</p>
+  </section>
+
+  <section class="card" id="matchCard">
+    <h2>Match</h2>
+    <div class="tbl"><table>
+      <thead><tr><th></th><th>#</th><th>Round</th><th>Tanggal</th><th>Jam</th><th>BO</th><th>Tim A</th><th>Skor</th><th></th><th>Skor</th><th>Tim B</th><th>Cepat</th><th>Live</th><th>Status</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+    <div style="margin-top:8px" id="addWrap"><button id="addM">＋ Tambah match</button> <span class="hint" style="display:inline">Di format Bebas kamu bisa tambah / hapus match dan kasih nama round sendiri.</span></div>
+    <datalist id="teamList"></datalist>
+  </section>
+
+  <section class="card" id="pvCard">
+    <h2>Preview (setelah disimpan)</h2>
+    <div class="pv">
+      <div class="preview"><iframe id="pvBracket" title="Bracket card"></iframe></div>
+      <div class="preview"><iframe id="pvRundown" title="Rundown card"></iframe></div>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script src="/bracket-formats.js"></script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const isTbd = (n) => !n || /^tbd$/i.test(String(n).trim());
+  let B = null, saved = 'null', live = null, info = null;
+  let toastT;
+  function toast(m, ok) { const t = $('toast'); t.textContent = m; t.className = 'toast show' + (ok ? ' ok' : ''); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600); }
+
+  async function load() {
+    const r = await fetch('/api/bracket', { cache: 'no-store' }).then((x) => x.json());
+    info = r;
+    B = r.bracket ? JSON.parse(JSON.stringify(r.bracket)) : null;
+    live = r.live;
+    $('tour').innerHTML = r.tournaments.map((t) => `<option value="${esc(t.id)}">${esc(t.name)}</option>`).join('');
+    $('tour').value = r.tournament.id;
+    const fo = r.formats.map((f) => `<option value="${esc(f.id)}">${esc(f.label)}</option>`).join('');
+    $('newFmt').innerHTML = fo; $('fmtSel').innerHTML = fo;
+    $('emptyName').textContent = r.tournament.name;
+    $('removeBr').hidden = r.tournament.isDefault;
+    $('teamList').innerHTML = ['TBD', ...r.teams].map((t) => `<option value="${esc(t)}">`).join('');
+    saved = JSON.stringify(B);
+    render(); dirty(); refreshPreview();
+  }
+  const need = (m) => Math.ceil((Number(m.bo) || 3) / 2);
+  function render() {
+    const has = !!B;
+    $('emptyCard').hidden = has; $('setCard').hidden = !has; $('matchCard').hidden = !has; $('pvCard').hidden = !has;
+    if (!has) { $('newFmt').value = 'single-elimination-4'; return; }
+    const F = info.formats.find((f) => f.id === (B.format || 'double-elimination-8'));
+    $('fmtName').textContent = F ? F.label : B.format;
+    if (document.activeElement !== $('fmtSel')) $('fmtSel').value = B.format || 'double-elimination-8';
+    const custom = (B.format || '') === 'custom';
+    $('addWrap').hidden = !custom;
+    $('autoAdvance').checked = B.autoAdvance !== false;
+    $('autoScores').checked = B.autoScores === true;
+    $('year').value = B.year || new Date().getFullYear();
+    $('tz').value = B.timezone || 'WIB';
+    const L = new Map((live?.matches || []).map((m) => [m.id, m]));
+    // the next unplayed match in date order, for the status chip
+    const order = [...(live?.matches || [])].filter((m) => !m.winnerSide && !m.live);
+    const nextId = order.sort((a, b) => key(a) - key(b))[0]?.id;
+    let html = '', lastRound = null;
+    B.matches.forEach((m, i) => {
+      const lm = L.get(m.id) || {};
+      if (m.round !== lastRound) { html += `<tr class="rnd"><td colspan="14">${esc(m.round || 'Round')}</td></tr>`; lastRound = m.round; }
+      const w = Number(m.a.score) >= need(m) ? 'a' : Number(m.b.score) >= need(m) ? 'b' : null;
+      const ph = (side) => (isTbd(m[side].name) && lm[side] && !isTbd(lm[side].name) ? `otomatis: ${lm[side].name}` : 'TBD');
+      const team = (side) => `<td class="team ${w === side ? 'win' : ''}"><input data-i="${i}" data-f="${side}.name" list="teamList" value="${esc(isTbd(m[side].name) ? '' : m[side].name)}" placeholder="${esc(ph(side))}"></td>`;
+      const score = (side) => `<td><div class="sc"><button data-i="${i}" data-step="${side}" data-d="-1" title="Kurangi">−</button><input data-i="${i}" data-f="${side}.score" inputmode="numeric" value="${m[side].score ?? ''}" placeholder="–"><button data-i="${i}" data-step="${side}" data-d="1" title="Tambah">+</button></div></td>`;
+      const st = lm.winnerSide ? `<span class="chip done">SELESAI · ${esc(lm[lm.winnerSide]?.name || '')}</span>` : lm.live || m.live ? '<span class="chip live">LIVE</span>' : m.id === nextId ? '<span class="chip next">Berikutnya</span>' : '<span class="chip">Mendatang</span>';
+      const quick = need(m) === 2 ? ['2-0', '2-1', '1-2', '0-2'] : need(m) === 3 ? ['3-0', '3-1', '3-2', '2-3', '1-3', '0-3'] : need(m) === 1 ? ['1-0', '0-1'] : [];
+      html += `<tr><td>${custom ? `<button class="del danger" data-del="${i}" title="Hapus match ini">✕</button>` : ''}</td><td class="mid">M${m.id}</td>
+        <td><input data-i="${i}" data-f="round" value="${esc(m.round)}" style="min-width:128px"></td>
+        <td><input data-i="${i}" data-f="date" value="${esc(m.date)}" placeholder="dd/mm" style="width:72px"></td>
+        <td><input data-i="${i}" data-f="time" value="${esc(m.time)}" placeholder="19.00" style="width:66px"></td>
+        <td><select data-i="${i}" data-f="bo" style="width:64px">${[1, 3, 5, 7].map((n) => `<option ${Number(m.bo || 3) === n ? 'selected' : ''} value="${n}">BO${n}</option>`).join('')}</select></td>
+        ${team('a')}${score('a')}<td class="vs">–</td>${score('b')}${team('b')}
+        <td><div class="quick">${quick.map((q) => `<button data-i="${i}" data-q="${q}">${q}</button>`).join('')}<button data-i="${i}" data-q="clear" title="Hapus skor">✕</button></div></td>
+        <td style="text-align:center"><input type="checkbox" data-i="${i}" data-f="live" ${m.live ? 'checked' : ''} style="width:auto"></td>
+        <td>${st}</td></tr>`;
+    });
+    $('rows').innerHTML = html;
+  }
+  function key(m) { const [d, mo] = String(m.date || '').split('/').map(Number); const [h, mi] = String(m.time || '').split(/[.:]/).map(Number); return d && mo ? (mo * 100 + d) * 10000 + (h || 0) * 100 + (mi || 0) : 9e9; }
+  function dirty() {
+    const d = JSON.stringify(B) !== saved;
+    $('save').disabled = !d; $('undo').disabled = !d;
+    $('saveState').textContent = d ? 'Ada perubahan yang belum disimpan' : 'Tersimpan';
+    $('saveState').className = d ? 'dirty' : 'ok';
+  }
+  function set(i, f, v) {
+    const m = B.matches[i];
+    if (f === 'live') m.live = !!v || undefined;
+    else if (f === 'bo') m.bo = Number(v);
+    else if (f.endsWith('.name')) m[f[0]].name = String(v).trim() || 'TBD';
+    else if (f.endsWith('.score')) { const n = String(v).trim() === '' ? null : Math.max(0, Math.min(9, parseInt(v, 10) || 0)); m[f[0]].score = n; }
+    else m[f] = v;
+  }
+  $('rows').addEventListener('change', (e) => {
+    const t = e.target; if (t.dataset.i == null || !t.dataset.f) return;
+    set(Number(t.dataset.i), t.dataset.f, t.type === 'checkbox' ? t.checked : t.value);
+    if (/score|bo|round|name/.test(t.dataset.f)) render();
+    dirty();
+  });
+  $('rows').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.del != null) { B.matches.splice(Number(b.dataset.del), 1); render(); dirty(); return; }
+    const m = B.matches[Number(b.dataset.i)];
+    if (b.dataset.step) { const s = m[b.dataset.step]; s.score = Math.max(0, Math.min(need(m), (Number(s.score) || 0) + Number(b.dataset.d))); }
+    else if (b.dataset.q === 'clear') { m.a.score = null; m.b.score = null; }
+    else if (b.dataset.q) { const [x, y] = b.dataset.q.split('-').map(Number); m.a.score = x; m.b.score = y; }
+    render(); dirty();
+  });
+  $('autoAdvance').onchange = (e) => { B.autoAdvance = e.target.checked; dirty(); };
+  $('autoScores').onchange = (e) => { B.autoScores = e.target.checked; dirty(); };
+  $('year').onchange = (e) => { B.year = Number(e.target.value) || B.year; dirty(); };
+  $('tz').onchange = (e) => { B.timezone = e.target.value.trim() || 'WIB'; dirty(); };
+  $('undo').onclick = () => { B = JSON.parse(saved); render(); dirty(); };
+  const make = (fmt) => BracketFormats.make(fmt, { year: (B && B.year) || new Date().getFullYear(), timezone: (B && B.timezone) || 'WIB' });
+  $('create').onclick = async () => { B = make($('newFmt').value); render(); dirty(); await save(); };
+  $('remake').onclick = () => {
+    if (!confirm('Buat ulang bracket dengan format "' + $('fmtSel').selectedOptions[0].text + '"? Semua match, nama tim dan skor sekarang diganti (bisa Undo sebelum disimpan).')) { $('fmtSel').value = B.format; return; }
+    B = make($('fmtSel').value); render(); dirty();
+  };
+  $('addM').onclick = () => {
+    const last = B.matches[B.matches.length - 1];
+    const id = Math.max(0, ...B.matches.map((m) => Number(m.id) || 0)) + 1;
+    B.matches.push({ id, round: last ? last.round : 'Round 1', date: last ? last.date : '', time: '', bo: last ? last.bo : 3, a: { name: 'TBD', score: null }, b: { name: 'TBD', score: null } });
+    render(); dirty();
+  };
+  $('removeBr').onclick = async () => {
+    if (!confirm('Hapus bracket ' + info.tournament.name + '? Kartu Bracket & Rundown untuk turnamen ini hilang sampai kamu buat lagi.')) return;
+    const r = await fetch('/api/bracket', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ remove: true }) }).then((x) => x.json()).catch(() => ({ ok: false }));
+    if (!r.ok) return toast(r.error || 'Gagal menghapus');
+    toast('Bracket dihapus', true); load();
+  };
+  $('tour').onchange = async (e) => {
+    if (!$('save').disabled && !confirm('Ada perubahan yang belum disimpan. Pindah turnamen tanpa menyimpan?')) { e.target.value = info.tournament.id; return; }
+    const r = await fetch('/api/tournaments/switch', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: e.target.value }) }).then((x) => x.json()).catch(() => ({ ok: false }));
+    if (!r.ok) { toast(r.error || 'Gagal pindah turnamen'); e.target.value = info.tournament.id; return; }
+    saved = 'null'; B = null; await load(); toast('Sekarang: ' + info.tournament.name, true);
+  };
+  async function save() {
+    if ($('save').disabled || !B) return;
+    $('save').disabled = true;
+    const r = await fetch('/api/bracket', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ bracket: B }) }).then((x) => x.json()).catch(() => ({ ok: false, error: 'Server tidak bisa dihubungi' }));
+    if (!r.ok) { toast(r.error || 'Gagal menyimpan'); dirty(); return; }
+    toast('Bracket disimpan', true);
+    await load();
+  }
+  $('save').onclick = save;
+  addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); } });
+  addEventListener('beforeunload', (e) => { if (!$('save').disabled) { e.preventDefault(); e.returnValue = ''; } });
+  function refreshPreview() {
+    const v = Date.now();
+    $('pvBracket').src = `/statcards?still=1&card=bracket&v=${v}`;
+    $('pvRundown').src = `/statcards?still=1&card=rundown&v=${v}`;
+  }
+  load().catch(() => toast('Server tidak bisa dihubungi — apakah start.bat masih jalan?'));
+})();
+</script>
+</body>
+</html>

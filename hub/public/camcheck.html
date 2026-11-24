@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cek browser untuk player cam</title>
+<style>
+  body { margin: 0; padding: 40px; background: #0a1a12; color: #f4e8c6; font: 600 26px/1.5 system-ui, "Segoe UI", sans-serif; }
+  h1 { margin: 0 0 6px; font-size: 34px; color: #f3e4b8; }
+  p { margin: 0 0 24px; color: #b3bea9; font-size: 20px; }
+  .row { display: flex; gap: 16px; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(214,189,134,.2); }
+  .i { width: 44px; text-align: center; font-weight: 900; }
+  .ok .i { color: #8fdc8f; } .bad .i { color: #f6b1a4; } .wait .i { color: #f0b94d; }
+  .row small { display: block; color: #b3bea9; font-size: 17px; font-weight: 500; }
+  #verdict { margin-top: 26px; padding: 18px 22px; border-radius: 12px; font-size: 28px; font-weight: 800; }
+  #verdict.ok { background: #183a24; border: 2px solid #8fdc8f; }
+  #verdict.bad { background: #3a1b14; border: 2px solid #e5604a; }
+</style>
+</head>
+<body>
+<h1>Cek browser untuk player cam</h1>
+<p>Buka halaman ini sebagai Browser source sementara di OBS (1920×1080). Hasilnya menunjukkan apakah overlay /cam bisa jalan di OBS ini.</p>
+<div id="list"></div>
+<div id="verdict">Mengecek…</div>
+<script>
+(async () => {
+  const list = document.getElementById('list');
+  const rows = [];
+  const add = (ok, title, note) => { rows.push(ok); list.insertAdjacentHTML('beforeend', `<div class="row ${ok ? 'ok' : 'bad'}"><span class="i">${ok ? '✓' : '✗'}</span><div>${title}<small>${note}</small></div></div>`); };
+  add(!!window.RTCPeerConnection, 'WebRTC', 'Untuk menerima video cam dari Cloudflare.');
+  let ins = false;
+  try { const pc = new RTCPeerConnection({ encodedInsertableStreams: true }); ins = typeof RTCRtpReceiver.prototype.createEncodedStreams === 'function'; pc.close(); } catch {}
+  add(ins, 'Encoded frames (insertable streams)', 'Untuk menyimpan video selama delay tanpa encode ulang.');
+  add(!!window.VideoDecoder, 'WebCodecs VideoDecoder', 'Untuk memutar video yang sudah di-delay.');
+  let vp8 = false;
+  try { vp8 = !!(window.VideoDecoder && (await VideoDecoder.isConfigSupported({ codec: 'vp8' })).supported); } catch {}
+  add(vp8, 'Decoder VP8', 'Format cadangan (Codec cam: VP8).');
+  let h264 = false, h264rtc = false;
+  try { h264 = !!(window.VideoDecoder && (await VideoDecoder.isConfigSupported({ codec: 'avc1.42e01f' })).supported); } catch {}
+  try { h264rtc = RTCRtpReceiver.getCapabilities('video').codecs.some((c) => /h264/i.test(c.mimeType)); } catch {}
+  add(h264 && h264rtc, 'Decoder H.264', 'Format utama (Codec cam: H.264, didecode kartu grafis). Kalau ✗: pilih VP8 di panel Player cam.');
+  // not counted in the verdict: without it H.264 still plays, only on the CPU
+  let hw = false;
+  try { hw = !!(window.VideoDecoder && (await VideoDecoder.isConfigSupported({ codec: 'avc1.42e01f', hardwareAcceleration: 'prefer-hardware' })).supported); } catch {}
+  list.insertAdjacentHTML('beforeend', `<div class="row ${hw ? 'ok' : 'bad'}"><span class="i">${hw ? '✓' : '!'}</span><div>H.264 di kartu grafis<small>${hw ? 'Cam didecode GPU: ringan untuk CPU.' : 'Browser ini decode H.264 pakai CPU (lebih berat). Cek driver kartu grafis / setting GPU di aplikasi siaran.'}</small></div></div>`);
+  let wa = false;
+  try { const ctx = new AudioContext({ sampleRate: 24000 }); ctx.createDelay(179); wa = true; ctx.close(); } catch {}
+  add(wa, 'Web Audio (delay suara)', 'Untuk men-delay suara mic pemain bersama videonya.');
+  const ua = navigator.userAgent.match(/Chrome\/([\d.]+)/);
+  add(!!ua && parseInt(ua[1], 10) >= 94, 'Versi Chromium ' + (ua ? ua[1] : '?'), 'Butuh Chromium 94 ke atas (OBS 28+).');
+  const v = document.getElementById('verdict');
+  const good = rows.every(Boolean);
+  v.className = good ? 'ok' : 'bad';
+  v.textContent = good ? '✓ OBS ini siap untuk player cam' : '✗ OBS ini belum bisa — kirim screenshot halaman ini ke tim teknis';
+})();
+</script>
+</body>
+</html>

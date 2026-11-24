@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Direborn Studio - Kamera</title>
+<style>
+  /* barebone until phase 4: white, grey, lines, boxes, no animation */
+  body { font: 14px system-ui, sans-serif; margin: 16px; color: #111; background: #fff; }
+  h1 { font-size: 18px; margin: 0 0 12px; }
+  h2 { font-size: 15px; margin: 20px 0 8px; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border: 1px solid #ccc; padding: 4px 8px; text-align: left; vertical-align: top; }
+  th { background: #f2f2f2; }
+  button, input { font: inherit; padding: 3px 8px; border: 1px solid #999; background: #fff; }
+  button:hover { background: #eee; }
+  .box { border: 1px solid #ccc; padding: 8px 12px; margin-bottom: 12px; }
+  .muted { color: #666; }
+  .live { font-weight: 600; }
+  .err { color: #a00; }
+  code { background: #f2f2f2; padding: 0 4px; }
+</style>
+</head>
+<body>
+<h1>Direborn Studio - Kamera</h1>
+<p><a href="http://localhost:8080/control">&larr; Kembali ke control panel</a></p>
+<div id="hub" class="box err" hidden></div>
+
+<div class="box">
+  <b>Delay</b>: <span id="delay">-</span> detik
+  <input id="delayIn" type="number" min="0" max="1020" step="0.1" style="width:90px">
+  <button data-set>Set</button>
+  <button data-nudge="-0.5">-0.5</button> <button data-nudge="0.5">+0.5</button>
+  <button data-preset="0">0</button> <button data-preset="900">15 menit</button>
+  <span class="muted">Sama untuk semua kamera.</span>
+</div>
+
+<div class="box">
+  <b>Cam otomatis</b> (ikut hero yang dipilih observer): <code>udp://127.0.0.1:<span id="autoPort">5000</span></code>
+  - sekarang: <span id="auto">-</span> <span class="muted">(GSI memilih: <span id="sel">-</span>)</span>
+</div>
+
+<h2>Kamera di layar (tim kiri / kanan dari control panel)</h2>
+<table>
+  <thead><tr><th>Slot</th><th>Nama</th><th>PIN</th><th>Status</th><th>OBS Media Source</th><th></th></tr></thead>
+  <tbody id="slots"></tbody>
+</table>
+
+<h2>Semua PIN</h2>
+<p><button id="sync">Buat PIN dari database tim</button> <span class="muted">PIN lama tetap sama; pemain baru dapat PIN baru.</span></p>
+<table>
+  <thead><tr><th>PIN</th><th>Nama</th><th>Tim</th><th>Jenis</th></tr></thead>
+  <tbody id="pins"></tbody>
+</table>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const post = (p, b) => fetch(p, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(b || {}) });
+let delay = 0;
+
+function statusText(s) {
+  if (!s.name) return '<span class="muted">kosong</span>';
+  if (!s.running) return 'mati';
+  const st = s.status;
+  if (!st || !st.connected) return 'menunggu cam...';
+  return `<span class="live">LIVE</span> ${st.fps} fps, ${st.kbps} kbps, buffer ${st.buffered}s, hilang ${st.lost}${st.audio ? ', mic' : ''}`;
+}
+
+async function refresh() {
+  let d;
+  try { d = await (await fetch('/studio/state')).json(); } catch { return; }
+  $('hub').hidden = !d.hubError;
+  $('hub').textContent = d.hubError ? 'Hub tidak tersambung: ' + d.hubError : '';
+  delay = d.delay;
+  $('delay').textContent = d.delay;
+  if (document.activeElement !== $('delayIn')) $('delayIn').value = d.delay;
+  $('autoPort').textContent = d.autoPort;
+  $('auto').textContent = d.autoSlot || '-';
+  $('sel').textContent = d.selected || '-';
+  $('slots').innerHTML = d.slots.map((s) => `<tr><td>${s.slot}</td><td>${esc(s.name) || '<span class="muted">-</span>'}</td><td>${esc(s.pin)}</td>
+    <td>${statusText(s)}</td><td><code>udp://127.0.0.1:${s.port}</code></td>
+    <td>${s.name ? `<button data-restart="${s.slot}">Restart</button>` : ''}</td></tr>`).join('');
+  $('pins').innerHTML = d.pins.map((p) => `<tr><td><b>${esc(p.pin)}</b></td><td>${esc(p.name)}</td><td>${esc(p.team)}</td><td>${p.kind === 'team' ? 'team cam' : 'pemain'}</td></tr>`).join('')
+    || '<tr><td colspan="4" class="muted">Belum ada PIN.</td></tr>';
+}
+
+document.addEventListener('click', async (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.hasAttribute('data-set')) await post('/studio/delay', { delay: Number($('delayIn').value) });
+  if (b.dataset.nudge) await post('/studio/delay', { delay: Math.max(0, delay + Number(b.dataset.nudge)) });
+  if (b.dataset.preset) await post('/studio/delay', { delay: Number(b.dataset.preset) });
+  if (b.dataset.restart) await post('/studio/restart', { slot: b.dataset.restart });
+  if (b.id === 'sync') { b.disabled = true; const r = await post('/studio/pins/sync'); b.disabled = false; if (!r.ok) alert('Gagal: ' + await r.text()); }
+  refresh();
+});
+refresh();
+setInterval(refresh, 1000);
+</script>
+</body>
+</html>

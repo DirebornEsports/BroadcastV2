@@ -1,0 +1,1400 @@
+{
+  "_help": "Stat cards shown by the Stats cards buttons in the control panel. Edit text and numbers here (Notepad is fine), save, and the next time a card is shown it uses the new version. **word** = gold highlight. Bars: value = length, display = text shown, color = gold | green | red, max = optional full length.",
+  "groups": [
+    {
+      "id": "bracket",
+      "label": "Bracket & rundown"
+    },
+    {
+      "id": "fakta",
+      "label": "Fakta turnamen"
+    },
+    {
+      "id": "pemain",
+      "label": "Pemain sorotan"
+    },
+    {
+      "id": "tim",
+      "label": "Profil tim"
+    }
+  ],
+  "cards": [
+    {
+      "id": "bracket",
+      "group": "bracket",
+      "button": "Bracket",
+      "template": "bracket",
+      "title": "Bagan Turnamen",
+      "kicker": "Bracket"
+    },
+    {
+      "id": "rundown",
+      "group": "bracket",
+      "button": "Rundown",
+      "template": "rundown",
+      "title": "Jadwal & Hasil",
+      "kicker": "Rundown"
+    },
+    {
+      "id": "angka-utama",
+      "group": "fakta",
+      "button": "Angka utama",
+      "template": "fact",
+      "title": "Angka Utama",
+      "tiles": [
+        {
+          "value": "16",
+          "label": "Game dimainkan"
+        },
+        {
+          "value": "8",
+          "label": "Tim"
+        },
+        {
+          "value": "41",
+          "label": "Pemain"
+        },
+        {
+          "value": "1.029",
+          "label": "Total kill pemain"
+        },
+        {
+          "value": "43:49",
+          "label": "Rata-rata durasi"
+        },
+        {
+          "value": "81:25",
+          "label": "Game terpanjang"
+        },
+        {
+          "value": "23:12",
+          "label": "Game terpendek"
+        },
+        {
+          "value": "64,3",
+          "label": "Rata-rata kill / game"
+        }
+      ],
+      "note": "Sejauh ini sudah 16 game dimainkan oleh 8 tim dan 41 pemain, dengan total 1.029 kill pemain, rata-rata 64,3 kill per game. Rata-rata durasi game 43 menit 49 detik; game terpanjang 1 jam 21 menit 25 detik dan game terpendek 23 menit 12 detik."
+    },
+    {
+      "id": "top-fragger",
+      "group": "fakta",
+      "button": "Top fragger",
+      "template": "fact",
+      "title": "Top Fragger Turnamen",
+      "barSize": "lg",
+      "bars": [
+        {
+          "label": "NotDrew",
+          "sub": "ULAR REBORN",
+          "value": 57,
+          "color": "gold"
+        },
+        {
+          "label": "frz",
+          "sub": "FARHAN+4",
+          "value": 56,
+          "color": "gold"
+        },
+        {
+          "label": "0 care",
+          "sub": "chad · 3 game",
+          "value": 53,
+          "color": "gold"
+        },
+        {
+          "label": "Your Savior",
+          "sub": "The Dudz",
+          "value": 46,
+          "color": "green"
+        },
+        {
+          "label": "peRFection",
+          "sub": "ULAR REBORN",
+          "value": 43,
+          "color": "green"
+        }
+      ],
+      "note": "Top fragger turnamen adalah NotDrew dari ULAR REBORN dengan 57 kill, disusul frz dari FARHAN+4 dengan 56, dan 0 care dari chad dengan 53. Selisih dua teratas cuma satu kill. Perhatikan juga 0 care: dia mengumpulkan 53 kill hanya dalam 3 game, sementara NotDrew dan frz main 5 game. Secara total, turnamen ini sudah menghasilkan 1.029 kill, rata-rata 64 kill per game."
+    },
+    {
+      "id": "hero-pick",
+      "group": "fakta",
+      "button": "Hero paling dipick",
+      "template": "fact",
+      "title": "Hero Paling Sering Dipick",
+      "barSize": "sm",
+      "bars": [
+        {
+          "label": "Rubick",
+          "value": 7,
+          "color": "gold"
+        },
+        {
+          "label": "Dark Willow",
+          "value": 6,
+          "color": "gold"
+        },
+        {
+          "label": "Hoodwink",
+          "value": 6,
+          "color": "gold"
+        },
+        {
+          "label": "Windranger",
+          "value": 6,
+          "color": "gold"
+        },
+        {
+          "label": "Disruptor",
+          "value": 5,
+          "color": "green"
+        },
+        {
+          "label": "Doom",
+          "value": 5,
+          "color": "green"
+        },
+        {
+          "label": "Earth Spirit",
+          "value": 5,
+          "color": "green"
+        },
+        {
+          "label": "Necrophos",
+          "value": 5,
+          "color": "green"
+        },
+        {
+          "label": "Void Spirit",
+          "value": 5,
+          "color": "green"
+        }
+      ],
+      "note": "Dari 160 pick pemain, muncul 69 hero berbeda. Rubick paling sering dipick, 7 kali. Dark Willow, Hoodwink, dan Windranger menyusul dengan 6 pick, lalu lima hero lain, yaitu Disruptor, Doom, Earth Spirit, Necrophos, dan Void Spirit, masing-masing dipick 5 kali."
+    },
+    {
+      "id": "radiant-dire",
+      "group": "fakta",
+      "button": "Radiant vs Dire",
+      "template": "fact",
+      "title": "Keunggulan Sisi: Radiant vs Dire",
+      "barSize": "xl",
+      "bars": [
+        {
+          "label": "Radiant",
+          "sub": "menang 10 dari 16",
+          "value": 62.5,
+          "display": "62,5%",
+          "color": "green"
+        },
+        {
+          "label": "Dire",
+          "sub": "menang 6 dari 16",
+          "value": 37.5,
+          "display": "37,5%",
+          "color": "red"
+        }
+      ],
+      "note": "Radiant menang 10 dari 16 game, atau 62,5 persen, sementara Dire menang 6 game, 37,5 persen. Sejauh ini sisi Radiant punya keunggulan yang cukup jelas di turnamen ini."
+    },
+    {
+      "id": "first-second",
+      "group": "fakta",
+      "button": "First vs second pick",
+      "template": "fact",
+      "title": "First Pick vs Second Pick",
+      "barSize": "xl",
+      "bars": [
+        {
+          "label": "First Pick",
+          "sub": "menang 5 dari 16",
+          "value": 31.3,
+          "display": "31,3%",
+          "color": "green"
+        },
+        {
+          "label": "Second Pick",
+          "sub": "menang 11 dari 16",
+          "value": 68.8,
+          "display": "68,8%",
+          "color": "gold"
+        }
+      ],
+      "note": "Yang menarik, tim yang mendapat first pick cuma menang 5 dari 16 game, atau 31,3 persen. Tim yang memilih belakangan, alias second pick, menang 11 dari 16 game, atau 68,8 persen. Sejauh ini, memilih belakangan terbukti lebih menguntungkan."
+    },
+    {
+      "id": "durasi",
+      "group": "fakta",
+      "button": "Durasi game",
+      "template": "fact",
+      "title": "Durasi Game",
+      "barSize": "md",
+      "bars": [
+        {
+          "label": "< 30 menit",
+          "value": 2,
+          "display": "2 game",
+          "color": "green"
+        },
+        {
+          "label": "30–45 menit",
+          "value": 8,
+          "display": "8 game",
+          "color": "gold"
+        },
+        {
+          "label": "> 45 menit",
+          "value": 6,
+          "display": "6 game",
+          "color": "green"
+        }
+      ],
+      "note": "Rata-rata satu game berlangsung 43 menit 49 detik. Ada 2 game di bawah 30 menit, 8 game di rentang 30 sampai 45 menit, dan 6 game lebih dari 45 menit. Game terpendek cuma 23 menit 12 detik, MAXWELL +4 melawan The Dudz. Game terpanjang 1 jam 21 menit 25 detik, chad melawan ULAR REBORN, disusul 1 jam 12 menit antara Antariksa dan FARHAN+4."
+    },
+    {
+      "id": "kaisora",
+      "group": "pemain",
+      "button": "Kaisora",
+      "template": "player",
+      "name": "Kaisora",
+      "team": "MAXWELL +4",
+      "bracket": "Upper Bracket",
+      "stats": [
+        {
+          "value": "4",
+          "label": "Game"
+        },
+        {
+          "value": "40",
+          "label": "Kill"
+        },
+        {
+          "value": "11",
+          "label": "Death",
+          "hl": true
+        },
+        {
+          "value": "44",
+          "label": "Assist"
+        },
+        {
+          "value": "7,64",
+          "label": "KDA",
+          "hl": true
+        },
+        {
+          "value": "742",
+          "label": "Avg GPM"
+        },
+        {
+          "value": "101.100",
+          "label": "Hero damage"
+        },
+        {
+          "value": "28%",
+          "label": "Porsi kill tim"
+        }
+      ],
+      "heroes": [
+        "Anti-Mage",
+        "Faceless Void",
+        "Kez",
+        "Lone Druid"
+      ],
+      "panels": [
+        {
+          "title": "Core yang selalu dapat farm",
+          "text": "Empat game, **empat hero berbeda**: Anti-Mage, Faceless Void, Kez, dan Lone Druid. Semuanya hero core yang butuh farm, dengan GPM rata-rata **742**."
+        },
+        {
+          "title": "Hampir tak tersentuh",
+          "text": "Cuma mati **11 kali dalam 4 game**, kurang dari 3 per game, sambil mencetak **40 kill**."
+        },
+        {
+          "title": "Dua ancaman sekaligus",
+          "text": "Rekan setimnya, **Maxwell**, KDA-nya bahkan sedikit lebih tinggi (**7,83**). MAXWELL +4 punya dua pemain yang jarang mati tapi terus mencetak kill."
+        },
+        {
+          "title": "KDA duo MAXWELL +4",
+          "bars": [
+            {
+              "label": "Maxwell",
+              "value": 7.83,
+              "display": "7,83",
+              "color": "gold"
+            },
+            {
+              "label": "Kaisora",
+              "value": 7.64,
+              "display": "7,64",
+              "color": "gold"
+            }
+          ]
+        }
+      ],
+      "keyLabel": "Kalimat kunci",
+      "key": "Tim yang belum pernah kalah, dan Kaisora cuma mati kurang dari 3 kali per game."
+    },
+    {
+      "id": "rin",
+      "group": "pemain",
+      "button": "Rin",
+      "template": "player",
+      "name": "Rin",
+      "team": "CHAD",
+      "bracket": "Upper Bracket",
+      "stats": [
+        {
+          "value": "3",
+          "label": "Game"
+        },
+        {
+          "value": "53",
+          "label": "Kill",
+          "hl": true
+        },
+        {
+          "value": "13",
+          "label": "Death"
+        },
+        {
+          "value": "46",
+          "label": "Assist"
+        },
+        {
+          "value": "7,62",
+          "label": "KDA"
+        },
+        {
+          "value": "914",
+          "label": "Avg GPM",
+          "hl": true
+        },
+        {
+          "value": "175.700",
+          "label": "Hero damage"
+        },
+        {
+          "value": "38%",
+          "label": "Porsi kill tim"
+        }
+      ],
+      "heroes": [
+        "Lifestealer",
+        "Nature's Prophet",
+        "Sven"
+      ],
+      "panels": [
+        {
+          "title": "GPM tertinggi turnamen",
+          "text": "GPM rata-rata **914**, tertinggi dari seluruh pemain di turnamen ini."
+        },
+        {
+          "title": "Mesin kill",
+          "text": "Rata-rata **17,7 kill per game**, hanya kalah dari ndnc yang 18 per game. Dia cuma mati **13 kali dalam 3 game**."
+        },
+        {
+          "title": "Tiga game, tiga hero",
+          "text": "Lifestealer, Nature's Prophet, dan Sven. chad menang **2 dari 3** game itu."
+        },
+        {
+          "title": "Rata-rata kill per game",
+          "bars": [
+            {
+              "label": "ndnc",
+              "value": 18,
+              "color": "green"
+            },
+            {
+              "label": "Rin",
+              "value": 17.7,
+              "display": "17,7",
+              "color": "gold"
+            }
+          ]
+        }
+      ],
+      "keyLabel": "Kalimat kunci",
+      "key": "53 kill cuma dalam 3 game, dengan GPM tertinggi di seluruh turnamen."
+    },
+    {
+      "id": "ndnc",
+      "group": "pemain",
+      "button": "ndnc",
+      "template": "player",
+      "name": "ndnc",
+      "team": "ESCAPE ESPORTS",
+      "bracket": "Upper Bracket",
+      "stats": [
+        {
+          "value": "2",
+          "label": "Game"
+        },
+        {
+          "value": "36",
+          "label": "Kill"
+        },
+        {
+          "value": "6",
+          "label": "Death",
+          "hl": true
+        },
+        {
+          "value": "19",
+          "label": "Assist"
+        },
+        {
+          "value": "9,17",
+          "label": "KDA",
+          "hl": true
+        },
+        {
+          "value": "904",
+          "label": "Avg GPM"
+        },
+        {
+          "value": "78.000",
+          "label": "Hero damage"
+        },
+        {
+          "value": "38%",
+          "label": "Porsi kill tim"
+        }
+      ],
+      "heroes": [
+        "Luna",
+        "Phantom Lancer"
+      ],
+      "panels": [
+        {
+          "title": "KDA nomor satu",
+          "text": "KDA **9,17**, tertinggi dari **semua 41 pemain**. Cuma mati 6 kali dalam 2 game, rata-rata 3 per game."
+        },
+        {
+          "title": "Farm monster",
+          "text": "Dua hero, dua-duanya bergantung pada farm: **Luna** dan **Phantom Lancer**. Hasilnya GPM **904** dan XPM sekitar **1.300**."
+        },
+        {
+          "title": "Tulang punggung kill",
+          "text": "Memegang **38 persen** kill Escape Esports, meski baru dua game yang dimainkan."
+        },
+        {
+          "title": "KDA ndnc vs duo MAXWELL +4",
+          "bars": [
+            {
+              "label": "ndnc",
+              "value": 9.17,
+              "display": "9,17",
+              "color": "gold"
+            },
+            {
+              "label": "Maxwell",
+              "value": 7.83,
+              "display": "7,83",
+              "color": "green"
+            },
+            {
+              "label": "Kaisora",
+              "value": 7.64,
+              "display": "7,64",
+              "color": "green"
+            }
+          ]
+        }
+      ],
+      "keyLabel": "Kalimat kunci",
+      "key": "KDA terbaik dari 41 pemain, dan rata-rata 18 kill per game."
+    },
+    {
+      "id": "captainkid",
+      "group": "pemain",
+      "button": "CaptainKid",
+      "template": "player",
+      "name": "CaptainKid",
+      "team": "THE DUDZ",
+      "bracket": "Lower Bracket",
+      "stats": [
+        {
+          "value": "4",
+          "label": "Game"
+        },
+        {
+          "value": "46",
+          "label": "Kill"
+        },
+        {
+          "value": "14",
+          "label": "Death"
+        },
+        {
+          "value": "27",
+          "label": "Assist"
+        },
+        {
+          "value": "5,21",
+          "label": "KDA"
+        },
+        {
+          "value": "579",
+          "label": "Avg GPM"
+        },
+        {
+          "value": "93.700",
+          "label": "Hero damage"
+        },
+        {
+          "value": "44%",
+          "label": "Porsi kill tim",
+          "hl": true
+        }
+      ],
+      "heroes": [
+        "Earth Spirit",
+        "Ember Spirit",
+        "Keeper of the Light",
+        "Snapfire"
+      ],
+      "panels": [
+        {
+          "title": "Porsi kill tertinggi",
+          "text": "**44 persen** kill tim, tertinggi dari semua pemain. Empat pemain The Dudz lainnya digabung cuma punya **59 kill**."
+        },
+        {
+          "title": "Si paling fleksibel",
+          "text": "Hero beda tiap game: Earth Spirit, Ember Spirit, Keeper of the Light, dan Snapfire. Mengisi apa pun yang dibutuhkan tim."
+        },
+        {
+          "title": "Dampak tanpa farm",
+          "text": "GPM-nya cuma **579**, jadi dampaknya datang dari kill, bukan dari farm. Hanya **14 death** dalam 4 game."
+        },
+        {
+          "title": "Kill The Dudz",
+          "bars": [
+            {
+              "label": "CaptainKid",
+              "value": 46,
+              "color": "gold"
+            },
+            {
+              "label": "4 lainnya",
+              "value": 59,
+              "color": "green"
+            }
+          ]
+        }
+      ],
+      "keyLabel": "Kalimat kunci",
+      "key": "Satu pemain hampir separuh kill tim, dan bakal ketemu NotDrew di Lower Quarterfinal."
+    },
+    {
+      "id": "frz",
+      "group": "pemain",
+      "button": "frz",
+      "template": "player",
+      "name": "frz",
+      "team": "FARHAN+4",
+      "bracket": "Lower Bracket",
+      "stats": [
+        {
+          "value": "5",
+          "label": "Game"
+        },
+        {
+          "value": "56",
+          "label": "Kill",
+          "hl": true
+        },
+        {
+          "value": "22",
+          "label": "Death"
+        },
+        {
+          "value": "29",
+          "label": "Assist"
+        },
+        {
+          "value": "3,86",
+          "label": "KDA"
+        },
+        {
+          "value": "772",
+          "label": "Avg GPM"
+        },
+        {
+          "value": "175.900",
+          "label": "Hero damage"
+        },
+        {
+          "value": "40%",
+          "label": "Porsi kill tim",
+          "hl": true
+        }
+      ],
+      "heroes": [
+        "Anti-Mage",
+        "Kez",
+        "Lifestealer",
+        "Sven",
+        "Ursa"
+      ],
+      "panels": [
+        {
+          "title": "Fragger nomor dua",
+          "text": "**56 kill**, terbanyak kedua di turnamen setelah NotDrew, dengan GPM **772** dan hero damage sekitar **176 ribu**."
+        },
+        {
+          "title": "Lima game, lima hero",
+          "text": "Anti-Mage, Kez, Lifestealer, Sven, dan Ursa."
+        },
+        {
+          "title": "Pemikul beban",
+          "text": "Di tim yang mencatat **2 menang 3 kalah**, frz memegang **40 persen** dari seluruh kill tim."
+        },
+        {
+          "title": "Top fragger turnamen",
+          "bars": [
+            {
+              "label": "NotDrew",
+              "value": 57,
+              "color": "green"
+            },
+            {
+              "label": "frz",
+              "value": 56,
+              "color": "gold"
+            },
+            {
+              "label": "Rin",
+              "value": 53,
+              "color": "green"
+            }
+          ]
+        }
+      ],
+      "keyLabel": "Kalimat kunci",
+      "key": "Cuma satu kill di belakang top fragger turnamen."
+    },
+    {
+      "id": "notdrew",
+      "group": "pemain",
+      "button": "NotDrew",
+      "template": "player",
+      "name": "NotDrew",
+      "team": "ULAR REBORN",
+      "bracket": "Lower Bracket",
+      "stats": [
+        {
+          "value": "5",
+          "label": "Game"
+        },
+        {
+          "value": "57",
+          "label": "Kill",
+          "hl": true
+        },
+        {
+          "value": "18",
+          "label": "Death"
+        },
+        {
+          "value": "66",
+          "label": "Assist"
+        },
+        {
+          "value": "6,83",
+          "label": "KDA"
+        },
+        {
+          "value": "911",
+          "label": "Avg GPM"
+        },
+        {
+          "value": "242.100",
+          "label": "Hero damage",
+          "hl": true
+        },
+        {
+          "value": "32%",
+          "label": "Porsi kill tim"
+        }
+      ],
+      "heroes": [
+        "Necrophos ×2",
+        "Sven",
+        "Terrorblade",
+        "Ursa"
+      ],
+      "panels": [
+        {
+          "title": "Top fragger turnamen",
+          "text": "**57 kill**, terbanyak dari semua pemain, rata-rata **11,4 kill per game**."
+        },
+        {
+          "title": "Raja damage",
+          "text": "Hero damage sekitar **242 ribu**, tertinggi di turnamen, lebih dari **55 ribu** di atas peringkat kedua."
+        },
+        {
+          "title": "Farm dan konsistensi",
+          "text": "GPM **911** dalam lima game: Necrophos dua kali, lalu Sven, Terrorblade, dan Ursa. Mati 18 kali, rata-rata **3,6 per game**."
+        },
+        {
+          "title": "Hero damage",
+          "bars": [
+            {
+              "label": "NotDrew",
+              "value": 242,
+              "display": "242K",
+              "color": "gold"
+            },
+            {
+              "label": "frz",
+              "value": 176,
+              "display": "176K",
+              "color": "green"
+            },
+            {
+              "label": "Rin",
+              "value": 176,
+              "display": "176K",
+              "color": "green"
+            }
+          ]
+        }
+      ],
+      "keyLabel": "Kalimat kunci",
+      "key": "Kill terbanyak dan hero damage tertinggi di turnamen. Duel kuncinya lawan CaptainKid."
+    },
+    {
+      "id": "maxwell",
+      "group": "tim",
+      "button": "MAXWELL +4",
+      "template": "team",
+      "name": "MAXWELL +4",
+      "pill": "4 Menang · 0 Kalah",
+      "bracket": "Upper Bracket",
+      "record": "4–0",
+      "groups": [
+        {
+          "title": "Rata-rata per game",
+          "bars": [
+            {
+              "label": "Kill",
+              "value": 36,
+              "color": "gold"
+            },
+            {
+              "label": "Death",
+              "value": 18.5,
+              "display": "18,5",
+              "color": "red"
+            }
+          ]
+        },
+        {
+          "title": "Menang per urutan pick",
+          "bars": [
+            {
+              "label": "First pick",
+              "value": 2,
+              "max": 2,
+              "display": "2 dari 2",
+              "color": "gold"
+            },
+            {
+              "label": "Second pick",
+              "value": 2,
+              "max": 2,
+              "display": "2 dari 2",
+              "color": "gold"
+            }
+          ]
+        }
+      ],
+      "panels": [
+        {
+          "title": "Tak terkalahkan",
+          "text": "Satu-satunya tim yang **belum pernah kalah**. Menang 2 dari 2 saat first pick dan 2 dari 2 saat second pick."
+        },
+        {
+          "title": "Paling jarang mati",
+          "text": "Rata-rata cuma **18,5 death per game**, terendah dari semua tim, sementara kill-nya rata-rata 36."
+        },
+        {
+          "title": "Game tercepat turnamen",
+          "text": "Kemenangan atas The Dudz cuma **23 menit 12 detik**, dengan skor kill **34 lawan 9**."
+        },
+        {
+          "title": "Menutup game dengan rapi",
+          "text": "Rata-rata durasi saat menang **38 menit 17 detik**."
+        }
+      ],
+      "keyLabel": "Berikutnya",
+      "key": "Upper Final · 24/10 · 14.00 WIB · vs pemenang chad vs Escape Esports"
+    },
+    {
+      "id": "chad",
+      "group": "tim",
+      "button": "chad",
+      "template": "team",
+      "name": "chad",
+      "pill": "2 Menang · 1 Kalah",
+      "bracket": "Upper Bracket",
+      "record": "2–1",
+      "groups": [
+        {
+          "title": "Rata-rata assist per game",
+          "bars": [
+            {
+              "label": "chad",
+              "value": 122,
+              "color": "gold"
+            },
+            {
+              "label": "Escape",
+              "value": 106,
+              "color": "green"
+            }
+          ]
+        },
+        {
+          "title": "Rata-rata durasi game",
+          "bars": [
+            {
+              "label": "chad",
+              "value": 3660,
+              "display": "1:01:00",
+              "color": "gold"
+            },
+            {
+              "label": "Turnamen",
+              "value": 2629,
+              "display": "43:49",
+              "color": "green"
+            }
+          ]
+        }
+      ],
+      "panels": [
+        {
+          "title": "Rivalitas satu lawan",
+          "text": "Semua game mereka sejauh ini melawan **ULAR REBORN**, dan chad menang **2-1**."
+        },
+        {
+          "title": "Raja maraton",
+          "text": "Game pertama adalah **game terpanjang turnamen**: 1 jam 21 menit 25 detik, chad menang **53 lawan 31** kill. Rata-rata durasi game mereka 1 jam 1 menit, terpanjang dari semua tim."
+        },
+        {
+          "title": "Selalu second pick",
+          "text": "chad selalu dapat second pick, **3 dari 3 game**."
+        },
+        {
+          "title": "Teamwork tertinggi",
+          "text": "Rata-rata **122 assist per game**, tertinggi dari semua tim. Escape Esports kedua dengan 106."
+        }
+      ],
+      "keyLabel": "Berikutnya",
+      "key": "Upper Semifinal · 23/10 · 19.00 WIB · vs Escape Esports"
+    },
+    {
+      "id": "escape",
+      "group": "tim",
+      "button": "Escape Esports",
+      "template": "team",
+      "name": "Escape Esports",
+      "pill": "2 Menang · 0 Kalah",
+      "bracket": "Upper Bracket",
+      "record": "2–0",
+      "groups": [
+        {
+          "title": "Rata-rata kill per game",
+          "bars": [
+            {
+              "label": "Escape",
+              "value": 47,
+              "color": "gold"
+            },
+            {
+              "label": "Rata² tim",
+              "value": 32.2,
+              "display": "32,2",
+              "color": "green"
+            }
+          ]
+        }
+      ],
+      "panels": [
+        {
+          "title": "Belum tersentuh",
+          "text": "Baru main 2 game, **dua-duanya menang** lawan BeBeK KingDom, dan dua-duanya sebagai **second pick**."
+        },
+        {
+          "title": "Tim paling agresif",
+          "text": "Rata-rata **47 kill per game**, tertinggi dari semua tim."
+        },
+        {
+          "title": "Game paling berdarah",
+          "text": "Game kedua mereka adalah yang paling berdarah di turnamen: **46 lawan 51 kill**, total **97 kill**, dan Escape yang menang."
+        },
+        {
+          "title": "Ekonomi tertinggi",
+          "tiles": [
+            {
+              "value": "3.105",
+              "label": "GPM tim"
+            },
+            {
+              "value": "4.441",
+              "label": "XPM tim"
+            }
+          ]
+        }
+      ],
+      "keyLabel": "Berikutnya",
+      "key": "Upper Semifinal · 23/10 · 19.00 WIB · vs chad"
+    },
+    {
+      "id": "thedudz",
+      "group": "tim",
+      "button": "The Dudz",
+      "template": "team",
+      "name": "The Dudz",
+      "pill": "2 Menang · 2 Kalah",
+      "bracket": "Lower Bracket",
+      "record": "2–2",
+      "groups": [
+        {
+          "title": "Rata-rata durasi game",
+          "bars": [
+            {
+              "label": "The Dudz",
+              "value": 1902,
+              "display": "31:42",
+              "color": "gold"
+            },
+            {
+              "label": "Turnamen",
+              "value": 2629,
+              "display": "43:49",
+              "color": "green"
+            }
+          ]
+        },
+        {
+          "title": "Porsi kill tim",
+          "max": 100,
+          "bars": [
+            {
+              "label": "CaptainKid",
+              "value": 44,
+              "display": "44%",
+              "color": "gold"
+            },
+            {
+              "label": "Lainnya",
+              "value": 56,
+              "display": "56%",
+              "color": "green"
+            }
+          ]
+        }
+      ],
+      "panels": [
+        {
+          "title": "Head-to-head",
+          "tiles": [
+            {
+              "value": "2–0",
+              "label": "vs Antariksa"
+            },
+            {
+              "value": "0–2",
+              "label": "vs MAXWELL +4"
+            }
+          ]
+        },
+        {
+          "title": "Tim paling cepat",
+          "text": "Rata-rata game cuma **31 menit 42 detik**, tercepat di turnamen. Dua kemenangannya hanya **33 menit dan 31 menit**."
+        },
+        {
+          "title": "Catatan pahit",
+          "text": "Kekalahan terakhir dari MAXWELL +4 cuma menghasilkan **9 kill**, jumlah kill terendah dari tim mana pun dalam satu game."
+        },
+        {
+          "title": "Kunci duel berikutnya",
+          "text": "**CaptainKid** memegang **44 persen** kill The Dudz, dan bakal ketemu NotDrew, top fragger turnamen."
+        }
+      ],
+      "keyLabel": "Berikutnya",
+      "key": "Lower Quarterfinal · 24/10 · 11.00 WIB · vs ULAR REBORN"
+    },
+    {
+      "id": "farhan",
+      "group": "tim",
+      "button": "FARHAN+4",
+      "template": "team",
+      "name": "FARHAN+4",
+      "pill": "2 Menang · 3 Kalah",
+      "bracket": "Lower Bracket",
+      "record": "2–3",
+      "groups": [
+        {
+          "title": "Menang per urutan pick",
+          "bars": [
+            {
+              "label": "First pick",
+              "value": 0,
+              "max": 2,
+              "display": "0 dari 2",
+              "color": "gold"
+            },
+            {
+              "label": "Second pick",
+              "value": 2,
+              "max": 3,
+              "display": "2 dari 3",
+              "color": "gold"
+            }
+          ]
+        },
+        {
+          "title": "Death terbanyak antar pemain",
+          "bars": [
+            {
+              "label": "Suis",
+              "value": 56,
+              "color": "red"
+            },
+            {
+              "label": "MJ",
+              "value": 56,
+              "color": "red"
+            }
+          ]
+        }
+      ],
+      "panels": [
+        {
+          "title": "Head-to-head",
+          "tiles": [
+            {
+              "value": "0–2",
+              "label": "vs MAXWELL +4"
+            },
+            {
+              "value": "2–1",
+              "label": "vs Antariksa"
+            }
+          ]
+        },
+        {
+          "title": "Death terbanyak",
+          "text": "Total death **186**, paling banyak dari semua tim. Dua support mereka, **Suis dan MJ**, sama-sama 56 death, terbanyak di antara semua pemain."
+        },
+        {
+          "title": "Bangkit dari lower",
+          "text": "Kalah 0-2 dari MAXWELL +4, lalu bangkit menyingkirkan Antariksa **2-1**. Game ketiganya paling ketat di turnamen: kill **34 lawan 33** dalam 53 menit."
+        },
+        {
+          "title": "First pick belum bertuah",
+          "text": "**0 menang dari 2** game saat first pick. Second pick menang **2 dari 3**."
+        }
+      ],
+      "keyLabel": "Berikutnya",
+      "key": "Lower Quarterfinal · 23/10 · 22.00 WIB · vs tim yang kalah di chad vs Escape Esports"
+    },
+    {
+      "id": "ular",
+      "group": "tim",
+      "button": "ULAR REBORN",
+      "template": "team",
+      "name": "ULAR REBORN",
+      "pill": "3 Menang · 2 Kalah",
+      "bracket": "Lower Bracket",
+      "record": "3–2",
+      "groups": [
+        {
+          "title": "Total kill vs death",
+          "bars": [
+            {
+              "label": "Kill",
+              "value": 179,
+              "color": "gold"
+            },
+            {
+              "label": "Death",
+              "value": 179,
+              "color": "red"
+            }
+          ]
+        },
+        {
+          "title": "Rata-rata durasi",
+          "bars": [
+            {
+              "label": "Saat menang",
+              "value": 2275,
+              "display": "37:55",
+              "color": "gold"
+            },
+            {
+              "label": "Saat kalah",
+              "value": 3960,
+              "display": "±1:06",
+              "color": "red"
+            }
+          ]
+        }
+      ],
+      "panels": [
+        {
+          "title": "Kill terbanyak",
+          "text": "Total **179 kill**, terbanyak dari semua tim. Uniknya death mereka juga persis **179**, jadi tiap game itu adu kill yang terbuka."
+        },
+        {
+          "title": "Head-to-head",
+          "tiles": [
+            {
+              "value": "1–2",
+              "label": "vs chad"
+            },
+            {
+              "value": "2–0",
+              "label": "vs BeBeK KingDom"
+            }
+          ]
+        },
+        {
+          "title": "Pembantaian",
+          "text": "Lawan BeBeK KingDom, game kedua dimenangkan **42 lawan 15** kill dalam **33 menit**."
+        },
+        {
+          "title": "Menang cepat, kalah lama",
+          "text": "Rata-rata menang dalam **37 menit 55 detik**, tapi kalah panjang, rata-rata **1 jam 6 menit**."
+        }
+      ],
+      "keyLabel": "Berikutnya",
+      "key": "Lower Quarterfinal · 24/10 · 11.00 WIB · vs The Dudz"
+    }
+  ],
+  "bracket": {
+    "_help": "Shared by the Bracket and Rundown cards. Update scores here after each match (score null = not played). Team logos come from the Teams database by name. Set \"live\": true on a match to mark it LIVE.",
+    "year": 2026,
+    "timezone": "WIB",
+    "format": "double-elimination-8",
+    "matches": [
+      {
+        "id": 1,
+        "round": "Upper Quarterfinal",
+        "date": "16/10",
+        "time": "19.00",
+        "bo": 3,
+        "a": {
+          "name": "Maxwell+4",
+          "score": 2
+        },
+        "b": {
+          "name": "FARHAN+4",
+          "score": 0
+        }
+      },
+      {
+        "id": 2,
+        "round": "Upper Quarterfinal",
+        "date": "16/10",
+        "time": "22.00",
+        "bo": 3,
+        "a": {
+          "name": "Antariksa Club",
+          "score": 0
+        },
+        "b": {
+          "name": "The Dudz",
+          "score": 2
+        }
+      },
+      {
+        "id": 3,
+        "round": "Upper Quarterfinal",
+        "date": "17/10",
+        "time": "11.00",
+        "bo": 3,
+        "a": {
+          "name": "ULAR REBORN",
+          "score": 1
+        },
+        "b": {
+          "name": "chad",
+          "score": 2
+        }
+      },
+      {
+        "id": 4,
+        "round": "Upper Quarterfinal",
+        "date": "17/10",
+        "time": "14.00",
+        "bo": 3,
+        "a": {
+          "name": "Escape Esports",
+          "score": 2
+        },
+        "b": {
+          "name": "BeBeK KingDom",
+          "score": 0
+        }
+      },
+      {
+        "id": 5,
+        "round": "Lower Round 1",
+        "date": "17/10",
+        "time": "17.00",
+        "bo": 3,
+        "a": {
+          "name": "FARHAN+4",
+          "score": 2
+        },
+        "b": {
+          "name": "Antariksa Club",
+          "score": 1
+        }
+      },
+      {
+        "id": 6,
+        "round": "Lower Round 1",
+        "date": "18/10",
+        "time": "14.00",
+        "bo": 3,
+        "a": {
+          "name": "ULAR REBORN",
+          "score": 2
+        },
+        "b": {
+          "name": "BeBeK KingDom",
+          "score": 0
+        }
+      },
+      {
+        "id": 7,
+        "round": "Upper Semifinal",
+        "date": "18/10",
+        "time": "16.00",
+        "bo": 3,
+        "a": {
+          "name": "Maxwell+4",
+          "score": 2
+        },
+        "b": {
+          "name": "The Dudz",
+          "score": 0
+        }
+      },
+      {
+        "id": 8,
+        "round": "Upper Semifinal",
+        "date": "23/10",
+        "time": "19.00",
+        "bo": 3,
+        "a": {
+          "name": "chad",
+          "score": null
+        },
+        "b": {
+          "name": "Escape Esports",
+          "score": null
+        }
+      },
+      {
+        "id": 9,
+        "round": "Lower Quarterfinal",
+        "date": "23/10",
+        "time": "22.00",
+        "bo": 3,
+        "a": {
+          "name": "TBD",
+          "score": null
+        },
+        "b": {
+          "name": "FARHAN+4",
+          "score": null
+        }
+      },
+      {
+        "id": 10,
+        "round": "Lower Quarterfinal",
+        "date": "24/10",
+        "time": "11.00",
+        "bo": 3,
+        "a": {
+          "name": "The Dudz",
+          "score": null
+        },
+        "b": {
+          "name": "ULAR REBORN",
+          "score": null
+        }
+      },
+      {
+        "id": 11,
+        "round": "Upper Final",
+        "date": "24/10",
+        "time": "14.30",
+        "bo": 3,
+        "a": {
+          "name": "Maxwell+4",
+          "score": null
+        },
+        "b": {
+          "name": "TBD",
+          "score": null
+        }
+      },
+      {
+        "id": 12,
+        "round": "Lower Semifinal",
+        "date": "24/10",
+        "time": "18.00",
+        "bo": 3,
+        "a": {
+          "name": "TBD",
+          "score": null
+        },
+        "b": {
+          "name": "TBD",
+          "score": null
+        }
+      },
+      {
+        "id": 13,
+        "round": "Lower Final",
+        "date": "25/10",
+        "time": "14.30",
+        "bo": 3,
+        "a": {
+          "name": "TBD",
+          "score": null
+        },
+        "b": {
+          "name": "TBD",
+          "score": null
+        }
+      },
+      {
+        "id": 14,
+        "round": "Grand Final",
+        "date": "",
+        "time": "",
+        "bo": 5,
+        "a": {
+          "name": "TBD",
+          "score": null
+        },
+        "b": {
+          "name": "TBD",
+          "score": null
+        }
+      }
+    ]
+  }
+}

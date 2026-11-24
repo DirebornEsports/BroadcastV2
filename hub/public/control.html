@@ -1,0 +1,1309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script src="/vendor/anime.umd.min.js"></script><script src="/ui/motion.js"></script>
+<script src="/theme.js"></script>
+<script src="/ui/shell.js" defer></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Draft Control</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a1a12; --panel: #10291c; --panel2: #173d29; --panel3: #1f5236; --line: rgba(214,189,134,.28); --line-hi: rgba(214,189,134,.6);
+    --text: #f4e8c6; --muted: #a9b59f; --gold: #d6bd86; --gold-hi: #f3e4b8; --gold-lo: #9c7f47;
+    --left: #ff2d87; --right: #3d5afe; --ok: #9fd67a; --warn: #f0b94d; --danger: #e5604a;
+    --font: Montserrat, "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: var(--text); font: 500 14px var(--font);
+    background: linear-gradient(180deg, rgba(var(--bg-rgb),.86), rgba(var(--bg-rgb),.96)), url(/assets/clouds.jpg) center top / 1400px auto fixed, var(--bg);
+    min-height: 100vh;
+  }
+  button, input, select { font: inherit; color: inherit; }
+  button {
+    background: linear-gradient(180deg, var(--panel3), var(--panel2)); border: 1px solid var(--line-hi); border-radius: 7px;
+    padding: 7px 13px; cursor: pointer; font-weight: 600; letter-spacing: 0; color: var(--text);
+  }
+  button:hover { border-color: var(--gold-hi); color: var(--gold-hi); }
+  button.primary { background: linear-gradient(180deg, var(--gold-hi), var(--gold)); color: var(--panel); border-color: var(--gold-hi); }
+  button.danger { border-color: rgba(229,96,74,.6); color: #ffc0b3; }
+  button.on { background: linear-gradient(180deg, var(--gold-hi), var(--gold)); color: var(--panel); border-color: var(--gold-hi); }
+  input, select, textarea { width: 100%; background: rgba(var(--shade-rgb),.7); border: 1px solid var(--line); border-radius: 7px; padding: 7px 10px; min-width: 0; color: var(--text); }
+  select option { background: var(--panel); }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--gold); outline-offset: -1px; }
+  label { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: 12px; font-weight: 600; color: var(--muted); }
+
+  header {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 10px 18px; position: sticky; top: 0; z-index: 5;
+    background: linear-gradient(180deg, var(--panel2), var(--panel)); border-bottom: 2px solid var(--gold);
+    box-shadow: 0 4px 16px rgba(0,0,0,.4);
+  }
+  header .brand { display: flex; align-items: center; gap: 10px; }
+  header .brand img { width: 54px; filter: drop-shadow(0 2px 3px rgba(0,0,0,.5)); }
+  header h1 { margin: 0; font: 600 17px var(--font); letter-spacing: 0; color: var(--gold-hi); }
+  .seg { display: inline-flex; border: 1px solid var(--line-hi); border-radius: 8px; overflow: hidden; }
+  .seg button { border: 0; border-radius: 0; background: transparent; }
+  .seg button.on { background: linear-gradient(180deg, var(--gold-hi), var(--gold)); color: var(--panel); }
+  .spacer { flex: 1; }
+  .hdr-link { color: var(--gold); font-weight: 600; text-decoration: none; border: 1px solid var(--line-hi); padding: 7px 13px; border-radius: 7px; }
+  .hdr-link:hover { color: var(--gold-hi); border-color: var(--gold-hi); }
+  .dbpick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .dbpick select { font-weight: 600; }
+  .dbpick .lt select { border-left: 4px solid var(--left); }
+  .dbpick .rt select { border-left: 4px solid var(--right); }
+  .dbhint a { color: var(--gold); }
+  .ig { display: grid; grid-template-columns: 300px 230px 1fr; gap: 18px; align-items: start; }
+  .igcol { display: grid; gap: 10px; }
+  .ignow { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: rgba(var(--shade-rgb),.45); font-weight: 600; line-height: 1.4; }
+  .ignow small { display: block; color: var(--muted); font-weight: 600; font-size: 11px; letter-spacing: 0; }
+  .igtable { display: grid; gap: 4px; max-height: 330px; overflow: auto; }
+  .igrow { display: grid; grid-template-columns: 8px 1.2fr 46px 1fr 1.4fr; gap: 8px; align-items: center; padding: 5px 8px; border-radius: 6px; background: rgba(var(--shade-rgb),.4); border: 1px solid transparent; font-size: 12px; }
+  .igrow.sel { border-color: var(--gold-hi); background: rgba(var(--line-rgb),.12); }
+  .igrow .tm { width: 8px; height: 22px; border-radius: 2px; }
+  .igrow .tm.radiant { background: #64b35a; } .igrow .tm.dire { background: #c4473a; }
+  .igrow img { width: 46px; height: 26px; object-fit: cover; border-radius: 2px; }
+  .igrow .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .igrow .nm small { display: block; font-weight: 600; color: var(--muted); font-size: 10px; }
+  .igrow .ok { color: var(--ok); font-weight: 600; }
+  .igrow .warn { color: var(--warn); font-weight: 600; }
+  .igrow select { padding: 4px 6px; font-size: 12px; }
+  @media (min-width: 1101px) { .ig.pop { grid-template-columns: 300px 230px 1fr; } }
+  @media (max-width: 1100px) { .ig { grid-template-columns: 1fr; } }
+  .framer { display: grid; grid-template-columns: 170px 1fr; gap: 12px; align-items: start; }
+  .framer iframe { width: 170px; height: 228px; border: 1.5px solid var(--line-hi); border-radius: 8px; background: #0a1d13; }
+  .fctl { display: grid; gap: 8px; }
+  .pad { display: grid; grid-template-columns: repeat(3, 44px); gap: 4px; }
+  .pad button { padding: 6px 0; }
+  .capsel { border-color: rgba(var(--line-rgb),.7) !important; background: rgba(var(--line-rgb),.16) !important; color: var(--gold-hi) !important; font-weight: 600; }
+  .pill { font-size: 12px; font-weight: 600; color: var(--muted); padding: 5px 11px; border: 1px solid var(--line); border-radius: 99px; background: rgba(var(--shade-rgb),.5); }
+  .pill.ok { color: var(--ok); border-color: rgba(159,214,122,.45); }
+  .pill.bad { color: var(--danger); border-color: rgba(229,96,74,.5); }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #5d6b5a; margin-right: 6px; }
+  .dot.live { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+
+  /* warning strip */
+  #warn { display: none; padding: 8px 18px; gap: 8px; flex-wrap: wrap; background: rgba(var(--shade-rgb),.75); border-bottom: 1px solid var(--line); }
+  #warn.show { display: flex; }
+  .w { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 7px; font-size: 13px; font-weight: 600; }
+  .w::before { content: ""; width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .w.err  { background: rgba(229,96,74,.14); border: 1px solid rgba(229,96,74,.5); color: #ffc9be; }
+  .w.err::before { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+  .w.warn { background: rgba(240,185,77,.12); border: 1px solid rgba(240,185,77,.45); color: #f8dca0; }
+  .w.warn::before { background: var(--warn); }
+  .w.info { background: rgba(var(--line-rgb),.08); border: 1px solid var(--line); color: var(--muted); }
+  .w.info::before { background: var(--gold); }
+
+  main { padding: 16px 18px 40px; display: grid; gap: 16px; max-width: 1500px; margin: 0 auto; }
+  .card {
+    background: linear-gradient(180deg, rgba(var(--panel2-rgb),.88), rgba(var(--panel-rgb),.92)); border: 1.5px solid var(--line-hi); border-radius: 10px; padding: 14px;
+    box-shadow: inset 0 1px 0 rgba(var(--hi-rgb),.12), 0 6px 18px rgba(0,0,0,.3);
+  }
+  .card h2 { margin: 0 0 12px; font: 600 12px var(--font); letter-spacing: 0; color: var(--gold); display: flex; align-items: center; gap: 10px; }
+  .card h2::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line-hi), transparent); }
+
+  /* board */
+  .board { display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; align-items: stretch; }
+  .tb { border-radius: 14px; padding: 12px; border: 0; background: var(--panel3); position: relative; overflow: hidden; }
+  .tb::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; border-radius: 8px 8px 0 0; }
+  .tb.left::before  { background: var(--left); }
+  .tb.right::before { background: var(--right); }
+  .tb .head { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .tb .head b { font: 600 16px var(--font); letter-spacing: 0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tb .head small { color: var(--gold); font-weight: 600; font-size: 11px; letter-spacing: 0; }
+  .sc { display: inline-flex; align-items: center; gap: 5px; }
+  .sc button { padding: 1px 9px; font-weight: 600; line-height: 1.3; }
+  .sc span { min-width: 24px; text-align: center; font: 600 20px var(--font); color: var(--gold-hi); }
+  .row { display: grid; gap: 6px; }
+  .row.bans  { grid-template-columns: repeat(7, 1fr); margin-bottom: 6px; }
+  .row.picks { grid-template-columns: repeat(5, 1fr); }
+  .row.players { grid-template-columns: repeat(5, 1fr); margin-top: 6px; }
+  .row.players select { padding: 5px 6px; font-size: 12px; font-weight: 600; }
+  .row.players select.set { border-color: var(--gold); color: var(--gold-hi); }
+  .s {
+    position: relative; border-radius: 8px; background: #e8e8ed center/cover no-repeat; border: 0;
+    cursor: pointer; overflow: hidden;
+  }
+  .s.ban  { aspect-ratio: 16/9; }
+  .s.pick { aspect-ratio: 16/11; }
+  .s.ban.filled { filter: sepia(.8) brightness(.7); }
+  .s.ban.filled::after { content: "✕"; position: absolute; inset: 0; display: grid; place-items: center; color: #ff6a4d; font: 600 20px var(--font); text-shadow: 0 0 6px #000; }
+  .s .n { position: absolute; left: 6px; top: 4px; font-size: 10px; font-weight: 600; color: var(--muted); }
+  .s.filled .n { color: rgba(255,255,255,.85); text-shadow: 0 0 3px #000; }
+  .s .nm { position: absolute; left: 0; right: 0; bottom: 0; font-size: 11px; font-weight: 600; text-align: center; background: rgba(var(--shade-rgb),.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 1px 2px; }
+  .s.active { outline: 2px solid var(--accent); outline-offset: 1px; box-shadow: 0 0 0 5px rgba(0,113,227,.18); }
+  .s.target { outline: 2px dashed var(--accent); outline-offset: 1px; }
+  .mid { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; min-width: 200px; text-align: center; }
+  .next { font: 600 15px var(--font); letter-spacing: 0; color: var(--gold-hi); }
+  .next small { display: block; color: var(--muted); font: 600 11px var(--font); letter-spacing: 0; }
+  .bigclock { font: 600 36px var(--font); font-variant-numeric: tabular-nums; }
+  .reserves { display: flex; gap: 14px; color: var(--muted); font-size: 12px; font-weight: 600; }
+  .btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .check { flex-direction: row; align-items: center; gap: 7px; font-size: 12px; }
+  .check input { width: auto; accent-color: var(--gold); }
+
+  .seq { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 12px; }
+  .chip {
+    width: 34px; height: 26px; border-radius: 5px; display: grid; place-items: center; font: 600 11px var(--font);
+    border: 1px solid var(--line); background: rgba(var(--shade-rgb),.6); color: var(--muted); cursor: default;
+  }
+  .chip.left  { border-bottom: 3px solid var(--left); }
+  .chip.right { border-bottom: 3px solid var(--right); }
+  .chip.done { background: var(--panel3); color: var(--text); }
+  .chip.cur  { background: linear-gradient(180deg, var(--gold-hi), var(--gold)); color: var(--panel); border-color: var(--gold-hi); }
+
+  /* lower grid */
+  .lower { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
+  body[data-tab="air"] .lower, body[data-tab="check"] .lower { display: none; }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; align-items: center; }
+  .filters input { flex: 1; width: auto; min-width: 220px; font-size: 16px; font-weight: 600; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; max-height: 62vh; overflow: auto; padding-right: 4px; }
+  .h {
+    position: relative; aspect-ratio: 16/9; border-radius: 5px; background: #000 center/cover no-repeat; cursor: pointer;
+    border: 1px solid transparent; overflow: hidden;
+  }
+  .h:hover { border-color: var(--gold-hi); transform: translateY(-1px); }
+  .h span { position: absolute; left: 0; right: 0; bottom: 0; font-size: 11px; font-weight: 600; text-align: center; background: rgba(var(--shade-rgb),.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 1px 2px; }
+  .h.used { opacity: .18; filter: grayscale(1); cursor: not-allowed; }
+  .h.first { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,113,227,.3); }
+
+  .form { display: grid; gap: 10px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .three { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; }
+  .five { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .five input { padding: 6px 7px; font-size: 13px; }
+  fieldset { border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin: 0; display: grid; gap: 8px; background: rgba(var(--shade-rgb),.25); }
+  legend { padding: 0 6px; font: 600 11px var(--font); letter-spacing: 0; color: var(--gold); }
+  input[type=color] { padding: 2px; height: 34px; }
+  .sc-top { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 12px; }
+  .sc-auto { flex-direction: row; align-items: center; gap: 8px; } .sc-auto select { width: auto; }
+  .sc-grp { display: grid; grid-template-columns: 130px 1fr; gap: 10px; align-items: start; margin-top: 8px; }
+  .sc-grp h4 { margin: 8px 0 0; font-size: 12px; letter-spacing: 0; color: var(--gold); }
+  .sc-grp .btns { justify-content: flex-start; }
+  .sc-grp button.on { box-shadow: 0 0 0 2px var(--gold-hi), 0 0 14px rgba(var(--hi-rgb),.5); }
+  .hint a { color: var(--gold); font-weight: 600; }
+  .nm { display: grid; grid-template-columns: 1fr 280px; gap: 16px; align-items: start; }
+  .nmcol { display: grid; gap: 10px; min-width: 0; }
+  .nmgrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .nmpv { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; border: 1px solid var(--line-hi); background: repeating-conic-gradient(var(--bg) 0 25%, var(--panel) 0 50%) 0 0 / 24px 24px; }
+  .nmpv iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .nmpv.wide { aspect-ratio: 16/9; }
+  .nm.widepv { grid-template-columns: 1fr 420px; }
+  .tkpv { position: relative; aspect-ratio: 16/9; border-radius: 10px; overflow: hidden; border: 1px solid var(--line-hi); background: repeating-conic-gradient(var(--bg) 0 25%, var(--panel) 0 50%) 0 0 / 24px 24px; }
+  .tkpv iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .tkgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  #tkMsgs { width: 100%; min-height: 96px; resize: vertical; font: inherit; }
+  @media (max-width: 900px) { .nm, .nm.widepv, .tkgrid { grid-template-columns: 1fr; } .nmpv { max-width: 320px; } .nmpv.wide { max-width: none; } }
+  .gsichecks { display: grid; gap: 6px; }
+  .delayrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line-hi); background: rgba(var(--shade-rgb),.45); }
+  .delayrow > b { font-size: 13px; color: var(--gold-hi); }
+  .gsichecks .ck { display: grid; grid-template-columns: 22px 230px 1fr; gap: 10px; align-items: start; font-size: 13px; padding: 6px 10px; border-radius: 7px; background: rgba(var(--shade-rgb),.45); border: 1px solid var(--line); }
+  .gsichecks .ck b { font-weight: 600; }
+  .gsichecks .ck .i { font-weight: 600; text-align: center; }
+  .gsichecks .ck.ok .i { color: var(--ok); } .gsichecks .ck.bad .i { color: var(--danger); } .gsichecks .ck.wn .i { color: var(--warn); }
+  .gsichecks .ck span:last-child { color: var(--muted); line-height: 1.45; }
+  .hint { color: var(--muted); font-size: 12px; line-height: 1.5; }
+  .hint code { background: rgba(var(--shade-rgb),.7); padding: 1px 6px; border-radius: 4px; color: var(--gold-hi); border: 1px solid var(--line); }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }
+  .toast {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #3a1a12; border: 1px solid var(--danger);
+    color: #ffd6cc; padding: 10px 16px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 9; font-weight: 600;
+  }
+  .toast.ok { background: var(--panel2); border-color: var(--ok); color: #dff3d0; }
+  .toast.show { opacity: 1; }
+  .gsi-note { display: none; }
+  body.gsi .gsi-note { display: block; }
+  body.gsi .grid { opacity: .35; pointer-events: none; }
+  ::-webkit-scrollbar { width: 10px; } ::-webkit-scrollbar-thumb { background: var(--panel3); border-radius: 5px; border: 2px solid var(--panel); }
+  @media (max-width: 1100px) { .board, .lower { grid-template-columns: 1fr; } }
+</style>
+<link rel="stylesheet" href="/ui/panel.css">
+</head>
+<body>
+<header>
+  <div class="brand"><img src="/assets/cloud-ornament.png" alt=""><h1>Draft control</h1></div>
+  <nav class="tabs" id="tabs" aria-label="Sections"><button data-tab="draft">Draft</button><button data-tab="setup">Setup</button><button data-tab="air">On air</button><button data-tab="check">Check</button></nav>
+  <div class="seg" id="modeSeg">
+    <button data-mode="manual">Manual</button>
+    <button data-mode="gsi">Auto (GSI)</button>
+  </div>
+  <button id="visBtn">Overlay: shown</button>
+  <span class="pill" id="gsiPill"><span class="dot" id="gsiDot"></span><span>GSI: no data</span></span>
+  <span class="pill" id="connPill">connecting…</span>
+  <div class="spacer"></div>
+  <a href="/teams" class="hdr-link">Teams database</a>
+  <a href="/stats" class="hdr-link">Tournament stats</a>
+  <a href="/cards" class="hdr-link">Stats cards</a>
+  <a href="/camcontrol" class="hdr-link">Player cam</a>
+  <a href="/mix" class="hdr-link">Mix draw</a>
+  <a href="/logout" class="hdr-link">Logout</a>
+  <button id="copyUrl" title="Copy the OBS browser source URL">Copy OBS URL</button>
+</header>
+<div id="warn"></div>
+
+<main>
+  <section class="card" data-pane="draft">
+    <div class="board">
+      <div class="tb left">
+        <div class="head"><span class="sc"><button data-score="left" data-d="-1" title="Score −1">−</button><span id="sc-left">0</span><button data-score="left" data-d="1" title="Score +1">+</button></span><b id="nm-left">TEAM A</b><small id="fp-left"></small></div>
+        <div class="row bans" id="bans-left"></div><div class="row picks" id="picks-left"></div><div class="row players" id="players-left"></div>
+      </div>
+      <div class="mid">
+        <div class="next" id="next">—</div>
+        <div class="bigclock" id="clock">0:00</div>
+        <div class="reserves"><span id="res-left">0:00</span><span>reserve</span><span id="res-right">0:00</span></div>
+        <div class="btns">
+          <button id="tStart" title="Restart the clock for this step">Start</button>
+          <button id="tPause">Pause</button>
+          <button id="tStop">Stop</button>
+        </div>
+        <label class="check"><input type="checkbox" id="autoTimer"> auto-restart clock each step</label>
+        <div class="btns">
+          <button id="undo" title="Ctrl+Z">Undo</button>
+          <button id="swap">Swap sides</button>
+          <button id="reset" class="danger">Reset draft</button>
+        </div>
+      </div>
+      <div class="tb right">
+        <div class="head"><span class="sc"><button data-score="right" data-d="-1" title="Score −1">−</button><span id="sc-right">0</span><button data-score="right" data-d="1" title="Score +1">+</button></span><b id="nm-right">TEAM B</b><small id="fp-right"></small></div>
+        <div class="row bans" id="bans-right"></div><div class="row picks" id="picks-right"></div><div class="row players" id="players-right"></div>
+      </div>
+    </div>
+    <div class="seq" id="seq"></div>
+    <p class="hint" style="margin:10px 0 0">Click a hero to fill the highlighted step. Click a slot to target it instead (for fixes), right-click a slot to clear it. Type to search, <code>Enter</code> picks the top result, <code>Esc</code> clears, <code>Ctrl+Z</code> undoes. Use the dropdowns under the picks to say which player plays each hero.</p>
+    <p class="hint gsi-note">Auto mode: the draft follows the Dota 2 client (observer/spectator). Hero picking is disabled here — switch to Manual to correct anything. Player dropdowns still work.</p>
+  </section>
+
+  <div class="lower">
+    <section class="card" data-pane="draft">
+      <h2>Heroes</h2>
+      <div class="filters">
+        <input id="search" placeholder="Search hero… (Enter to pick)" autocomplete="off" autofocus>
+        <div class="seg" id="attrSeg">
+          <button data-attr="" class="on">All</button>
+          <button data-attr="str">STR</button>
+          <button data-attr="agi">AGI</button>
+          <button data-attr="int">INT</button>
+          <button data-attr="all">UNI</button>
+        </div>
+      </div>
+      <div class="grid" id="grid"></div>
+    </section>
+
+    <section class="card" data-pane="setup">
+      <h2>Match setup</h2>
+      <form class="form" id="setup" autocomplete="off">
+        <fieldset>
+          <legend>Load teams</legend>
+          <div class="dbpick">
+            <label class="lt">Left team<select id="dbLeft"></select></label>
+            <label class="rt">Right team<select id="dbRight"></select></label>
+          </div>
+          <p class="hint dbhint" style="margin:0">Picks the team's name, tag, color, logo and players from the database in one go. <a href="/teams">Add or edit teams →</a></p>
+        </fieldset>
+        <fieldset>
+          <legend>Event</legend>
+          <div class="three" style="grid-template-columns:1.4fr 1.4fr .8fr .8fr">
+            <label>Title<input name="title"></label>
+            <label>Stage<input name="stage" placeholder="GRAND FINAL"></label>
+            <label>Format<select name="format"><option>BO1</option><option>BO2</option><option>BO3</option><option>BO5</option></select></label>
+            <label>First pick<select name="firstPick"><option value="left">Left</option><option value="right">Right</option></select></label>
+          </div>
+          <label>Event logo — shown in empty pick &amp; ban slots<span style="display:flex;gap:6px"><input name="eventLogo" placeholder="/logos/dire-battle.png" style="flex:1"><button type="button" id="evUpload" style="white-space:nowrap">Upload…</button></span></label><input type="file" id="evFile" accept="image/*" style="display:none">
+        </fieldset>
+        <fieldset>
+          <legend>Left team</legend>
+          <div class="three">
+            <label>Name<input name="leftName"></label>
+            <label>Tag<input name="leftTag"></label>
+            <label>Score<input name="leftScore" type="number" min="0"></label>
+          </div>
+          <div class="two">
+            <label>Logo (path or URL)<input name="leftLogo" placeholder="/logos/team-a.png"></label>
+            <label>Color<input name="leftColor" type="color"></label>
+          </div>
+          <p class="hint roster" id="roster-left" style="margin:0"></p>
+        </fieldset>
+        <fieldset>
+          <legend>Right team</legend>
+          <div class="three">
+            <label>Name<input name="rightName"></label>
+            <label>Tag<input name="rightTag"></label>
+            <label>Score<input name="rightScore" type="number" min="0"></label>
+          </div>
+          <div class="two">
+            <label>Logo (path or URL)<input name="rightLogo" placeholder="/logos/team-b.png"></label>
+            <label>Color<input name="rightColor" type="color"></label>
+          </div>
+          <p class="hint roster" id="roster-right" style="margin:0"></p>
+        </fieldset>
+        <fieldset>
+          <legend>Clock &amp; GSI</legend>
+          <div class="three">
+            <label>Radiant is on<select name="radiantSide"><option value="left">Left</option><option value="right">Right</option></select></label>
+            <label>Reserve L (s)<input name="resLeft" type="number" min="0"></label>
+            <label>Reserve R (s)<input name="resRight" type="number" min="0"></label>
+          </div>
+        </fieldset>
+        <div class="btns" style="justify-content:flex-start">
+          <button type="submit" class="primary">Apply</button>
+          <button type="button" id="revert">Revert</button>
+        </div>
+      </form>
+      <hr>
+      <h2>Hero image cache</h2>
+      <p class="hint">Downloads hero art once so the overlay doesn't depend on Valve's CDN during the broadcast. Do this before going live.</p>
+      <div class="btns" style="justify-content:flex-start">
+        <button id="cacheStill">Cache icons + portraits</button>
+        <button id="cacheAnim" title="Large download (several hundred MB)">+ animated portraits</button>
+      </div>
+      <p class="hint" id="cacheStatus"></p>
+      <hr>
+      <h2>Portrait framing</h2>
+      <p class="hint" style="margin-top:0">Hero off-centre or too big/small in its card? Pick it, nudge it, done. Saved for every future match.</p>
+      <div class="framer">
+        <iframe id="fPrev" title="Portrait preview"></iframe>
+        <div class="fctl">
+          <label>Hero<select id="fHero"></select></label>
+          <div class="pad">
+            <span></span><button data-f="up" title="Move hero up">▲</button><span></span>
+            <button data-f="left" title="Move hero left">◀</button><button data-f="center" title="Back to auto-centre">●</button><button data-f="right" title="Move hero right">▶</button>
+            <span></span><button data-f="down" title="Move hero down">▼</button><span></span>
+          </div>
+          <div class="btns" style="justify-content:flex-start"><button data-f="zout" title="Zoom out">− Zoom</button><button data-f="zin" title="Zoom in">+ Zoom</button></div>
+          <button data-f="reset" class="danger" style="width:100%">Reset this hero</button>
+          <p class="hint" id="fVals" style="margin:0"></p>
+        </div>
+      </div>
+    </section>
+  </div>
+  <section class="card" id="gsiCard" data-pane="check">
+    <h2>GSI check — what Dota is sending</h2>
+    <div class="delayrow">
+      <b>Anti-snipe delay</b>
+      <div class="seg" id="gsiDelaySeg">
+        <button data-dl="0">Off</button><button data-dl="60">1:00</button><button data-dl="120">2:00</button><button data-dl="180">3:00</button><button data-dl="300">5:00</button>
+      </div>
+      <label class="sc-auto">or seconds<input type="number" id="gsiDelaySec" min="0" max="600" step="5" style="width:80px"></label>
+      <span class="hint" id="gsiDelayTxt"></span>
+    </div>
+    <div id="gsiChecks" class="gsichecks"></div>
+    <div class="btns" style="justify-content:flex-start;margin-top:8px">
+      <button id="gsiAuto">Switch to Auto (GSI)</button>
+      <a href="/api/gsi-last" class="hdr-link" style="padding:7px 12px">Download last GSI data</a>
+    </div>
+    <p class="hint" style="margin:6px 0 0">Still stuck? Download the last GSI data while you watch the game and send the file; it shows exactly what Dota reports.</p>
+  </section>
+  <section class="card" id="popCard" data-pane="air">
+    <h2>Hero stats popup &amp; GSI automation</h2>
+    <div class="ig pop">
+      <div class="igcol">
+        <label class="check"><input type="checkbox" id="popOn"> Show tournament stats when a hero is picked</label>
+        <label class="check"><input type="checkbox" id="popBan"> …also when a hero is banned</label>
+        <label>Seconds on screen<input type="number" id="popSec" min="2" max="30" style="width:90px"></label>
+        <label>Test with hero<select id="popHero"></select></label>
+        <div class="btns" style="justify-content:flex-start"><button id="popTest">Show test popup</button><a href="/stats" class="hdr-link" style="padding:7px 12px">Stats page</a></div>
+      </div>
+      <div class="igcol">
+        <label>Popup position</label>
+        <div class="pad">
+          <span></span><button data-pp="up" title="Up">▲</button><span></span>
+          <button data-pp="left" title="Left">◀</button><button data-pp="home" title="Default spot">●</button><button data-pp="right" title="Right">▶</button>
+          <span></span><button data-pp="down" title="Down">▼</button><span></span>
+        </div>
+        <p class="hint" id="popPos" style="margin:0"></p>
+        <p class="hint" id="popData" style="margin:0"></p>
+      </div>
+      <div class="igcol">
+        <label class="check"><input type="checkbox" id="autoAssign"> Put players on their heroes automatically (GSI)</label>
+        <label class="check"><input type="checkbox" id="autoTeams"> Detect both teams and the Radiant side from the players' Steam IDs (GSI)</label>
+        <p class="hint" style="margin:0 0 6px">After the draft, each player takes a hero during strategy time. Dota then reports who is on which hero and the overlay fills the player name + picture into that card. Matching uses the Steam IDs from the Teams page. The dropdowns under the picks still work as a manual override.</p>
+        <label class="check"><input type="checkbox" id="recordStats"> Save finished games to the tournament stats (GSI)</label>
+        <p class="hint" style="margin:0" id="lastRec">When a game ends, the draft, winner and every player's hero, K/D/A and GPM are added to the stats. Remove test lobbies on the Stats page.</p>
+      </div>
+    </div>
+  </section>
+  <section class="card" id="cdCard" data-pane="air">
+    <h2>Countdown live</h2>
+    <div class="btns" style="justify-content:flex-start;align-items:flex-end;flex-wrap:wrap">
+      <label style="width:110px">Menit<input id="cdMin" type="number" min="1" max="600" value="10"></label>
+      <button class="primary" id="cdSet">Mulai</button>
+      <button data-cdadd="-1">−1 menit</button><button data-cdadd="1">+1 menit</button><button data-cdadd="5">+5 menit</button>
+      <button class="danger" id="cdStop">Stop</button>
+      <button id="cdVis">Sembunyikan</button>
+    </div>
+    <div class="ignow" id="cdNow" style="margin-top:12px">Belum jalan</div>
+    <label style="margin-top:12px;max-width:360px">Label di atas angka<input id="cdLab" maxlength="30" placeholder="Live dalam"></label>
+    <p class="hint">OBS: Browser source <code>/countdown</code> 1920 × 1080 di atas scene starting soon. Kanan bawah = countdown ini, tengah = next match VS (diambil dari bracket, sama dengan kartu Next match di bawah).</p>
+  </section>
+
+  <section class="card" id="bnCard" data-pane="air">
+    <h2>Banner teks berputar</h2>
+    <label>Teks (satu baris per teks, bergantian)<textarea id="bnMsgs" rows="4" placeholder="DIREBATTLE UPRISING - GRAND FINALS"></textarea></label>
+    <div class="btns" style="justify-content:flex-start;align-items:flex-end;flex-wrap:wrap;margin-top:10px">
+      <label style="width:110px">Detik per teks<input id="bnSec" type="number" min="2" max="60" value="6"></label>
+      <label style="width:90px">X<input id="bnX" type="number" min="0" max="1900"></label>
+      <label style="width:90px">Y<input id="bnY" type="number" min="0" max="1060"></label>
+      <label style="width:100px">Lebar<input id="bnW" type="number" min="160" max="1920"></label>
+      <button class="primary" id="bnSave">Simpan</button>
+      <button id="bnVis">Sembunyikan</button>
+    </div>
+    <p class="hint">OBS: Browser source <code>/banner</code> 1920 × 1080 di scene in-game. Posisi dalam piksel layar 1920 × 1080; warnanya ikut desain turnamen.</p>
+  </section>
+
+  <section class="card" id="csCard" data-pane="air">
+    <h2>Caster</h2>
+    <p class="hint" style="margin-top:0">Satu baris per frame caster: nama, lalu posisi plate nama di frame itu (piksel layar 1920 × 1080). Teksnya otomatis pas setinggi plate, dan tiap beberapa detik bergulir keluar-masuk per huruf. Tips: buka <code>/caster?bg=1</code> untuk melihat kotak tiap plate.</p>
+    <div id="csRows" style="display:grid;gap:8px"></div>
+    <div class="btns" style="justify-content:flex-start;align-items:flex-end;flex-wrap:wrap;margin-top:10px">
+      <button id="csAdd">+ Tambah caster</button>
+      <label style="width:120px">Detik per loop<input id="csSec" type="number" min="2" max="60" value="6"></label>
+      <button class="primary" id="csSave">Simpan</button>
+      <button id="csVis">Sembunyikan</button>
+    </div>
+    <p class="hint">OBS: Browser source <code>/caster</code> 1920 × 1080 di atas frame cam caster.</p>
+  </section>
+
+  <section class="card" id="chCard" data-pane="air">
+    <h2>Karakter live chat (YouTube)</h2>
+    <p class="hint" style="margin-top:0">Tiap penonton yang ngetik di live chat YouTube dapat karakter kecil yang jalan-jalan di satu garis tanah, dengan nama dan chat-nya di balon. Yang diam 4 menit jalan keluar.</p>
+    <div class="btns" style="justify-content:flex-start;align-items:flex-end;flex-wrap:wrap">
+      <label style="flex:1;min-width:260px">Link video live YouTube<input id="chVideo" placeholder="https://www.youtube.com/live/…"></label>
+      <label style="width:110px">Maks karakter<input id="chMax" type="number" min="1" max="40" value="12"></label>
+      <label style="width:110px">Garis tanah Y<input id="chGround" type="number" min="80" max="1080" value="785"></label>
+      <button class="primary" id="chSave">Simpan</button>
+    </div>
+    <div class="btns" style="justify-content:flex-start;flex-wrap:wrap;margin-top:10px">
+      <button class="primary" id="chOn">Mulai baca chat</button>
+      <button id="chTest">Tes karakter</button>
+      <button id="chVis">Sembunyikan</button>
+    </div>
+    <p class="hint" id="chStatus"></p>
+    <p class="hint">OBS: Browser source <code>/chatwalk</code> 1920 × 1080 di atas scene. Garis tanah dalam piksel layar 1920 × 1080; buka <code>/chatwalk?bg=1</code> untuk melihat garisnya. Butuh secret <code>YT_API_KEY</code> (YouTube Data API v3) di Cloudflare; kuota gratisnya cukup ±6 jam baca chat per hari.</p>
+  </section>
+
+  <section class="card" id="nmCard" data-pane="air">
+    <h2>Next match overlay (countdown)</h2>
+    <div class="nm">
+      <div class="nmcol">
+        <div class="sc-top" style="margin:0">
+          <div class="seg" id="nmMode"><button data-m="auto" title="The next unplayed match of the bracket">Auto</button><button data-m="match">Choose match</button><button data-m="custom">Custom</button></div>
+          <button id="nmVis">Hide</button>
+          <div class="seg" id="nmPvSeg" title="Preview layout"><button data-pv="sq">Square</button><button data-pv="wide">16:9</button></div>
+        </div>
+        <label id="nmMatchWrap">Bracket match<select id="nmMatch"></select></label>
+        <div id="nmCustom" class="nmgrid">
+          <label>Team A<input id="nmA" list="nmTeams" placeholder="TBD"></label>
+          <label>Team B<input id="nmB" list="nmTeams" placeholder="TBD"></label>
+          <label>Round<input id="nmRound" placeholder="Grand Final"></label>
+          <label>BO<select id="nmBo"><option>1</option><option selected>3</option><option>5</option><option>7</option></select></label>
+          <label>Date<input id="nmDate" placeholder="dd/mm"></label>
+          <label>Time (WIB)<input id="nmTime" placeholder="19.00"></label>
+        </div>
+        <datalist id="nmTeams"></datalist>
+        <div class="sc-top" style="margin:4px 0 0">
+          <label class="sc-auto">Title<input id="nmTitle" style="width:180px"></label>
+          <span class="hint">Schedule slips:</span>
+          <button data-nmd="-5">−5 min</button><button data-nmd="5">+5 min</button><button data-nmd="0">Reset</button>
+        </div>
+        <p class="ignow" id="nmNow">—</p>
+        <p class="hint" style="margin:0">OBS: Browser source <b><span class="origin"></span>/nextmatch</b> at <b>1080 × 1080</b> (square), or <b><span class="origin"></span>/nextmatch-wide</b> at <b>1920 × 1080</b> (16:9 full screen, also shows the match after it). Both follow these settings. Logos come from the Teams page, the time from the bracket (<a href="/bracket">Edit bracket</a>). At zero it shows “Segera dimulai”, and “Live sekarang” when the series is marked live.</p>
+      </div>
+      <div class="nmpv"><iframe id="nmPv" title="Next match preview"></iframe></div>
+    </div>
+  </section>
+  <section class="card" id="tkCard" data-pane="air">
+    <h2>Running text (ticker)</h2>
+    <div class="tkgrid">
+      <div class="nmcol">
+        <div class="sc-top" style="margin:0">
+          <button id="tkVis">Hide</button>
+          <label class="sc-auto">Badge<input id="tkL1" style="width:90px" maxlength="20"><input id="tkL2" style="width:90px" maxlength="20"></label>
+        </div>
+        <div class="sc-top" style="margin:0">
+          <label class="check"><input type="checkbox" id="tkNext"> Next match + countdown</label>
+          <label class="check"><input type="checkbox" id="tkUp"> Matches after it</label>
+          <label class="check"><input type="checkbox" id="tkRes"> Latest results</label>
+        </div>
+        <label>Your own messages (one per line)<textarea id="tkMsgs" placeholder="Follow kami di Instagram…"></textarea></label>
+        <div class="sc-top" style="margin:0">
+          <label class="sc-auto">Speed<input type="range" id="tkSpeed" min="30" max="400" step="10" style="width:140px"><span id="tkSpeedTxt" class="hint"></span></label>
+          <label class="sc-auto">Height from bottom<input type="number" id="tkBottom" min="0" max="1000" step="5" style="width:80px"> px</label>
+        </div>
+        <p class="hint" style="margin:0">OBS: Browser source <b><span class="origin"></span>/ticker</b> at <b>1920 × 1080</b>, on top of your scenes. Match info comes from the Next match settings above and the bracket. When the next match is marked live the badge turns red <b>Live now</b>.</p>
+      </div>
+      <div class="tkpv"><iframe id="tkPv" title="Running text preview"></iframe></div>
+    </div>
+  </section>
+  <section class="card" id="sfxCard" data-pane="air">
+    <h2>Sound effects</h2>
+    <div class="sc-top">
+      <label class="check"><input type="checkbox" id="sfxOn"> Play a sound on every animation (draft bar, stats popup, stat cards, in-game card)</label>
+      <label class="sc-auto">Volume<input type="range" id="sfxVol" min="0" max="100" step="5" style="width:160px"><span id="sfxVolTxt" class="hint"></span></label>
+    </div>
+    <div class="btns" style="justify-content:flex-start" id="sfxTests"></div>
+    <p class="hint" style="margin:8px 0 0">Test buttons play through the draft overlay in OBS. Every OBS Browser source needs <b>Control audio via OBS</b> ticked so the sound reaches the mixer. Replace a sound by putting your own <b>.mp3</b> with the same name in <b>public/sounds/sfx/</b>. Hero name calls (public/sounds/heroes) still play on picks.</p>
+  </section>
+  <section class="card" id="scCard" data-pane="air">
+    <h2>Stats cards (full screen)</h2>
+    <p class="hint" style="margin:0 0 10px">OBS: add a Browser source <b><span class="origin"></span>/statcards</b> (1920 × 1080) on top of your scenes. Press a card to animate it in; press it again or <b>Hide</b> to take it off. Change the text and numbers in <b>data/statcards.json</b>; the next card you show uses the new version.</p>
+    <div class="sc-top">
+      <button id="scPrev" title="Previous card">◀ Prev</button>
+      <button id="scNext" title="Next card">Next ▶</button>
+      <button id="scHide" class="danger">Hide</button>
+      <label class="sc-auto">Auto-hide after<select id="scAuto"><option value="0">never (I'll hide it)</option><option value="8">8 s</option><option value="10">10 s</option><option value="12">12 s</option><option value="15">15 s</option><option value="20">20 s</option><option value="30">30 s</option></select></label>
+      <span class="hint" id="scNow"></span>
+      <a href="/cards" class="hdr-link" style="padding:7px 12px;margin-left:auto">Open Stats Cards panel</a>
+      <a href="/bracket" class="hdr-link" style="padding:7px 12px">Edit bracket</a>
+    </div>
+    <div id="scGroups"></div>
+  </section>
+  <section class="card" id="igCard" data-pane="air">
+    <h2>In-game player card</h2>
+    <div class="ig">
+      <div class="igcol">
+        <div class="seg" id="igMode">
+          <button data-m="auto" title="Follow the hero the observer selects">Auto (observer)</button>
+          <button data-m="manual">Manual</button>
+          <button data-m="off">Off</button>
+        </div>
+        <div class="seg" id="igStyle" style="margin-top:6px">
+          <button data-st="photo" title="Only the player's picture beside the hero portrait">Photo only</button>
+          <button data-st="full">Photo + name &amp; stats</button>
+        </div>
+        <label id="igManualWrap">Show player<select id="igManual"></select></label>
+        <div class="ignow" id="igNow">—</div>
+        <div class="btns" style="justify-content:flex-start">
+          <button id="igCopy">Copy in-game OBS URL</button>
+        </div>
+        <p class="hint" style="margin:0">Add it in OBS as a Browser source <code>/ingame</code> (1920×1080), above the game capture. Auto follows the hero the observer has <b>selected</b> (clicking the portrait or the hero hotkeys).</p>
+      </div>
+      <div class="igcol">
+        <label>Position &amp; size</label>
+        <div class="pad">
+          <span></span><button data-ig="up" title="Up">▲</button><span></span>
+          <button data-ig="left" title="Left">◀</button><button data-ig="home" title="Default spot">●</button><button data-ig="right" title="Right">▶</button>
+          <span></span><button data-ig="down" title="Down">▼</button><span></span>
+        </div>
+        <div class="btns" style="justify-content:flex-start"><button data-ig="smaller">− Size</button><button data-ig="bigger">+ Size</button></div>
+        <label class="check"><input type="checkbox" id="igFine"> fine steps (2 px)</label>
+        <p class="hint" id="igPos" style="margin:0"></p>
+      </div>
+      <div class="igcol wide">
+        <label>Players Dota is sending <span id="igAge" style="font-weight:600"></span></label>
+        <div class="igtable" id="igTable"><p class="hint" style="margin:0">No in-game data yet. Players appear here once the observer client is in a match with GSI working.</p></div>
+      </div>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const SIDES = ['left', 'right'];
+  let S = null, heroes = [], heroById = new Map(), offset = 0;
+  let target = null;          // { side, type, index } chosen by clicking a slot
+  let attr = '';
+  let dirty = false;
+  let connected = false;
+
+  // ---------- API ----------
+  async function send(type, payload = {}) {
+    try {
+      const r = await fetch('/api/action', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type, ...payload }) });
+      const j = await r.json().catch(() => ({}));
+      if (!j.ok) toast(j.error || 'Something went wrong');
+      return j.ok;
+    } catch { toast('Server not reachable'); return false; }
+  }
+  let toastT;
+  function toast(msg, ok = false) { const t = $('toast'); t.textContent = msg; t.className = 'toast show' + (ok ? ' ok' : ''); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600); }
+
+  // ---------- board ----------
+  const slotEls = { left: { ban: [], pick: [] }, right: { ban: [], pick: [] } };
+  const playerSel = { left: [], right: [] };
+  for (const side of SIDES) {
+    for (const [type, count, row] of [['ban', 7, 'bans'], ['pick', 5, 'picks']]) {
+      for (let i = 0; i < count; i++) {
+        const d = document.createElement('div');
+        d.className = 's ' + type;
+        d.innerHTML = `<span class="n">${type === 'ban' ? 'B' : 'P'}${i + 1}</span><span class="nm"></span>`;
+        d.onclick = () => {
+          if (S?.mode !== 'manual') return;
+          const t = { side, type, index: i };
+          target = target && sameSlot(target, t) ? null : t;
+          renderBoard(); $('search').focus();
+        };
+        d.oncontextmenu = (e) => {
+          e.preventDefault();
+          if (S?.slots[side][row][i] != null) send('clear', { target: { side, type, index: i } });
+        };
+        $(`${row}-${side}`).appendChild(d);
+        slotEls[side][type].push(d);
+      }
+    }
+    for (let i = 0; i < 5; i++) {
+      const sel = document.createElement('select');
+      sel.title = `Who plays pick ${i + 1}`;
+      sel.onchange = () => { if (sel.value !== '__gsi') send('assignPlayer', { side, index: i, player: sel.value === '' ? null : Number(sel.value) }); };
+      $('players-' + side).appendChild(sel);
+      playerSel[side].push(sel);
+    }
+  }
+  const sameSlot = (a, b) => a && b && a.side === b.side && a.type === b.type && a.index === b.index;
+
+  function renderPlayers(side) {
+    const roster = S.teams[side].players || [];
+    const cap = S.teams[side].captain;
+    const opts = '<option value="">— player —</option>' + roster.map((p, i) => p ? `<option value="${i}">${esc(p)}${cap === i ? ' (C)' : ''}</option>` : '').join('');
+    playerSel[side].forEach((sel, i) => {
+      if (sel._opts !== opts) { sel.innerHTML = opts; sel._opts = opts; }
+      const v = S.pickPlayers?.[side]?.[i];
+      let val = Number.isInteger(v) && roster[v] ? String(v) : '';
+      const extra = sel.querySelector('option[data-gsi]');
+      if (v && typeof v === 'object' && v.name) {
+        if (!extra || extra.textContent !== 'GSI: ' + v.name) { extra?.remove(); const o = document.createElement('option'); o.dataset.gsi = '1'; o.value = '__gsi'; o.textContent = 'GSI: ' + v.name; sel.appendChild(o); }
+        val = '__gsi';
+      } else extra?.remove();
+      if (document.activeElement !== sel) sel.value = val;
+      sel.classList.toggle('set', val !== '');
+      sel.disabled = !roster.some(Boolean);
+    });
+  }
+
+  function renderBoard() {
+    if (!S) return;
+    for (const side of SIDES) {
+      $('nm-' + side).textContent = S.teams[side].name;
+      $('sc-' + side).textContent = S.teams[side].score;
+      $('fp-' + side).textContent = [S.firstPick === side ? 'First pick' : '', S.radiantSide === side ? 'Radiant' : 'Dire'].filter(Boolean).join(' · ');
+      for (const type of ['ban', 'pick']) {
+        slotEls[side][type].forEach((d, i) => {
+          const id = S.slots[side][type + 's'][i];
+          const h = id != null ? heroById.get(id) : null;
+          d.classList.toggle('filled', id != null);
+          d.style.backgroundImage = h ? `url(/img/icon/${h.slug})` : '';
+          d.querySelector('.nm').textContent = h ? h.name : (id != null ? '#' + id : '');
+          d.classList.toggle('active', sameSlot(S.active, { side, type, index: i }));
+          d.classList.toggle('target', sameSlot(target, { side, type, index: i }));
+        });
+      }
+      renderPlayers(side);
+    }
+    const tgt = target || S.active;
+    const nextEl = $('next');
+    if (tgt) {
+      const t = S.teams[tgt.side];
+      nextEl.innerHTML = `<small>${target ? 'Editing slot' : 'Now'}</small>${esc(t.tag || t.name)} · ${tgt.type[0].toUpperCase() + tgt.type.slice(1)} ${tgt.index + 1}`;
+    } else nextEl.innerHTML = '<small>DRAFT</small>COMPLETE';
+
+    const seq = $('seq');
+    if (seq.childElementCount !== S.sequence.length) {
+      seq.innerHTML = '';
+      S.sequence.forEach(() => seq.appendChild(Object.assign(document.createElement('div'), { className: 'chip' })));
+    }
+    S.sequence.forEach((s, i) => {
+      const c = seq.children[i];
+      const filled = S.slots[s.side][s.type + 's'][s.index] != null;
+      c.className = `chip ${s.side} ${filled ? 'done' : ''} ${S.mode === 'manual' && i === S.step ? 'cur' : ''}`;
+      c.textContent = (s.type === 'ban' ? 'B' : 'P') + (s.index + 1);
+      c.title = `${i + 1}. ${S.teams[s.side].name} ${s.type}`;
+    });
+  }
+
+  // ---------- warnings ----------
+  const logoState = new Map();   // url -> 'ok' | 'bad' | 'loading'
+  function checkLogo(url) {
+    if (!url) return 'ok';
+    if (!logoState.has(url)) {
+      logoState.set(url, 'loading');
+      const img = new Image();
+      img.onload = () => { logoState.set(url, 'ok'); renderWarnings(); };
+      img.onerror = () => { logoState.set(url, 'bad'); renderWarnings(); };
+      img.src = url;
+    }
+    return logoState.get(url);
+  }
+  function renderWarnings() {
+    const out = [];
+    if (!connected) out.push(['err', 'Not connected to the overlay server — is start.bat still running?']);
+    if (S) {
+      const now = Date.now() + offset;
+      const age = S.gsi.lastAt ? (now - S.gsi.lastAt) / 1000 : Infinity;
+      if (S.mode === 'gsi' && age === Infinity) out.push(['err', 'Auto mode, but no data from Dota yet — check the GSI file, launch option, and that the observer is spectating the lobby.']);
+      else if (S.mode === 'gsi' && age > 10) out.push(['warn', `Auto mode: no data from Dota for ${Math.round(age)}s — observer client closed or network dropped?`]);
+      if (S.gsi.delay) out.push(['info', `GSI anti-snipe delay ${Math.floor(S.gsi.delay / 60)}:${String(S.gsi.delay % 60).padStart(2, '0')} — the overlay is behind the live game on purpose. Manual clicks are not delayed.`]);
+      if (S.mode !== 'gsi' && age < 15) out.push(['warn', 'Dota is sending game data but the panel is in Manual — picks from Dota are ignored. Switch to Auto (GSI).']);
+      if (!S.visible) out.push(['info', 'Overlay is hidden on stream.']);
+      for (const [label, url] of [['Left team logo', S.teams.left.logo], ['Right team logo', S.teams.right.logo], ['Event logo', S.event.logo]]) {
+        if (checkLogo(url) === 'bad') out.push(['warn', `${label} not found: ${url} — check the file is in public/logos/ and the name matches.`]);
+      }
+      for (const side of SIDES) {
+        const roster = S.teams[side].players || [];
+        if (!roster.some(Boolean)) continue;
+        const missing = S.slots[side].picks.filter((id, i) => id != null && !Number.isInteger(S.pickPlayers?.[side]?.[i])).length;
+        if (missing) out.push(['info', `${S.teams[side].tag || S.teams[side].name}: ${missing} pick${missing > 1 ? 's have' : ' has'} no player assigned.`]);
+      }
+    }
+    const w = $('warn');
+    const html = out.map(([lvl, msg]) => `<span class="w ${lvl}">${esc(msg)}</span>`).join('');
+    if (w._html !== html) { w.innerHTML = html; w._html = html; }
+    w.classList.toggle('show', out.length > 0);
+  }
+
+  // ---------- heroes ----------
+  const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const initials = (n) => n.split(/[\s-]+/).map((w) => w[0] || '').join('').toLowerCase();
+  function filtered() {
+    const q = norm($('search').value);
+    let list = heroes.filter((h) => !attr || h.attr === attr);
+    if (q) {
+      list = list.filter((h) => norm(h.name).includes(q) || norm(h.slug).includes(q) || initials(h.name).startsWith(q));
+      list.sort((a, b) => (norm(b.name).startsWith(q) - norm(a.name).startsWith(q)) || a.name.localeCompare(b.name));
+    }
+    return list;
+  }
+  function usedSet() { return new Set(SIDES.flatMap((s) => [...S.slots[s].bans, ...S.slots[s].picks]).filter((x) => x != null)); }
+
+  function renderGrid() {
+    const grid = $('grid');
+    const used = S ? usedSet() : new Set();
+    const list = filtered();
+    const firstFree = $('search').value ? list.find((h) => !used.has(h.id)) : null;
+    grid.innerHTML = '';
+    for (const h of list) {
+      const d = document.createElement('div');
+      d.className = 'h' + (used.has(h.id) ? ' used' : '') + (h === firstFree ? ' first' : '');
+      d.style.backgroundImage = `url(/img/icon/${h.slug})`;
+      d.title = h.name;
+      d.innerHTML = `<span>${esc(h.name)}</span>`;
+      d.onclick = () => pickHero(h);
+      grid.appendChild(d);
+    }
+  }
+  async function pickHero(h) {
+    if (!S || S.mode !== 'manual') return toast('Switch to Manual mode first');
+    if (usedSet().has(h.id) && !(target && S.slots[target.side][target.type + 's'][target.index] === h.id)) return toast(h.name + ' is already used');
+    const ok = await send('assign', { heroId: h.id, ...(target ? { target } : {}) });
+    if (ok) { target = null; $('search').value = ''; renderGrid(); }
+    $('search').focus();
+  }
+
+  $('search').addEventListener('input', renderGrid);
+  $('search').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const used = usedSet();
+      const h = filtered().find((x) => !used.has(x.id));
+      if (h) pickHero(h);
+    } else if (e.key === 'Escape') {
+      $('search').value = ''; target = null; renderGrid(); renderBoard();
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    // Ctrl+Z undoes a draft step only on the Draft tab, and never while typing (it is text undo there)
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && document.body.dataset.tab === 'draft' && !e.target.closest('form, input, textarea, select')) { e.preventDefault(); send('undo'); }
+  });
+  // ---------- tabs: Draft / Setup / On air / Check (remembered per device) ----------
+  const TABS = ['draft', 'setup', 'air', 'check'];
+  function setTab(t) {
+    if (!TABS.includes(t)) t = 'draft';
+    document.body.dataset.tab = t;
+    [...$('tabs').children].forEach((b) => b.classList.toggle('on', b.dataset.tab === t));
+    try { localStorage.setItem('dbo.controlTab', t); } catch {}
+    if (t === 'draft') $('search').focus({ preventScroll: true });
+  }
+  $('tabs').addEventListener('click', (e) => { const b = e.target.closest('button[data-tab]'); if (b) setTab(b.dataset.tab); });
+  setTab((() => { try { return localStorage.getItem('dbo.controlTab'); } catch { return null; } })());
+  $('attrSeg').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    attr = b.dataset.attr;
+    [...$('attrSeg').children].forEach((x) => x.classList.toggle('on', x === b));
+    renderGrid();
+  });
+
+  // ---------- header / clock ----------
+  $('modeSeg').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) send('mode', { mode: b.dataset.mode }); });
+  $('visBtn').onclick = () => send('visible', { visible: !S.visible });
+  $('undo').onclick = () => send('undo');
+  document.querySelectorAll('[data-score]').forEach((b) => b.onclick = () => {
+    const side = b.dataset.score;
+    const score = Math.max(0, (Number(S?.teams[side].score) || 0) + Number(b.dataset.d));
+    send('teams', { teams: { [side]: { score } } });
+  });
+  $('swap').onclick = () => send('swap');
+  $('reset').onclick = () => { if (confirm('Clear all picks, bans and player assignments?')) send('reset'); };
+  $('tStart').onclick = () => send('timer', { cmd: 'start' });
+  $('tPause').onclick = () => send('timer', { cmd: S?.timer.running ? 'pause' : 'resume' });
+  $('tStop').onclick = () => send('timer', { cmd: 'stop' });
+  $('autoTimer').onchange = (e) => send('autoTimer', { value: e.target.checked });
+  $('copyUrl').onclick = async () => {
+    const url = location.origin + '/overlay';
+    try { await navigator.clipboard.writeText(url); toast('Copied ' + url, true); } catch { prompt('OBS browser source URL:', url); }
+  };
+  $('cacheStill').onclick = () => send('precache', { anim: false });
+  $('cacheAnim').onclick = () => { if (confirm('Animated portraits are a large download. Continue?')) send('precache', { anim: true }); };
+
+  const fmt = (s) => { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+  function tick() {
+    if (!S) return;
+    const now = Date.now() + offset;
+    const t = S.timer;
+    const main = t.running ? (t.endsAt - now) / 1000 : t.remaining;
+    let label = fmt(main);
+    if (t.running && main < 0 && S.active && S.mode === 'manual') label = 'R ' + fmt(S.reserve[S.active.side] + main);
+    $('clock').textContent = label;
+    $('clock').style.color = t.running ? (main < 0 ? 'var(--danger)' : 'var(--text)') : 'var(--muted)';
+    $('tPause').textContent = t.running ? 'Pause' : 'Resume';
+    $('res-left').textContent = fmt(S.reserve.left);
+    $('res-right').textContent = fmt(S.reserve.right);
+    const age = S.gsi.lastAt ? (now - S.gsi.lastAt) / 1000 : Infinity;
+    $('gsiDot').classList.toggle('live', age < 5);
+    $('gsiPill').lastChild.textContent = S.gsi.lastAt ? (age < 5 ? 'GSI: live' : `GSI: last ${Math.round(age)}s ago`) : 'GSI: no data';
+  }
+  setInterval(() => { tick(); renderWarnings(); }, 500);
+
+  // ---------- setup form ----------
+  const form = $('setup');
+  form.addEventListener('input', () => { dirty = true; });
+  const ROLE_SHORT = { carry: 'Carry', mid: 'Mid', offlane: 'Off', soft: 'Pos 4', hard: 'Pos 5', standin: 'Stand-in', coach: 'Coach' };
+  function renderRosters() {
+    for (const side of SIDES) {
+      const t = S.teams[side];
+      const list = (t.players || []).map((p, i) => p ? `${t.captain === i ? '<b style="color:var(--gold-hi)">' + esc(p) + ' (C)</b>' : esc(p)}${t.roles?.[i] ? ' <span style="opacity:.6">' + (ROLE_SHORT[t.roles[i]] || t.roles[i]) + '</span>' : ''}${t.photos?.[i] ? ' 📷' : ''}` : '').filter(Boolean);
+      $('roster-' + side).innerHTML = list.length ? 'Roster: ' + list.join(' · ') + ' — <a href="/teams" style="color:var(--gold)">edit on the Teams page</a>' : 'No roster — load a team from the database, or add one on the <a href="/teams" style="color:var(--gold)">Teams page</a>.';
+    }
+  }
+  $('evUpload').onclick = () => $('evFile').click();
+  $('evFile').onchange = async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = await fetch('/api/upload-logo', { method: 'POST', headers: { 'x-filename': encodeURIComponent(f.name), 'content-type': 'application/octet-stream' }, body: f }).then((x) => x.json()).catch(() => ({}));
+    if (!r.ok) return toast(r.error || 'Upload failed');
+    await send('event', { event: { logo: r.path } });
+    form.elements.eventLogo.value = r.path; toast('Event logo updated', true);
+  };
+  function fillForm() {
+    const f = form.elements;
+    f.title.value = S.event.title; f.stage.value = S.event.stage || ''; f.format.value = S.event.format; f.eventLogo.value = S.event.logo;
+    f.firstPick.value = S.firstPick; f.radiantSide.value = S.radiantSide;
+    for (const side of SIDES) {
+      const t = S.teams[side];
+      f[side + 'Name'].value = t.name; f[side + 'Tag'].value = t.tag; f[side + 'Score'].value = t.score;
+      f[side + 'Logo'].value = t.logo; f[side + 'Color'].value = /^#[0-9a-f]{6}$/i.test(t.color) ? t.color : '#888888';
+    }
+    f.resLeft.value = Math.round(S.reserve.left); f.resRight.value = Math.round(S.reserve.right);
+    dirty = false;
+  }
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const f = form.elements;
+    const team = (side) => ({
+      name: f[side + 'Name'].value, tag: f[side + 'Tag'].value, score: f[side + 'Score'].value, logo: f[side + 'Logo'].value, color: f[side + 'Color'].value,
+    });
+    await send('event', { event: { title: f.title.value, stage: f.stage.value, format: f.format.value, logo: f.eventLogo.value } });
+    await send('teams', { teams: { left: team('left'), right: team('right') } });
+    if (f.firstPick.value !== S.firstPick) await send('firstPick', { side: f.firstPick.value });
+    if (f.radiantSide.value !== S.radiantSide) await send('radiantSide', { side: f.radiantSide.value });
+    await send('reserve', { reserve: { left: f.resLeft.value, right: f.resRight.value } });
+    dirty = false; fillForm(); toast('Applied', true);
+  });
+  $('revert').onclick = fillForm;
+
+  // ---------- portrait framing ----------
+  let fSlug = '';
+  function renderFramer() {
+    if (!S || !heroes.length) return;
+    const picked = SIDES.flatMap((s) => S.slots[s].picks).filter((x) => x != null).map((id) => heroById.get(id)).filter(Boolean);
+    const pickedIds = new Set(picked.map((h) => h.id));
+    const opts = (picked.length ? '<optgroup label="Picked now">' + picked.map((h) => `<option value="${h.slug}">${esc(h.name)}</option>`).join('') + '</optgroup>' : '') +
+      '<optgroup label="All heroes">' + heroes.filter((h) => !pickedIds.has(h.id)).map((h) => `<option value="${h.slug}">${esc(h.name)}</option>`).join('') + '</optgroup>';
+    const sel = $('fHero');
+    if (sel._opts !== opts) { sel.innerHTML = opts; sel._opts = opts; }
+    if (!fSlug) fSlug = picked[0]?.slug || heroes[0]?.slug || '';
+    if (document.activeElement !== sel) sel.value = fSlug;
+    if ($('fPrev')._slug !== fSlug) { $('fPrev').src = '/overlay?bg=1&solo=' + encodeURIComponent(fSlug); $('fPrev')._slug = fSlug; }
+    const o = (S.display.heroFraming || {})[fSlug] || {};
+    $('fVals').textContent = `x ${(o.x || 0).toFixed(2)} · y ${(o.y || 0).toFixed(2)} · zoom ${(o.zoom || 1).toFixed(2)}` + (Object.keys(o).length ? '' : ' (auto)');
+  }
+  $('fHero').onchange = () => { fSlug = $('fHero').value; renderFramer(); };
+  document.querySelectorAll('[data-f]').forEach((b) => b.onclick = () => {
+    if (!fSlug) return;
+    const o = (S.display.heroFraming || {})[fSlug] || {};
+    const x = o.x || 0, y = o.y || 0, zoom = o.zoom || 1, step = 0.03;
+    const f = b.dataset.f;
+    if (f === 'reset') return send('framing', { slug: fSlug, reset: true });
+    const next = {
+      left: { x: x + step }, right: { x: x - step },      // arrows move the HERO, so the crop moves the other way
+      up: { y: y + step }, down: { y: y - step },
+      center: { x: 0 },
+      zin: { zoom: +(zoom * 1.08).toFixed(3) }, zout: { zoom: +(zoom / 1.08).toFixed(3) },
+    }[f];
+    send('framing', { slug: fSlug, ...next });
+  });
+
+  // ---------- stats popup + GSI automation ----------
+  $('popOn').onchange = (e) => send('statPopup', { enabled: e.target.checked });
+  $('popBan').onchange = (e) => send('statPopup', { onBan: e.target.checked });
+  $('popSec').onchange = (e) => send('statPopup', { seconds: Number(e.target.value) });
+  $('autoAssign').onchange = (e) => send('autoAssign', { value: e.target.checked });
+  $('autoTeams').onchange = (e) => send('autoTeams', { value: e.target.checked });
+  $('recordStats').onchange = (e) => send('recordStats', { value: e.target.checked });
+  $('popTest').onclick = () => { const id = Number($('popHero').value); if (id) send('statPopup', { test: id, side: S.active?.side || 'left' }); };
+  document.querySelectorAll('[data-pp]').forEach((b) => b.onclick = () => {
+    const c = S.statPopup, st = 12;
+    send('statPopup', { up: { y: c.y + st }, down: { y: c.y - st }, left: { x: c.x - st }, right: { x: c.x + st }, home: { x: 24, y: 132 } }[b.dataset.pp]);
+  });
+
+  // ---------- full-screen stats cards ----------
+  let SC = { cards: [], groups: [] };
+  async function loadStatCards() {
+    try { SC = await (await fetch('/api/statcards', { cache: 'no-store' })).json(); } catch { return; }
+    const groups = SC.groups.length ? SC.groups : [{ id: undefined, label: 'Cards' }];
+    $('scGroups').innerHTML = (SC.error ? `<p class="hint" style="color:var(--warn)">${esc(SC.error)}</p>` : '') + groups.map((g) => {
+      const cards = SC.cards.filter((c) => !SC.groups.length || c.group === g.id);
+      if (!cards.length) return '';
+      return `<div class="sc-grp"><h4>${esc(g.label)}</h4><div class="btns">${cards.map((c) => `<button data-sc="${esc(c.id)}">${esc(c.button || c.title || c.name || c.id)}</button>`).join('')}</div></div>`;
+    }).join('');
+    document.querySelectorAll('[data-sc]').forEach((b) => b.onclick = () => send('statCard', { id: S?.statCard?.id === b.dataset.sc ? null : b.dataset.sc }));
+    renderStatCards();
+  }
+  function stepCard(dir) {
+    if (!SC.cards.length) return;
+    const i = SC.cards.findIndex((c) => c.id === S?.statCard?.id);
+    const n = i < 0 ? (dir > 0 ? 0 : SC.cards.length - 1) : (i + dir + SC.cards.length) % SC.cards.length;
+    send('statCard', { id: SC.cards[n].id });
+  }
+  $('scPrev').onclick = () => stepCard(-1);
+  $('scNext').onclick = () => stepCard(1);
+  $('scHide').onclick = () => send('statCard', { id: null });
+  $('scAuto').onchange = (e) => send('statCard', { autoHide: Number(e.target.value) });
+  function renderStatCards() {
+    if (!S || !S.statCard) return;
+    const id = S.statCard.id;
+    document.querySelectorAll('[data-sc]').forEach((b) => b.classList.toggle('on', b.dataset.sc === id));
+    const c = SC.cards.find((x) => x.id === id);
+    $('scNow').textContent = c ? `On air: ${c.button || c.title || c.name}` : 'Nothing on screen';
+    if (document.activeElement !== $('scAuto')) $('scAuto').value = String(S.statCard.autoHide || 0);
+  }
+  loadStatCards();
+
+  // ---------- sound effects ----------
+  const SFX_LIST = [['pick', 'Pick'], ['ban', 'Ban'], ['player', 'Player name'], ['photo', 'Player photo'], ['score', 'Score point'], ['turn', 'Next turn'],
+    ['popup', 'Stats popup'], ['card-in', 'Stat card in'], ['bars', 'Stat card bars'], ['card-out', 'Stat card out'], ['ingame', 'In-game card'], ['overlay-in', 'Bar in'], ['overlay-out', 'Bar out']];
+  $('sfxTests').innerHTML = SFX_LIST.map(([k, l]) => `<button data-sfx="${k}">▶ ${l}</button>`).join('');
+  document.querySelectorAll('[data-sfx]').forEach((b) => b.onclick = () => send('sfx', { test: b.dataset.sfx }));
+  $('sfxOn').onchange = (e) => send('sfx', { enabled: e.target.checked });
+  $('sfxVol').oninput = (e) => { $('sfxVolTxt').textContent = e.target.value + '%'; };
+  $('sfxVol').onchange = (e) => send('sfx', { volume: Number(e.target.value) / 100 });
+  function renderSfx() {
+    if (!S || !S.sfx) return;
+    $('sfxOn').checked = S.sfx.enabled !== false;
+    if (document.activeElement !== $('sfxVol')) { $('sfxVol').value = Math.round((S.sfx.volume ?? .6) * 100); $('sfxVolTxt').textContent = $('sfxVol').value + '%'; }
+  }
+
+  // ---------- GSI check ----------
+  $('gsiAuto').onclick = () => send('mode', { mode: 'gsi' });
+  document.querySelectorAll('[data-dl]').forEach((b) => b.onclick = () => send('gsiDelay', { seconds: Number(b.dataset.dl) }));
+  $('gsiDelaySec').onchange = (e) => send('gsiDelay', { seconds: Number(e.target.value) });
+  const mmss = (s) => Math.floor(s / 60) + ':' + String(Math.round(s % 60)).padStart(2, '0');
+  document.querySelectorAll('#igStyle [data-st]').forEach((b) => b.onclick = () => send('ingameCard', { style: b.dataset.st }));
+  function renderGsiCheck() {
+    if (!S || !S.gsi) return;
+    const D = S.gsi.diag || {}, now = Date.now() + offset;
+    const age = S.gsi.lastAt ? (now - S.gsi.lastAt) / 1000 : Infinity;
+    const rows = [];
+    const add = (lvl, title, text) => rows.push(`<div class="ck ${lvl === 'mid' ? 'wn' : lvl}"><span class="i">${lvl === 'ok' ? '✓' : lvl === 'bad' ? '✗' : '!'}</span><b>${title}</b><span>${text}</span></div>`);
+    if (D.rejected && (!S.gsi.lastAt || D.lastRejectAt > S.gsi.lastAt))
+      add('bad', 'Token', `Dota is sending, but with token "${esc(D.lastRejectToken)}". The .cfg and the GSI_TOKEN secret on Cloudflare must be the same.`);
+    if (age === Infinity) add('bad', 'Receiving from Dota', 'Nothing received yet. Check: the .cfg is in <code>…\\dota 2 beta\\game\\dota\\cfg\\gamestate_integration\\</code> and ends in <b>.cfg</b> (not .cfg.txt); launch option <code>-gamestateintegration</code>; Dota restarted after adding the file; the uri in the .cfg is <code>' + location.origin + '/gsi</code>.');
+    else if (age > 15) add('mid', 'Receiving from Dota', `Last message ${Math.round(age)}s ago (${D.count} received). Dota only sends while you are in a game, replay or the draft.`);
+    else add('ok', 'Receiving from Dota', `${D.count} messages · ${esc(D.provider || 'Dota 2')}${D.gameState ? ' · ' + esc(D.gameState.toLowerCase().replace(/_/g, ' ')) : ''}${D.matchId ? ' · match ' + esc(D.matchId) : ''}`);
+    if (age !== Infinity) {
+      if (S.mode !== 'gsi') add('bad', 'Draft mode', 'The panel is in <b>Manual</b>, so picks from Dota are ignored. Press <b>Switch to Auto (GSI)</b>.');
+      else add('ok', 'Draft mode', 'Auto (GSI): picks and bans come from Dota.');
+      if (D.spectator) add('ok', 'Spectator data', `All ${D.players} players received (you are spectating / watching).`);
+      else add('bad', 'Spectator data', `Dota is only sending your own player${D.ownPlayer ? ' (' + esc(D.ownPlayer) + ')' : ''}. Hero picks per player and the in-game card need the game to be <b>watched</b>: lobby observer, Watch tab live game, or a replay.`);
+      if (D.draftPresent) add(D.draftPicks || D.draftBans ? 'ok' : 'mid', 'Draft', `${D.draftPicks} picks, ${D.draftBans} bans in Dota's draft data.`);
+      else if (D.heroFallback) add('mid', 'Draft', 'No draft data (joined after the draft, or a replay). Picks were filled from the heroes the players are on; bans aren\'t available this way.');
+      else add('mid', 'Draft', 'No draft data in this message. Dota sends it during the draft; after it, picks are taken from the players\' heroes.');
+      if (D.spectator) {
+        if (D.selected) add('ok', 'Selected hero', `${esc(D.selected.hero)} (${esc(D.selected.name)}) — the in-game card follows this.`);
+        else add('mid', 'Selected hero', 'No hero selected. Click a hero portrait at the top bar (or use the hero hotkeys) so the in-game card knows who to show.');
+        const ps = S.gsiPlayers || [];
+        const byId = ps.filter((p) => p.match && p.match.how === 'id').length, byName = ps.filter((p) => p.match && p.match.how === 'name').length;
+        const none = ps.filter((p) => !p.match).map((p) => esc(p.name || '?'));
+        add(none.length ? 'mid' : 'ok', 'Players → photos', `${byId} matched by Steam ID, ${byName} by name${none.length ? `, not found: ${none.join(', ')} — add their Steam ID on the Teams page (or Link to… in the In-game card section)` : ''}.`);
+      }
+      const c = S.card, st = (S.ingameCard && S.ingameCard.style) || 'photo';
+      if (S.ingameCard?.mode === 'off') add('mid', 'In-game card', 'Turned off (In-game player card → Off).');
+      else if (!c) add('mid', 'In-game card', 'Nothing to show yet (no selected hero, or the data is older than 30 s).');
+      else if (st === 'photo' && !c.photo) add('mid', 'In-game card', `${esc(c.name)} is selected but has no photo on the Teams page, so nothing shows (photo-only mode).`);
+      else add('ok', 'In-game card', `Showing ${esc(c.name)}${c.teamName ? ' (' + esc(c.teamName) + ')' : ''}.`);
+    }
+    // anti-snipe delay status
+    const dl = S.gsi.delay || 0;
+    document.querySelectorAll('[data-dl]').forEach((b) => b.classList.toggle('on', Number(b.dataset.dl) === dl));
+    if (document.activeElement !== $('gsiDelaySec')) $('gsiDelaySec').value = dl;
+    let dtxt = 'Off: the overlay follows Dota live.';
+    if (dl) {
+      const held = S.gsi.oldest ? Math.min(dl, (now - S.gsi.oldest) / 1000) : 0;
+      dtxt = `The overlay shows the game as it was ${mmss(dl)} ago. ` + (S.gsi.queued ? `Buffer: ${mmss(held)} held (${S.gsi.queued} updates).` + (held < dl - 2 ? ` Overlay starts updating in ${mmss(dl - held)}.` : '') : 'Buffer empty (no data from Dota).');
+    }
+    $('gsiDelayTxt').textContent = dtxt;
+    const html = rows.join('');
+    if ($('gsiChecks')._html !== html) { $('gsiChecks').innerHTML = html; $('gsiChecks')._html = html; }
+    $('gsiAuto').style.display = S.mode === 'gsi' ? 'none' : '';
+    document.querySelectorAll('#igStyle [data-st]').forEach((b) => b.classList.toggle('on', b.dataset.st === ((S.ingameCard && S.ingameCard.style) || 'photo')));
+  }
+  setInterval(renderGsiCheck, 1000);
+
+  // ---------- next match overlay ----------
+  fetch('/api/teams').then((r) => r.json()).then((ts) => { $('nmTeams').innerHTML = ['TBD', ...ts.map((t) => t.name)].map((n) => `<option value="${esc(n)}">`).join(''); }).catch(() => {});
+  document.querySelectorAll('#nmMode [data-m]').forEach((b) => b.onclick = () => send('nextMatch', { mode: b.dataset.m }));
+  // ---------- countdown live (/countdown) and rotating banner (/banner) ----------
+  $('cdSet').onclick = () => send('countdown', { minutes: Number($('cdMin').value) || 0 });
+  document.querySelectorAll('[data-cdadd]').forEach((b) => { b.onclick = () => send('countdown', { add: Number(b.dataset.cdadd) }); });
+  $('cdStop').onclick = () => send('countdown', { stop: true });
+  $('cdVis').onclick = () => send('countdown', { visible: !(S && S.countdown && S.countdown.visible !== false) });
+  $('cdLab').onchange = () => send('countdown', { label: $('cdLab').value });
+  setInterval(() => {
+    const c = S && S.countdown; if (!c) return;
+    const left = c.endsAt ? c.endsAt - (Date.now() + offset) : 0, s = Math.ceil(left / 1000);
+    $('cdNow').textContent = !c.endsAt ? 'Belum jalan' : left <= 0 ? 'Habis — overlay menampilkan "Segera live"'
+      : `Sisa ${Math.floor(s / 3600) ? Math.floor(s / 3600) + ':' : ''}${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+    $('cdVis').textContent = c.visible === false ? 'Tampilkan' : 'Sembunyikan';
+    if (document.activeElement !== $('cdLab')) $('cdLab').value = c.label || '';
+    const b = S.banner || {};
+    $('bnVis').textContent = b.visible === false ? 'Tampilkan' : 'Sembunyikan';
+    if (!$('bnCard').contains(document.activeElement) && $('bnCard').dataset.v !== String(b.v)) {
+      $('bnCard').dataset.v = String(b.v);
+      $('bnMsgs').value = (b.messages || []).join('\n'); $('bnSec').value = b.seconds || 6; $('bnX').value = b.x ?? 0; $('bnY').value = b.y ?? 0; $('bnW').value = b.w || 430;
+    }
+  }, 500);
+  // caster name plates: one row per frame
+  const csRow = (x = {}) => {
+    const r = document.createElement('div'); r.className = 'csrow'; r.style.cssText = 'display:grid;grid-template-columns:minmax(140px,1fr) repeat(4,84px) auto;gap:8px;align-items:end';
+    r.innerHTML = '<label>Nama<input data-k="name" maxlength="30"></label><label>X<input data-k="x" type="number"></label><label>Y<input data-k="y" type="number"></label>'
+      + '<label>Lebar<input data-k="w" type="number"></label><label>Tinggi<input data-k="h" type="number"></label><button class="danger" title="Hapus baris ini">✕</button>';
+    for (const [k, d] of Object.entries({ name: '', x: 160, y: 990, w: 400, h: 50 })) r.querySelector(`[data-k="${k}"]`).value = x[k] ?? d;
+    r.querySelector('button').onclick = () => r.remove();
+    $('csRows').appendChild(r);
+  };
+  $('csAdd').onclick = () => csRow();
+  setInterval(() => {
+    const k = S && S.caster; if (!k) return;
+    $('csVis').textContent = k.visible === false ? 'Tampilkan' : 'Sembunyikan';
+    if (!$('csCard').contains(document.activeElement) && $('csCard').dataset.v !== String(k.v)) {
+      $('csCard').dataset.v = String(k.v);
+      $('csRows').textContent = ''; (k.slots || []).forEach(csRow); $('csSec').value = k.seconds || 6;
+    }
+  }, 500);
+  $('csSave').onclick = () => send('caster', { seconds: Number($('csSec').value), slots: [...$('csRows').children].map((r) => Object.fromEntries([...r.querySelectorAll('[data-k]')].map((i) => [i.dataset.k, i.dataset.k === 'name' ? i.value : Number(i.value)]))) });
+  $('csVis').onclick = () => send('caster', { visible: !(S && S.caster && S.caster.visible !== false) });
+  setInterval(() => {
+    const c = S && S.chat; if (!c) return;
+    $('chVis').textContent = c.visible === false ? 'Tampilkan' : 'Sembunyikan';
+    $('chOn').textContent = c.on ? 'Stop baca chat' : 'Mulai baca chat';
+    $('chStatus').textContent = c.on || c.status ? 'Status: ' + (c.status || '…') : '';
+    if (!$('chCard').contains(document.activeElement) && $('chCard').dataset.v !== String(c.v)) {
+      $('chCard').dataset.v = String(c.v);
+      $('chVideo').value = c.video ? 'https://www.youtube.com/watch?v=' + c.video : ''; $('chMax').value = c.max || 12; $('chGround').value = c.ground || 785;
+    }
+  }, 500);
+  $('chSave').onclick = () => send('chat', { video: $('chVideo').value, max: Number($('chMax').value), ground: Number($('chGround').value) });
+  $('chOn').onclick = () => send('chat', S && S.chat && S.chat.on ? { on: false } : { video: $('chVideo').value, on: true });
+  $('chTest').onclick = () => send('chat', { test: true });
+  $('chVis').onclick = () => send('chat', { visible: !(S && S.chat && S.chat.visible !== false) });
+  $('bnSave').onclick = () => send('banner', { messages: $('bnMsgs').value.split('\n'), seconds: Number($('bnSec').value), x: Number($('bnX').value), y: Number($('bnY').value), w: Number($('bnW').value) });
+  $('bnVis').onclick = () => send('banner', { visible: !(S && S.banner && S.banner.visible !== false) });
+  $('nmVis').onclick = () => send('nextMatch', { visible: !(S && S.nextMatch && S.nextMatch.visible) });
+  $('nmMatch').onchange = (e) => send('nextMatch', { matchId: Number(e.target.value) });
+  $('nmTitle').onchange = (e) => send('nextMatch', { title: e.target.value });
+  const nmField = { nmA: 'a', nmB: 'b', nmRound: 'round', nmBo: 'bo', nmDate: 'date', nmTime: 'time' };
+  for (const [id, k] of Object.entries(nmField)) $(id).onchange = (e) => send('nextMatch', { custom: { [k]: e.target.value } });
+  document.querySelectorAll('[data-nmd]').forEach((b) => b.onclick = () => {
+    const d = Number(b.dataset.nmd);
+    send('nextMatch', { delayMin: d === 0 ? 0 : ((S && S.nextMatch && S.nextMatch.delayMin) || 0) + d });
+  });
+  const setNmPv = (w) => { $('nmPv').src = w ? '/nextmatch-wide?mute=1' : '/nextmatch?mute=1'; $('nmPv').parentElement.classList.toggle('wide', w); $('nmCard').querySelector('.nm').classList.toggle('widepv', w);
+    document.querySelectorAll('#nmPvSeg [data-pv]').forEach((b) => b.classList.toggle('on', (b.dataset.pv === 'wide') === w)); };
+  document.querySelectorAll('#nmPvSeg [data-pv]').forEach((b) => b.onclick = () => setNmPv(b.dataset.pv === 'wide'));
+  setNmPv(false);
+
+  // ---------- running text ----------
+  $('tkPv').src = '/ticker?mute=1&bg=1';
+  $('tkVis').onclick = () => send('ticker', { visible: !(S && S.ticker && S.ticker.visible) });
+  $('tkL1').onchange = (e) => send('ticker', { label1: e.target.value });
+  $('tkL2').onchange = (e) => send('ticker', { label2: e.target.value });
+  $('tkNext').onchange = (e) => send('ticker', { showNext: e.target.checked });
+  $('tkUp').onchange = (e) => send('ticker', { showUpcoming: e.target.checked });
+  $('tkRes').onchange = (e) => send('ticker', { showResults: e.target.checked });
+  $('tkMsgs').onchange = (e) => send('ticker', { messages: e.target.value.split('\n').map((x) => x.trim()).filter(Boolean) });
+  $('tkSpeed').oninput = (e) => { $('tkSpeedTxt').textContent = e.target.value; };
+  $('tkSpeed').onchange = (e) => send('ticker', { speed: Number(e.target.value) });
+  $('tkBottom').onchange = (e) => send('ticker', { bottom: Number(e.target.value) });
+  function renderTicker() {
+    if (!S || !S.ticker) return;
+    const t = S.ticker, keep = (id, v) => { if (document.activeElement !== $(id)) $(id).value = v ?? ''; };
+    $('tkVis').textContent = t.visible ? 'Hide' : 'Show'; $('tkVis').classList.toggle('on', !t.visible);
+    keep('tkL1', t.label1); keep('tkL2', t.label2); keep('tkSpeed', t.speed); keep('tkBottom', t.bottom);
+    if (document.activeElement !== $('tkMsgs')) $('tkMsgs').value = (t.messages || []).join('\n');
+    $('tkSpeedTxt').textContent = t.speed;
+    $('tkNext').checked = t.showNext; $('tkUp').checked = t.showUpcoming; $('tkRes').checked = t.showResults;
+  }
+  let nmInfo = null, nmSig = null;
+  async function loadNm() { try { nmInfo = await fetch('/api/nextmatch', { cache: 'no-store' }).then((r) => r.json()); } catch { return; } renderNm(); }
+  function renderNm() {
+    if (!S || !S.nextMatch) return;
+    const n = S.nextMatch;
+    const sig = JSON.stringify(n) + '|' + S.statsVersion;
+    if (sig !== nmSig) { nmSig = sig; loadNm(); return; }
+    document.querySelectorAll('#nmMode [data-m]').forEach((b) => b.classList.toggle('on', b.dataset.m === n.mode));
+    $('nmVis').textContent = n.visible ? 'Hide' : 'Show';
+    $('nmVis').classList.toggle('on', !n.visible);
+    $('nmMatchWrap').style.display = n.mode === 'match' ? '' : 'none';
+    $('nmCustom').style.display = n.mode === 'custom' ? '' : 'none';
+    const keep = (id, v) => { if (document.activeElement !== $(id)) $(id).value = v ?? ''; };
+    keep('nmTitle', n.title); keep('nmA', n.custom.a); keep('nmB', n.custom.b); keep('nmRound', n.custom.round); keep('nmBo', n.custom.bo || 3); keep('nmDate', n.custom.date); keep('nmTime', n.custom.time);
+    if (nmInfo) {
+      const opts = (nmInfo.choices || []).map((c) => `<option value="${c.id}">${esc(c.label)}</option>`).join('');
+      if ($('nmMatch')._opts !== opts) { $('nmMatch').innerHTML = opts; $('nmMatch')._opts = opts; }
+      if (document.activeElement !== $('nmMatch')) $('nmMatch').value = String(n.matchId ?? nmInfo.matchId ?? '');
+      $('nmNow').textContent = nmInfo.none ? 'No upcoming match found in the bracket.'
+        : `${n.visible ? 'On screen' : 'Hidden'}: ${nmInfo.matchId ? 'M' + nmInfo.matchId + ' · ' : ''}${nmInfo.round || ''} · ${nmInfo.a.name} vs ${nmInfo.b.name} · ${nmInfo.dayTxt || 'no date'}${nmInfo.time ? ' ' + nmInfo.time + ' ' + nmInfo.tz : ''}${n.delayMin ? ` (${n.delayMin > 0 ? '+' : ''}${n.delayMin} min)` : ''}`;
+    }
+  }
+  let popHeroesLoaded = false;
+  function renderPopup() {
+    if (!S || !S.statPopup) return;
+    const c = S.statPopup;
+    $('popOn').checked = c.enabled; $('popBan').checked = c.onBan;
+    if (document.activeElement !== $('popSec')) $('popSec').value = c.seconds;
+    $('popPos').textContent = `x ${c.x}px · ${c.y}px above the bar`;
+    $('autoAssign').checked = S.autoAssignPlayers !== false;
+    $('autoTeams').checked = S.autoTeams !== false;
+    $('recordStats').checked = S.recordStats !== false;
+    if (S.lastRecorded) $('lastRec').textContent = `Last saved: match ${S.lastRecorded.matchId} (${S.lastRecorded.winner} won) at ${new Date(S.lastRecorded.at).toLocaleTimeString()}.`;
+    if (!popHeroesLoaded && heroes.length) {
+      $('popHero').innerHTML = heroes.map((h) => `<option value="${h.id}">${esc(h.name)}</option>`).join('');
+      const rub = heroes.find((h) => h.slug === 'rubick'); if (rub) $('popHero').value = rub.id;
+      popHeroesLoaded = true;
+    }
+  }
+  fetch('/api/hero-stats').then((r) => r.json()).then((h) => { $('popData').textContent = `Stats loaded: ${h.matches} matches · ${h.drafts} with drafts · ${h.detailed} with hero detail.`; }).catch(() => {});
+
+  // ---------- in-game player card ----------
+  $('igMode').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) send('ingameCard', { mode: b.dataset.m }); });
+  $('igManual').onchange = () => {
+    const [side, index] = $('igManual').value.split(':');
+    send('ingameCard', { mode: 'manual', manual: side ? { side, index: Number(index) } : null });
+  };
+  $('igCopy').onclick = async () => { const url = location.origin + '/ingame'; try { await navigator.clipboard.writeText(url); toast('Copied ' + url, true); } catch { prompt('In-game OBS URL:', url); } };
+  document.querySelectorAll('[data-ig]').forEach((b) => b.onclick = () => {
+    const c = S.ingameCard, st = $('igFine').checked ? 2 : 10;
+    const m = { up: { y: c.y + st }, down: { y: c.y - st }, left: { x: c.x - st }, right: { x: c.x + st }, home: { x: 300, y: 0, scale: 1 },
+      bigger: { scale: +(c.scale * 1.05).toFixed(2) }, smaller: { scale: +(c.scale / 1.05).toFixed(2) } }[b.dataset.ig];
+    send('ingameCard', m);
+  });
+  function renderIngame() {
+    if (!S) return;
+    const c = S.ingameCard;
+    [...$('igMode').children].forEach((b) => b.classList.toggle('on', b.dataset.m === c.mode));
+    const opts = '<option value="">— choose player —</option>' + SIDES.map((side) => {
+      const t = S.teams[side];
+      return `<optgroup label="${esc(t.name)}">` + (t.players || []).map((p, i) => p ? `<option value="${side}:${i}">${esc(p)}</option>` : '').join('') + '</optgroup>';
+    }).join('');
+    const ms = $('igManual');
+    if (ms._opts !== opts) { ms.innerHTML = opts; ms._opts = opts; }
+    if (document.activeElement !== ms) ms.value = c.manual ? `${c.manual.side}:${c.manual.index}` : '';
+    $('igManualWrap').style.opacity = c.mode === 'manual' ? 1 : .5;
+    $('igPos').textContent = `x ${c.x}px · y ${c.y}px · size ${Math.round(c.scale * 100)}%`;
+    const card = S.card;
+    const hero = card && card.heroId != null ? heroById.get(card.heroId) : null;
+    $('igNow').innerHTML = c.mode === 'off' ? '<small>CARD</small>Off' : card
+      ? `<small>On screen</small>${esc(card.name)}${hero ? ' · ' + esc(hero.name) : ''}${card.matched === 'id' || card.matched === 'manual' ? '' : card.matched === 'name' ? ' <span style="color:var(--warn);font-size:12px">(matched by name)</span>' : ' <span style="color:var(--warn);font-size:12px">(not in database)</span>'}`
+      : `<small>On screen</small>${c.mode === 'auto' ? 'Nothing — observer has no hero selected' : 'Nothing — choose a player'}`;
+    // detected players
+    const list = S.gsiPlayers || [];
+    const pick = dbTeams.map((t) => `<optgroup label="${esc(t.name)}">` + t.players.map((p, i) => p ? `<option value="${t.id}:${i}">${esc(p)}</option>` : '').join('') + '</optgroup>').join('');
+    const html = list.length ? list.map((p) => {
+      const h = p.heroId != null ? heroById.get(p.heroId) : null;
+      const status = p.match ? (p.match.how === 'id' ? `<span class="ok">✓ ${esc(p.match.name)}</span>` : `<span class="warn">≈ ${esc(p.match.name)}</span>`) : '<span class="warn">not linked</span>';
+      const linker = p.accountId && (!p.match || p.match.how !== 'id') ? `<select data-acc="${p.accountId}"><option value="">Link to…</option>${pick}</select>` : '';
+      return `<div class="igrow ${p.selected ? 'sel' : ''}"><span class="tm ${p.team}"></span><span class="nm">${esc(p.name || '?')}<small>${esc(p.accountId || 'no id')}</small></span>${h ? `<img src="/img/icon/${h.slug}" alt="" title="${esc(h.name)}">` : '<span></span>'}<span>${status}</span><span>${linker}</span></div>`;
+    }).join('') : '<p class="hint" style="margin:0">No in-game data yet. Players appear here once the observer client is in a match with GSI working.</p>';
+    const tb = $('igTable');
+    if (tb._html !== html && !tb.contains(document.activeElement)) {
+      tb.innerHTML = html; tb._html = html;
+      tb.querySelectorAll('select[data-acc]').forEach((sel) => sel.onchange = async () => {
+        if (!sel.value) return;
+        const [teamId, index] = sel.value.split(':');
+        if (await send('linkPlayer', { accountId: sel.dataset.acc, teamId, index: Number(index) })) { toast('Player linked', true); loadDb(); }
+      });
+    }
+  }
+
+  // ---------- team database ----------
+  let dbTeams = [];
+  async function loadDb() {
+    try { dbTeams = await fetch('/api/teams').then((r) => r.json()); } catch { dbTeams = []; }
+    renderDb();
+  }
+  function renderDb() {
+    for (const side of SIDES) {
+      const sel = $(side === 'left' ? 'dbLeft' : 'dbRight');
+      const opts = '<option value="">' + (dbTeams.length ? '— choose team —' : 'No teams yet — add them on the Teams page') + '</option>' +
+        dbTeams.map((t) => `<option value="${t.id}">${esc(t.name)}${t.tag ? ' (' + esc(t.tag) + ')' : ''}</option>`).join('');
+      if (sel._opts !== opts) { sel.innerHTML = opts; sel._opts = opts; }
+      if (document.activeElement !== sel) sel.value = S?.teams[side].dbId && dbTeams.some((t) => t.id === S.teams[side].dbId) ? S.teams[side].dbId : '';
+    }
+  }
+  for (const side of SIDES) {
+    const sel = $(side === 'left' ? 'dbLeft' : 'dbRight');
+    sel.addEventListener('focus', loadDb);               // pick up teams added in another tab
+    sel.addEventListener('change', async () => {
+      if (!sel.value) return;
+      dirty = false;                                      // let the form refresh with the loaded team
+      const t = dbTeams.find((x) => x.id === sel.value);
+      if (await send('loadTeam', { side, teamId: sel.value })) toast(`${t ? t.name : 'Team'} loaded on the ${side}`, true);
+      sel.blur();
+    });
+  }
+  loadDb();
+
+  // ---------- state ----------
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function apply(st) {
+    const firstState = !S;
+    S = st;
+    offset = st.serverNow - Date.now();
+    document.body.classList.toggle('gsi', st.mode === 'gsi');
+    [...$('modeSeg').children].forEach((b) => b.classList.toggle('on', b.dataset.mode === st.mode));
+    $('visBtn').textContent = 'Overlay: ' + (st.visible ? 'shown' : 'hidden');
+    $('visBtn').classList.toggle('on', st.visible);
+    $('autoTimer').checked = st.autoTimer;
+    document.documentElement.style.setProperty('--left', st.teams.left.color);
+    document.documentElement.style.setProperty('--right', st.teams.right.color);
+    if (st.mode !== 'manual') target = null;
+    if (firstState || !dirty) fillForm();
+    const p = st.precache;
+    $('cacheStatus').textContent = p.total ? (p.running ? `Caching… ${p.done}/${p.total}` : `Cached ${p.done - p.failed}/${p.total} files${p.failed ? ` (${p.failed} unavailable)` : ''}.`) : '';
+    renderBoard(); renderGrid(); tick(); renderWarnings(); renderDb(); renderFramer(); renderIngame(); renderPopup(); renderStatCards(); renderSfx(); renderGsiCheck(); renderNm(); renderTicker(); renderRosters();
+  }
+
+  fetch('/api/heroes').then((r) => r.json()).then((list) => {
+    heroes = list; heroById = new Map(list.map((h) => [h.id, h]));
+    if (!list.some((h) => h.attr)) $('attrSeg').style.display = 'none';
+    const es = new EventSource('/events');
+    es.onopen = () => { connected = true; $('connPill').textContent = 'connected'; $('connPill').className = 'pill ok'; renderWarnings(); };
+    es.onerror = () => { connected = false; $('connPill').textContent = 'reconnecting…'; $('connPill').className = 'pill bad'; renderWarnings(); };
+    es.onmessage = (e) => { connected = true; apply(JSON.parse(e.data)); };
+  }).catch(() => { toast('Cannot reach the server — is it running?'); renderWarnings(); });
+})();
+document.querySelectorAll('.origin').forEach((e) => { e.textContent = location.origin; });
+</script>
+</body>
+</html>

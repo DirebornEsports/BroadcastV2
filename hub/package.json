@@ -1,0 +1,15 @@
+{
+  "name": "direborn-hub",
+  "private": true,
+  "description": "v1 broadcast Hub (draft, GSI, tournaments, teams, stats, on air) run locally inside Direborn Studio",
+  "scripts": {
+    "build": "node tools/build-manifest.mjs",
+    "dev": "node dev/local.mjs",
+    "test": "node test/run.mjs"
+  },
+  "dependencies": {
+    "animejs": "^4.5.0",
+    "selfsigned": "^5.5.0",
+    "werift": "^0.28.0"
+  }
+}

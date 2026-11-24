@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<script src="/vendor/anime.umd.min.js"></script><script src="/ui/motion.js"></script>
+<script src="/theme.js"></script>
+<script src="/ui/shell.js" defer></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Player Cam Control</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a1a12; --panel: #10291c; --panel2: #173d29; --panel3: #1f5236; --line: rgba(214,189,134,.28); --line-hi: rgba(214,189,134,.6);
+    --text: #f4e8c6; --muted: #b3bea9; --gold: #d6bd86; --gold-hi: #f3e4b8; --ok: #8fdc8f; --warn: #f0b94d; --danger: #e5604a; --danger-txt: #f6b1a4;
+    --font: Montserrat, "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; color: var(--text); font: 500 14px var(--font); min-height: 100vh;
+    background: linear-gradient(180deg, rgba(var(--bg-rgb),.88), rgba(var(--bg-rgb),.97)), url(/assets/clouds.jpg) center top / 1400px auto fixed, var(--bg); }
+  button, input, select { font: inherit; color: inherit; }
+  button { background: linear-gradient(180deg, var(--panel3), var(--panel2)); border: 1px solid var(--line-hi); border-radius: 7px; padding: 7px 13px; cursor: pointer; font-weight: 600; color: var(--text); }
+  button:hover { border-color: var(--gold-hi); color: var(--gold-hi); }
+  button.primary, button.on { background: linear-gradient(180deg, var(--gold-hi), var(--gold)); color: var(--panel); border-color: var(--gold-hi); }
+  button.danger { border-color: rgba(229,96,74,.7); color: var(--danger-txt); }
+  input, select { width: 100%; background: rgba(var(--shade-rgb),.75); border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; min-width: 0; color: var(--text); }
+  select option { background: var(--panel); }
+  input:focus, select:focus, button:focus-visible { outline: 2px solid var(--gold); outline-offset: -1px; }
+  label { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: 12px; font-weight: 600; color: var(--muted); }
+  label.check { flex-direction: row; align-items: center; gap: 8px; font-size: 13px; color: var(--text); }
+  label.check input { width: auto; accent-color: var(--gold); }
+  header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 18px; position: sticky; top: 0; z-index: 5;
+    background: linear-gradient(180deg, var(--panel2), var(--panel)); border-bottom: 2px solid var(--gold); }
+  header h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: 0; color: var(--gold-hi); }
+  .hdr-link { color: var(--gold); font-weight: 600; text-decoration: none; border: 1px solid var(--line-hi); padding: 7px 13px; border-radius: 7px; }
+  .sp { flex: 1; }
+  main { max-width: 1320px; margin: 0 auto; padding: 18px; display: grid; gap: 16px; }
+  .card { background: linear-gradient(180deg, rgba(var(--panel2-rgb),.86), rgba(var(--panel-rgb),.92)); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 12px; align-content: start; }
+  h2 { margin: 0; font-size: 12.5px; letter-spacing: 0; color: var(--gold); display: flex; align-items: center; gap: 10px; }
+  h2::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line-hi), transparent); }
+  .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+  .g3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .g2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .seg { display: inline-flex; border: 1px solid var(--line-hi); border-radius: 8px; overflow: hidden; }
+  .seg button { border: 0; border-radius: 0; background: transparent; }
+  .seg button.on { background: linear-gradient(180deg, var(--gold-hi), var(--gold)); color: var(--panel); }
+  .now { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: rgba(var(--shade-rgb),.5); font-weight: 600; line-height: 1.4; flex: 1; min-width: 280px; }
+  .now small { display: block; color: var(--muted); font-weight: 600; font-size: 11px; letter-spacing: 0; }
+  .hint { color: var(--muted); font-size: 12px; line-height: 1.55; margin: 0; }
+  .big { font-size: 20px; font-weight: 600; width: 110px; }
+  .warn { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--warn); background: rgba(178,80,0,.08); color: #8a3d00; font-weight: 600; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .tbl { display: grid; gap: 6px; }
+  .tr { display: grid; grid-template-columns: 1.2fr .9fr 1.5fr .9fr .9fr; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 8px; background: rgba(var(--shade-rgb),.45); border: 1px solid transparent; }
+  .tr.head { background: none; padding-top: 0; padding-bottom: 0; font-size: 11px; font-weight: 600; letter-spacing: 0; color: var(--muted); }
+  .tr.showing { border-color: var(--gold); background: rgba(var(--line-rgb),.1); }
+  .tr b { font-weight: 600; }
+  .bar { height: 6px; border-radius: 3px; background: rgba(0,0,0,.45); overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--warn); }
+  .bar i.full { background: var(--ok); }
+  .sub { font-size: 11px; color: var(--muted); font-weight: 600; margin-top: 3px; }
+  .c-ok { color: var(--ok); } .c-bad { color: var(--danger-txt); } .c-warn { color: var(--warn); } .c-gold { color: var(--gold-hi); }
+  .lnk { display: flex; gap: 10px; align-items: center; padding: 6px 8px; border-radius: 7px; background: rgba(var(--shade-rgb),.55); }
+  .lnk b { width: 100px; flex: none; }
+  .lnk span { flex: 1; min-width: 0; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lnk button { padding: 5px 10px; font-size: 12px; }
+  .pad { display: grid; grid-template-columns: repeat(3, 40px); gap: 4px; }
+  .pad button { padding: 6px 0; }
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%) translateY(80px); background: #3a1b14; border: 1px solid var(--danger); padding: 10px 18px; border-radius: 8px; font-weight: 600; transition: transform .25s; z-index: 9; }
+  .toast.ok { background: #183a24; border-color: var(--ok); }
+  .toast.show { transform: translateX(-50%); }
+  code { background: rgba(0,0,0,.35); padding: 1px 6px; border-radius: 4px; color: var(--gold-hi); }
+  .sync { border: 1px solid var(--line-hi); border-radius: 10px; padding: 10px 12px; display: grid; gap: 8px; background: rgba(var(--shade-rgb),.4); }
+  .sync-h { font-size: 12px; font-weight: 600; letter-spacing: 0; color: var(--gold); }
+  .syncbtn { font-size: 16px; padding: 12px 18px; flex: 1; }
+  #syncMark.armed { background: linear-gradient(180deg, #7a2a1d, #4f1b12); border-color: var(--danger); color: var(--danger-txt); }
+  #syncPlay:not(:disabled) { background: linear-gradient(180deg, var(--gold-hi), var(--gold)); color: var(--panel); border-color: var(--gold-hi); animation: pulse 1.2s infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 4px rgba(var(--line-rgb),.35); } }
+  .sync-st { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; min-height: 28px; }
+  .warnbox { border: 1px solid var(--warn); background: rgba(240,185,77,.1); border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.5; }
+  .rst, .kck { padding: 1px 7px; font-size: 13px; margin-left: 4px; }
+  .mics { display: grid; gap: 6px; }
+  .mic { display: grid; grid-template-columns: 140px 1fr 110px minmax(160px, 260px); gap: 12px; align-items: center; padding: 8px 10px; border-radius: 8px; background: rgba(var(--shade-rgb),.45); border: 1px solid transparent; }
+  .mic.muted { border-color: rgba(229,96,74,.45); }
+  .mic .bar { height: 10px; }
+  .mic .bar i { background: var(--ok); width: 0; transition: width .3s; }
+  .mic .bar i.hot { background: var(--warn); }
+  .mic button.mute { width: 110px; }
+  .mic button.mute.isMuted { background: linear-gradient(180deg, #7a2a1d, #4f1b12); border-color: var(--danger); color: var(--danger-txt); }
+  label.vol { flex-direction: row; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+  label.vol input { width: 160px; accent-color: var(--gold); padding: 0; }
+  label.vol span { width: 42px; color: var(--text); font-weight: 600; }
+  #audioOn.off { background: linear-gradient(180deg, #7a2a1d, #4f1b12); border-color: var(--danger); color: var(--danger-txt); }
+  @media (max-width: 980px) { .mic { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 980px) { .two { grid-template-columns: 1fr; } .tr { grid-template-columns: 1fr 1fr; } .tr.head { display: none; } }
+</style>
+<link rel="stylesheet" href="/ui/panel.css">
+</head>
+<body>
+<header>
+  <h1>Player cam</h1>
+  <a href="/control" class="hdr-link">← Control panel</a>
+  <a href="/logout" class="hdr-link">Logout</a>
+  <span class="sp"></span>
+  <span id="obsUrl" class="hint">OBS: <code id="obsCode">/cam?k=…</code> (1920 × 1080)</span>
+  <button id="copyObs">Copy OBS URL</button>
+</header>
+<main>
+  <div class="warn" id="gsiWarn" hidden>Anti-snipe GSI delay masih nyala (<span id="gsiWarnTxt"></span>). Untuk nonton DotaTV harus Off, kalau tidak cam & GSI tidak sinkron. <button id="gsiOff">Matikan GSI delay</button></div>
+
+  <section class="card">
+    <h2>Tampil di siaran</h2>
+    <div class="row" style="align-items:stretch">
+      <button id="vis">Sembunyikan</button>
+      <div class="seg" id="mode"><button data-m="auto" title="Ikut hero yang dipilih observer">Auto (ikut observer)</button><button data-m="manual">Manual</button><button data-m="off">Off</button></div>
+      <label id="manualWrap" style="width:200px">Cam manual<select id="manual"></select></label>
+      <div class="now" id="now"><small>Tampil sekarang</small>—</div>
+    </div>
+  </section>
+
+  <section class="card" id="teamCard">
+    <h2>Team cam <span class="hint" style="font-weight:600">— satu kamera yang menyorot satu tim, source OBS terpisah</span></h2>
+    <div class="row" style="align-items:stretch">
+      <button id="tcVis">Sembunyikan</button>
+      <div class="seg" id="tcShow"><button data-s="left" id="tcShowL">Tim kiri</button><button data-s="right" id="tcShowR">Tim kanan</button><button data-s="off">Off</button></div>
+      <div class="now" id="tcNow"><small>Team cam</small>—</div>
+    </div>
+    <div class="g2">
+      <div class="tcside"><label><span id="tcLblL">Kamera tim kiri</span><select id="tcLeft"></select></label><div class="row"><button id="tcLinkL">Copy link kamera</button><span class="hint" id="tcStL"></span></div></div>
+      <div class="tcside"><label><span id="tcLblR">Kamera tim kanan</span><select id="tcRight"></select></label><div class="row"><button id="tcLinkR">Copy link kamera</button><span class="hint" id="tcStR"></span></div></div>
+    </div>
+    <div class="row" style="align-items:flex-end">
+      <div class="g3" style="flex:1;min-width:240px"><label>X<input id="tcX" inputmode="numeric"></label><label>Y<input id="tcY" inputmode="numeric"></label><label>Lebar<input id="tcW" inputmode="numeric"></label></div>
+      <label class="check"><input type="checkbox" id="tcName"> Nama + logo tim</label>
+      <button id="tcCopyObs">Copy OBS URL team cam</button>
+      <button id="tcCopyFull">Copy OBS URL full 16:9</button>
+    </div>
+    <p class="hint">Kamera tim dikirim lewat halaman <code>/kirim</code> seperti cam pemain (link di atas sudah berisi nama tim). Pilih kamera itu di sini — kamera yang dipilih tidak muncul di <code>/cam</code> pemain, tapi tampil di Browser source <code>/teamcam</code> (1920 × 1080) dengan delay &amp; Sync horn yang sama. <b>Full 16:9</b> = kamera saja memenuhi seluruh layar tanpa frame/nama (X/Y/Lebar tidak dipakai). Suara mic kamera tim ikut keluar di <code>/teamcam</code> saat tim itu tampil (atur di Audio mic di bawah).</p>
+  </section>
+
+  <section class="card" id="audioCard">
+    <h2>Audio mic pemain</h2>
+    <div class="row" style="align-items:center">
+      <button id="audioOn">Audio: ON</button>
+      <label class="vol">Master <input type="range" id="master" min="0" max="200" step="5"><span id="masterTxt">100%</span></label>
+      <button id="muteAll">Mute semua</button><button id="unmuteAll">Nyalakan semua</button>
+    </div>
+    <div class="mics" id="mics"><p class="hint">Belum ada pemain.</p></div>
+    <p class="hint">Suara semua mic dicampur di source <code>/cam</code> dan di-delay sama seperti videonya — mute/volume berlaku untuk suara yang keluar di siaran. Di OBS centang <b>Control audio via OBS</b> pada Browser source <code>/cam</code>, supaya suaranya muncul di Audio Mixer. Meter menunjukkan suara yang sedang keluar (setelah delay), juga saat pemain di-mute.</p>
+  </section>
+
+  <div class="two">
+    <section class="card">
+      <h2>Delay &amp; tampilan</h2>
+      <div class="row">
+        <label>Delay (detik)<input id="delay" class="big" inputmode="decimal"></label>
+        <button data-d="-1">−1</button><button data-d="-0.1">−0.1</button><button data-d="0.1">+0.1</button><button data-d="1">+1</button>
+      </div>
+      <p class="hint">Samakan dengan delay DotaTV turnamen (maks 1020 dtk = 17 menit; untuk delay di atas 5 menit pakai kualitas cam 540p/360p supaya OBS tidak berat).</p>
+      <div class="sync">
+        <div class="sync-h">Sync horn</div>
+        <div class="row">
+          <button id="syncMark" class="syncbtn">① Horn LIVE</button>
+          <button id="syncPlay" class="syncbtn" disabled>② Horn di stream</button>
+          <button id="syncCancel" hidden>Batal</button>
+        </div>
+        <div class="sync-st" id="syncSt"></div>
+        <p class="hint">① tekan pas horn 0:00 bunyi di game <b>live</b> (client yang nonton live / suara pemain di <code>/lihat</code>). ② tekan pas horn yang sama bunyi di <b>stream</b> (DotaTV). Jarak keduanya langsung jadi delay, dan cam lanjut tanpa jeda karena gambar sejak ① sudah disimpan. Maks 17 menit. Keyboard: <b>F8</b> = ①, <b>F9</b> = ②.</p>
+      </div>
+      <div class="g2">
+        <label>Minimal tampil (detik)<input id="minHold" inputmode="decimal"></label>
+        <label>Codec cam<small id="codecNote" class="c-warn" style="display:block"></small><select id="codec"><option value="h264">H.264 — kartu grafis (ringan)</option><option value="vp8">VP8 — CPU (cadangan)</option></select></label>
+        <label>Kalau hero tanpa cam<select id="noCam"><option value="silhouette">Siluet + nama pemain</option><option value="hide">Sembunyikan cam</option><option value="keep">Tetap cam terakhir</option></select></label>
+      </div>
+      <div class="row" style="align-items:flex-start;gap:16px">
+        <div class="g3" style="flex:1;min-width:240px">
+          <label>X<input id="x" inputmode="numeric"></label>
+          <label>Y<input id="y" inputmode="numeric"></label>
+          <label>Lebar<input id="w" inputmode="numeric"></label>
+        </div>
+        <div>
+          <div class="pad">
+            <span></span><button data-mv="up" aria-label="Naik">▲</button><span></span>
+            <button data-mv="left" aria-label="Kiri">◀</button><button data-mv="home" aria-label="Posisi awal" title="Posisi awal (kiri HUD hero)">●</button><button data-mv="right" aria-label="Kanan">▶</button>
+            <span></span><button data-mv="down" aria-label="Turun">▼</button><span></span>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <button data-sz="-16">− Ukuran</button><button data-sz="16">+ Ukuran</button>
+        <label class="check"><input type="checkbox" id="fine"> langkah halus (2 px)</label>
+        <label class="check"><input type="checkbox" id="showName"> Tampilkan nama pemain</label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Status cam</h2>
+      <div class="row"><button id="kickAll" class="danger">Putus semua pemain</button><button id="resetAll" class="danger">Reset buffer semua cam</button><span class="hint">Kosongkan rekaman delay di OBS — cam mulai mengisi lagi dari nol (butuh waktu sebanyak delay).</span></div>
+      <div class="tbl" id="tbl"><p class="hint">Belum ada laporan dari overlay. Pastikan Browser source <code>/cam</code> sudah ada di OBS dan server cam sudah di-setting.</p></div>
+      <p class="hint" id="statusAge"></p>
+      <div class="warnbox" id="upWarn" hidden></div>
+      <p class="hint">Cam yang baru nyambung butuh waktu sebanyak delay sebelum bisa tampil — nyalakan cam pemain sebelum draft. Pratinjau gambar ada di OBS; panel ini sengaja tidak menarik cam lagi supaya hemat kuota.</p>
+    </section>
+  </div>
+
+  <div class="two">
+    <section class="card">
+      <h2>Server cam (Cloudflare Realtime)</h2>
+      <p class="hint" id="srvInfo">Mengecek setting…</p>
+      <div class="row" style="align-items:center">
+        <button class="primary" id="testConn">Tes koneksi</button>
+        <a class="hdr-link" id="openLihat" href="#" target="_blank" rel="noopener">Buka cek cam</a>
+        <span id="connRes" class="hint" style="font-weight: 600"></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Link untuk pemain</h2>
+      <div class="row"><label style="width:240px">Tim<select id="team"></select></label><button id="copyAll">Copy semua</button></div>
+      <div class="tbl" id="links"></div>
+      <p class="hint">Kirim link ke masing-masing pemain. Mereka buka di Chrome/Edge di PC, pilih webcam, tekan "Mulai kirim cam".</p>
+    </section>
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  let S = null, C = null, teams = [], status = null, toastT;
+  const HOME = { x: 293, y: 871 };
+  function toast(m, ok) { const t = $('toast'); t.textContent = m; t.className = 'toast show' + (ok ? ' ok' : ''); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2400); }
+  async function send(type, payload = {}) {
+    try {
+      const r = await fetch('/api/action', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type, ...payload }) });
+      const j = await r.json().catch(() => ({}));
+      if (!j.ok) toast(j.error || 'Gagal'); return j.ok;
+    } catch { toast('Server overlay tidak bisa dihubungi'); return false; }
+  }
+  const cam = (p) => send('playerCam', p);
+  $('resetAll').onclick = () => { if (confirm('Reset buffer semua cam? Cam hilang dari siaran sampai buffer terisi lagi.')) cam({ resetBuffer: '' }); };
+  async function kick(name) {
+    try {
+      const r = await fetch('/api/cam/kick', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name }) }).then((x) => x.json());
+      if (!r.ok) throw new Error(r.error || 'Gagal');
+      toast(r.kicked.length ? 'Diputus: ' + r.kicked.join(', ') : 'Tidak ada pemain yang tersambung', true);
+      pollStatus();
+    } catch (e) { toast(e.message); }
+  }
+  $('kickAll').onclick = () => { if (confirm('Putus cam SEMUA pemain? Halaman kirim mereka berhenti; mereka harus tekan Mulai lagi untuk tersambung.')) kick(''); };
+  $('tbl').addEventListener('click', (e) => { const k = e.target.closest('.kck'); if (k && confirm('Putus cam ' + k.dataset.n + '?')) kick(k.dataset.n); });
+  $('tbl').addEventListener('click', (e) => { const b = e.target.closest('.rst'); if (b && confirm('Reset buffer cam ' + b.dataset.n + '?')) cam({ resetBuffer: b.dataset.n }); });
+  let skew = 0;
+  const syncMark = () => { if (C && C.syncAt && !confirm('Tanda horn sudah ada. Tandai ulang dari sekarang?')) return; cam({ sync: 'mark', at: Date.now() + skew }); };
+  const syncPlay = () => { if (C && C.syncAt) cam({ sync: 'play', at: Date.now() + skew }); };
+  $('syncMark').onclick = syncMark; $('syncPlay').onclick = syncPlay;
+  $('syncCancel').onclick = () => cam({ sync: 'cancel' });
+  addEventListener('keydown', (e) => { if (e.key === 'F8') { e.preventDefault(); syncMark(); } else if (e.key === 'F9') { e.preventDefault(); syncPlay(); } });
+  const mmss = (sec) => Math.floor(sec / 60) + ':' + String(Math.floor(sec % 60)).padStart(2, '0') + '.' + Math.floor((sec * 10) % 10);
+  // the delay buffer lives in the OBS /cam source: warn when it has not been running long enough
+  function bufferNote() {
+    const fresh = status && status.age != null && status.age < 15000;
+    if (!fresh) return '';
+    const up = status.up || 0, need = Number(C.delay) || 0;
+    const ages = (status.cams || []).filter((c) => c.online).map((c) => c.age || 0);
+    const minAge = ages.length ? Math.min(...ages) : 0;
+    if (up && up < need + 5) return `Source <code>/cam</code> di OBS baru jalan <b>${mmss(up)}</b> — buffernya mulai dari nol saat itu, jadi cam baru tampil ±${mmss(Math.max(0, need - up))} lagi. Buffer delay ada di source OBS itu sendiri: source <code>/cam</code> harus <b>sudah jalan sebelum ①</b> dan tidak boleh di-refresh. Di properti Browser source <b>matikan</b> “Shutdown source when not visible” dan “Refresh browser when scene becomes active”, dan jangan klik Refresh.`;
+    if (ages.length && minAge < need + 5) return `Ada cam yang baru nyambung ${mmss(minAge)} lalu (pemain baru mulai kirim / reconnect) — cam itu baru tampil setelah ${mmss(need)} terkumpul.`;
+    return '';
+  }
+  function renderSync() {
+    if (!C) return;
+    const note = bufferNote(); $('upWarn').hidden = !note; if (note) $('upWarn').innerHTML = note;
+    const armed = !!C.syncAt;
+    $('syncMark').classList.toggle('armed', armed); $('syncMark').textContent = armed ? '① Ditandai — ulang' : '① Horn LIVE';
+    $('syncPlay').disabled = !armed; $('syncCancel').hidden = !armed;
+    if (armed) { const el = Math.max(0, (Date.now() + skew - C.syncAt) / 1000); $('syncSt').innerHTML = `Menunggu horn di stream… <span class="${el > 960 ? 'c-bad' : 'c-warn'}">${mmss(el)}</span>`; }
+    else $('syncSt').innerHTML = C.lastSync ? `<span class="c-ok">Delay di-set ${C.lastSync.delay} dtk (${mmss(C.lastSync.delay)})</span> <span class="hint">pukul ${new Date(C.lastSync.at - skew).toLocaleTimeString()}</span>` : '';
+  }
+  setInterval(renderSync, 100);
+  async function copy(text, what) { try { await navigator.clipboard.writeText(text); toast((what || 'Link') + ' di-copy', true); } catch { prompt('Copy:', text); } }
+  const keep = (id, v) => { if (document.activeElement !== $(id)) $(id).value = v ?? ''; };
+
+  // ---------- controls ----------
+  $('vis').onclick = () => cam({ visible: !C.visible });
+  document.querySelectorAll('#mode [data-m]').forEach((b) => b.onclick = () => cam({ mode: b.dataset.m }));
+  $('manual').onchange = (e) => cam({ manual: e.target.value });
+  $('delay').onchange = (e) => cam({ delay: Number(String(e.target.value).replace(',', '.')) });
+  document.querySelectorAll('[data-d]').forEach((b) => b.onclick = () => cam({ delayBy: Number(b.dataset.d) }));
+  $('minHold').onchange = (e) => cam({ minHold: Number(String(e.target.value).replace(',', '.')) });
+  $('noCam').onchange = (e) => cam({ noCam: e.target.value });
+  $('codec').onchange = (e) => cam({ codec: e.target.value });   // senders switch within ~15 s
+  for (const k of ['x', 'y', 'w']) $(k).onchange = (e) => cam({ [k]: Number(e.target.value) });
+  document.querySelectorAll('[data-mv]').forEach((b) => b.onclick = () => {
+    const st = $('fine').checked ? 2 : 10, m = b.dataset.mv;
+    if (m === 'home') return cam(HOME);
+    cam({ x: C.x + (m === 'left' ? -st : m === 'right' ? st : 0), y: C.y + (m === 'up' ? -st : m === 'down' ? st : 0) });
+  });
+  document.querySelectorAll('[data-sz]').forEach((b) => b.onclick = () => cam({ w: C.w + Number(b.dataset.sz) * ($('fine').checked ? 0.25 : 1) }));
+  
+  $('showName').onchange = (e) => cam({ showName: e.target.checked });
+  // keys live as secrets on Cloudflare; the operator page reads them to build the links
+  let K = { pushKey: '', viewKey: '', configured: false };
+  fetch('/api/cam/admin', { cache: 'no-store' }).then((r) => r.json()).then((d) => {
+    if (d.ok) K = d;
+    $('srvInfo').innerHTML = !d.ok ? `<span class="c-bad">${esc(d.error || 'Tidak bisa membaca setting')}</span>`
+      : d.configured ? `<span class="c-ok">Secret Cloudflare lengkap</span>${d.turn ? ' · TURN aktif' : ' · TURN tidak dipakai (opsional)'}`
+      : '<span class="c-bad">Secret CF_APP_ID, CF_APP_SECRET, PUSH_KEY dan VIEW_KEY belum lengkap di Cloudflare.</span>';
+    $('obsCode').textContent = location.origin + '/cam?k=' + (K.viewKey ? '••••••' : '(VIEW_KEY belum diisi)');
+    render();
+  }).catch(() => { $('srvInfo').innerHTML = '<span class="c-bad">Tidak bisa membaca setting server.</span>'; });
+  $('team').onchange = (e) => { cam({ team: e.target.value }); };
+  $('gsiOff').onclick = () => send('gsiDelay', { seconds: 0 });
+  $('copyObs').onclick = () => { if (!K.viewKey) return toast('VIEW_KEY belum diisi di Cloudflare'); copy(location.origin + '/cam?k=' + encodeURIComponent(K.viewKey), 'OBS URL'); };
+  $('testConn').onclick = async () => {
+    if (!K.viewKey) { $('connRes').innerHTML = '<span class="c-bad">VIEW_KEY belum diisi di Cloudflare.</span>'; return; }
+    $('connRes').textContent = 'Mengecek…';
+    try {
+      const r = await fetch('/api/cam/cams', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key: K.viewKey }) }).then((x) => x.json());
+      if (!r.ok) { $('connRes').innerHTML = `<span class="c-bad">${esc(r.error)}</span>`; return; }
+      const on = r.cams.filter((c) => c.online).length;
+      $('connRes').innerHTML = `<span class="c-ok">Tersambung · ${on} cam online</span>`;
+    } catch (e) { $('connRes').innerHTML = `<span class="c-bad">Server tidak bisa dihubungi (${esc(e.message)}).</span>`; }
+  };
+
+  // ---------- team cam ----------
+  const tcam = (p) => cam({ teamCam: p });
+  const TC = () => (C && C.teamCam) || {};
+  $('tcVis').onclick = () => tcam({ visible: TC().visible === false });
+  document.querySelectorAll('#tcShow [data-s]').forEach((b) => b.onclick = () => tcam({ show: b.dataset.s }));
+  $('tcLeft').onchange = (e) => tcam({ left: e.target.value });
+  $('tcRight').onchange = (e) => tcam({ right: e.target.value });
+  $('tcX').onchange = (e) => tcam({ x: Number(e.target.value) });
+  $('tcY').onchange = (e) => tcam({ y: Number(e.target.value) });
+  $('tcW').onchange = (e) => tcam({ w: Number(e.target.value) });
+  $('tcName').onchange = (e) => tcam({ showName: e.target.checked });
+  $('tcCopyObs').onclick = () => { if (!K.viewKey) return toast('VIEW_KEY belum diisi di Cloudflare'); copy(location.origin + '/teamcam?k=' + encodeURIComponent(K.viewKey), 'OBS URL team cam'); };
+  $('tcCopyFull').onclick = () => { if (!K.viewKey) return toast('VIEW_KEY belum diisi di Cloudflare'); copy(location.origin + '/teamcam?full=1&k=' + encodeURIComponent(K.viewKey), 'OBS URL team cam full 16:9'); };
+  const camName = (side) => { const t = S && S.teams && S.teams[side]; return String((t && (t.name || t.tag)) || (side === 'left' ? 'Tim kiri' : 'Tim kanan')).trim().slice(0, 18) + ' CAM'; };
+  function tcLink(side) {
+    if (!K.pushKey) return toast('PUSH_KEY belum diisi di Cloudflare');
+    const n = TC()[side] || camName(side);
+    if (!TC()[side]) tcam({ [side]: n });
+    copy(`${location.origin}/kirim?p=${encodeURIComponent(n)}&k=${encodeURIComponent(K.pushKey)}`, 'Link kamera ' + n);
+  }
+  $('tcLinkL').onclick = () => tcLink('left'); $('tcLinkR').onclick = () => tcLink('right');
+  function renderTeamCam() {
+    const t = TC(), ts = (status && status.team) || {};
+    const fresh = ts.at && ts.age != null && ts.age < 6000;
+    $('tcVis').textContent = t.visible === false ? 'Tampilkan' : 'Sembunyikan'; $('tcVis').classList.toggle('on', t.visible === false);
+    document.querySelectorAll('#tcShow [data-s]').forEach((b) => b.classList.toggle('on', b.dataset.s === (t.show || 'off')));
+    const tn = (side) => (S && S.teams && S.teams[side] && S.teams[side].name) || '';
+    $('tcShowL').textContent = tn('left') || 'Tim kiri'; $('tcShowR').textContent = tn('right') || 'Tim kanan';
+    $('tcLblL').textContent = 'Kamera ' + (tn('left') || 'tim kiri'); $('tcLblR').textContent = 'Kamera ' + (tn('right') || 'tim kanan');
+    const names = new Set([...(status?.cams || []).map((c) => c.name), ...(ts.cams || []).map((c) => c.name), ...(allCams || []).map((c) => c.name)]);
+    for (const [id, side] of [['tcLeft', 'left'], ['tcRight', 'right']]) {
+      const v = t[side] || ''; if (v) names.add(v);
+      const o = ['<option value="">— tidak ada —</option>', ...[...names].map((n) => `<option ${n === v ? 'selected' : ''}>${esc(n)}</option>`)].join('');
+      if ($(id)._o !== o && document.activeElement !== $(id)) { $(id).innerHTML = o; $(id)._o = o; }
+      const st = (ts.cams || []).find((c) => v && c.name.toLowerCase() === v.toLowerCase());
+      $(side === 'left' ? 'tcStL' : 'tcStR').innerHTML = !v ? 'belum dipilih' : !fresh ? '<span class="c-warn">source /teamcam belum melapor</span>'
+        : !st || !st.online ? '<span class="c-bad">kamera offline</span>' : st.filled >= 100 ? `<span class="c-ok">siap</span> · ${st.width}×${st.height}` : `<span class="c-warn">mengisi buffer ${Math.round((st.filled / 100) * (C.delay || 0))} / ${Math.round(C.delay || 0)} dtk</span>`;
+    }
+    keep('tcX', t.x); keep('tcY', t.y); keep('tcW', t.w);
+    $('tcName').checked = t.showName !== false;
+    let now;
+    if (t.visible === false) now = '<span class="c-warn">Disembunyikan</span>';
+    else if (!t.show || t.show === 'off') now = '<span class="c-warn">Off</span>';
+    else if (!t[t.show]) now = `<span class="c-warn">Kamera ${esc(tn(t.show) || t.show)} belum dipilih</span>`;
+    else if (fresh && ts.showing) now = `<span class="c-gold">${esc(tn(t.show) || ts.showing)}</span> — tampil`;
+    else now = fresh ? `${esc(tn(t.show) || t[t.show])} — kamera belum siap` : '<span class="c-warn">Source /teamcam tidak melapor — sudah ditambahkan di OBS?</span>';
+    $('tcNow').innerHTML = '<small>Team cam</small>' + now;
+  }
+  // every camera that is sending (team cams are not pulled by /cam, so they're not in its report)
+  let allCams = [];
+  async function pollCams() { if (!K.viewKey) return; try { const r = await fetch('/api/cam/cams', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key: K.viewKey }) }).then((x) => x.json()); if (r.ok) allCams = r.cams.filter((c) => c.online); } catch {} }
+  setInterval(pollCams, 8000); setTimeout(pollCams, 800);
+
+  // ---------- mic audio ----------
+  $('audioOn').onclick = () => cam({ audio: C.audio === false });
+  $('master').oninput = (e) => { $('masterTxt').textContent = e.target.value + '%'; };
+  $('master').onchange = (e) => cam({ master: Number(e.target.value) / 100 });
+  const micNames = () => {
+    const m = new Map();
+    for (const c of [...(status?.cams || []), ...(status?.team?.cams || [])]) m.set(c.name.toLowerCase(), c.name);
+    for (const l of linkList()) if (!m.has(l.name.toLowerCase())) m.set(l.name.toLowerCase(), l.name);
+    return [...m.values()];
+  };
+  $('muteAll').onclick = () => cam({ muteAll: true, names: micNames() });
+  $('unmuteAll').onclick = () => cam({ muteAll: false, names: micNames() });
+  function renderMics() {
+    const names = micNames();
+    const sig = names.join('|');
+    if ($('mics')._sig !== sig) {
+      $('mics')._sig = sig;
+      $('mics').innerHTML = !names.length ? '<p class="hint">Belum ada pemain.</p>' : names.map((n) => `<div class="mic" data-n="${esc(n)}"><b>${esc(n)}</b><div><div class="bar"><i></i></div><div class="sub st">—</div></div><button class="mute">Mute</button><label class="vol">Vol <input type="range" min="0" max="200" step="5"><span>100%</span></label></div>`).join('');
+    }
+    for (const row of $('mics').querySelectorAll('.mic')) {
+      const n = row.dataset.n, k = n.toLowerCase(), m = (C.mics || {})[k] || { muted: false, vol: 1 };
+      const st = [...(status?.cams || []), ...(status?.team?.cams || [])].find((c) => c.name.toLowerCase() === k);
+      row.classList.toggle('muted', !!m.muted);
+      const b = row.querySelector('.mute'); b.textContent = m.muted ? 'MUTED' : 'Mute'; b.classList.toggle('isMuted', !!m.muted);
+      const r = row.querySelector('input');
+      if (document.activeElement !== r) { r.value = Math.round((m.vol ?? 1) * 100); row.querySelector('.vol span').textContent = r.value + '%'; }
+      const lvl = st && st.mic ? st.level || 0 : 0;
+      const bar = row.querySelector('.bar i'); bar.style.width = Math.round(lvl * 100) + '%'; bar.classList.toggle('hot', lvl > 0.85);
+      row.querySelector('.st').innerHTML = !st || !st.online ? 'cam offline' : st.audioErr ? `<span class="c-bad">${esc(st.audioErr)}</span>` : !st.mic ? '<span class="c-warn">tanpa mic</span>'
+        : st.audio === 'suspended' ? '<span class="c-warn">audio overlay belum jalan — klik sekali di source OBS (Interact)</span>' : lvl > 0.15 ? (m.muted ? 'ada suara (di-mute)' : '<span class="c-ok">ada suara</span>') : 'sepi';
+    }
+  }
+  $('mics').onclick = (e) => {
+    const b = e.target.closest('.mute'); if (!b) return;
+    const n = b.closest('.mic').dataset.n, m = (C.mics || {})[n.toLowerCase()] || {};
+    cam({ mic: { name: n, muted: !m.muted } });
+  };
+  $('mics').oninput = (e) => { if (e.target.type === 'range') e.target.nextElementSibling.textContent = e.target.value + '%'; };
+  $('mics').onchange = (e) => { if (e.target.type === 'range') cam({ mic: { name: e.target.closest('.mic').dataset.n, vol: Number(e.target.value) / 100 } }); };
+
+  // ---------- links ----------
+  function linkList() {
+    const t = teams.find((x) => x.name === C.team) || null;
+    if (!t) return [];
+    return (t.players || []).filter(Boolean).map((n) => ({ name: n, url: K.pushKey ? `${location.origin}/kirim?p=${encodeURIComponent(n)}&k=${encodeURIComponent(K.pushKey)}` : '' }));
+  }
+  function renderLinks() {
+    const opts = ['<option value="">— pilih tim —</option>', ...teams.map((t) => `<option ${t.name === C.team ? 'selected' : ''}>${esc(t.name)}</option>`)].join('');
+    if ($('team')._o !== opts) { $('team').innerHTML = opts; $('team')._o = opts; }
+    const L = linkList();
+    const html = !C.team ? '<p class="hint">Pilih tim dulu.</p>' : !L.length ? '<p class="hint">Tim ini belum punya pemain di Teams.</p>'
+      : L.map((l, i) => `<div class="lnk"><b>${esc(l.name)}</b><span>${l.url ? esc(l.url.replace(/k=[^&]+/, 'k=••••••')) : 'PUSH_KEY belum diisi di Cloudflare'}</span><button data-cp="${i}" ${l.url ? '' : 'disabled'}>Copy</button></div>`).join('');
+    if ($('links')._h !== html) { $('links').innerHTML = html; $('links')._h = html; }
+  }
+  $('links').onclick = (e) => { const b = e.target.closest('[data-cp]'); if (b) { const l = linkList()[Number(b.dataset.cp)]; copy(l.url, 'Link ' + l.name); } };
+  $('copyAll').onclick = () => { const L = linkList().filter((l) => l.url); if (!L.length) return toast('Belum ada link'); copy(L.map((l) => `${l.name}: ${l.url}`).join('\n'), 'Semua link'); };
+
+  // ---------- render ----------
+  function render() {
+    if (!C) return;
+    $('vis').textContent = C.visible ? 'Sembunyikan' : 'Tampilkan'; $('vis').classList.toggle('on', !C.visible);
+    document.querySelectorAll('#mode [data-m]').forEach((b) => b.classList.toggle('on', b.dataset.m === C.mode));
+    
+    $('manualWrap').style.display = C.mode === 'manual' ? '' : 'none';
+    keep('delay', C.delay); keep('minHold', C.minHold); keep('x', C.x); keep('y', C.y); keep('w', C.w);
+    if (document.activeElement !== $('noCam')) $('noCam').value = C.noCam;
+    if (document.activeElement !== $('codec')) $('codec').value = C.codec || 'h264';
+    $('codecNote').textContent = C.codecNote || '';
+    $('showName').checked = C.showName !== false;
+    $('openLihat').href = '/lihat';
+    const gd = S && S.gsi ? Number(S.gsi.delay) || 0 : 0;
+    $('gsiWarn').hidden = !gd; $('gsiWarnTxt').textContent = gd ? `${Math.floor(gd / 60)}:${String(gd % 60).padStart(2, '0')}` : '';
+    const names = new Set([...(status?.cams || []).map((c) => c.name), ...linkList().map((l) => l.name)]);
+    if (C.manual) names.add(C.manual);
+    const mo = ['<option value="">— pilih —</option>', ...[...names].map((n) => `<option ${n === C.manual ? 'selected' : ''}>${esc(n)}</option>`)].join('');
+    if ($('manual')._o !== mo) { $('manual').innerHTML = mo; $('manual')._o = mo; }
+    const sel = S && S.camSel;
+    const showing = status && status.showing;
+    let now;
+    if (!C.visible) now = '<span class="c-warn">Disembunyikan</span>';
+    else if (C.mode === 'off') now = '<span class="c-warn">Off</span>';
+    else if (showing) now = `<span class="c-gold">${esc(showing)}</span> — ${C.mode === 'manual' ? 'dipilih manual' : sel ? 'observer pilih hero ' + esc(sel.name) : ''}`;
+    else if (status && status.silhouette) now = `<span class="c-gold">Siluet ${esc(status.silhouette)}</span> — pemain ini tidak punya cam yang siap`;
+    else if (sel) now = `Observer pilih <b>${esc(sel.name)}</b> — ${(status?.cams || []).some((c) => c.name.toLowerCase() === String(sel.name).toLowerCase()) ? 'cam belum siap (buffer delay masih mengisi)' : 'pemain ini tidak punya cam'}`;
+    else now = C.mode === 'manual' ? 'Pilih cam di samping' : 'Menunggu observer memilih hero (GSI)';
+    $('now').innerHTML = '<small>Tampil sekarang</small>' + now;
+    $('audioOn').textContent = C.audio === false ? 'Audio: OFF' : 'Audio: ON'; $('audioOn').classList.toggle('off', C.audio === false);
+    if (document.activeElement !== $('master')) { $('master').value = Math.round((C.master ?? 1) * 100); $('masterTxt').textContent = $('master').value + '%'; }
+    renderLinks(); renderStatus(); renderMics(); renderTeamCam();
+  }
+  function renderStatus() {
+    if (!status || !status.at) return;
+    const age = status.age ?? (Date.now() - status.at);
+    $('statusAge').innerHTML = age > 6000 ? '<span class="c-bad">Overlay /cam tidak melapor — apakah Browser source-nya aktif di OBS?</span>' : status.error ? `<span class="c-bad">${esc(status.error)}</span>` : '';
+    if (!status.cams.length) { $('tbl').innerHTML = '<p class="hint">Belum ada pemain yang mengirim cam.</p>'; return; }
+    const rows = status.cams.map((c) => {
+      const conn = !c.online ? '<span class="c-bad">offline</span>' : c.state === 'connected' ? '<span class="c-ok">live</span>' : `<span class="c-warn">${esc(c.state)}</span>`;
+      const full = c.filled >= 100;
+      const buf = c.online || c.filled ? `<div class="bar"><i class="${full ? 'full' : ''}" style="width:${Math.min(100, c.filled)}%"></i></div><div class="sub">${full ? 'siap' : `mengisi ${Math.round((c.filled / 100) * (C.delay || 0))} / ${Math.round(C.delay || 0)} dtk`}</div>` : '<div class="sub">—</div>';
+      const res = (c.width ? `${c.width}×${c.height}` : '—') + (c.lag != null ? `<div class="sub">delay ${(c.lag / 1000).toFixed(1)} dtk</div>` : '') + (c.online && c.keyAgo != null && c.keyAgo > 10 ? `<div class="sub c-warn" title="Tanpa keyframe rutin, Sync horn tidak bisa langsung lompat (cam menunggu buffer)">keyframe ${c.keyAgo} dtk lalu</div>` : '');
+      const show = c.name === status.showing ? '<b class="c-gold">Tampil</b>' : c.showing ? 'siaga' : '—';
+      return `<div class="tr ${c.name === status.showing ? 'showing' : ''}"><b>${esc(c.name)} <button class="rst" data-n="${esc(c.name)}" title="Reset buffer cam ${esc(c.name)}">↺</button><button class="kck" data-n="${esc(c.name)}" title="Putus cam ${esc(c.name)}">⏏</button></b><span>${conn}${c.err || c.decErr ? `<div class="sub c-bad">${esc(c.err || c.decErr)}</div>` : ''}</span><span>${buf}</span><span>${res}</span><span>${show}</span></div>`;
+    }).join('');
+    $('tbl').innerHTML = '<div class="tr head"><span>Pemain</span><span>Koneksi</span><span>Buffer delay</span><span>Resolusi</span><span>Tampil</span></div>' + rows;
+  }
+  async function pollStatus() { try { status = await fetch('/api/playercam/status', { cache: 'no-store' }).then((r) => r.json()); render(); } catch {} }
+  setInterval(pollStatus, 2000); pollStatus();
+  fetch('/api/teams').then((r) => r.json()).then((t) => {
+    teams = t || [];
+    if (C && !C.team) { const d = teams.find((x) => /direborn/i.test(x.name)); if (d) cam({ team: d.name }); }
+    render();
+  }).catch(() => {});
+  function connect() {
+    const es = new EventSource('/events');
+    es.onmessage = (e) => { S = JSON.parse(e.data); if (S.serverNow) skew = S.serverNow - Date.now(); C = S.playerCam; render(); renderSync(); };
+    es.onerror = () => { es.close(); setTimeout(connect, 2000); };
+  }
+  connect();
+})();
+</script>
+</body>
+</html>

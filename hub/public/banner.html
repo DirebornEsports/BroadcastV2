@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<script src="/vendor/anime.umd.min.js"></script><script src="/ui/motion.js"></script>
+<script src="/theme.js"></script>
+<title>Banner</title>
+<!-- OBS: Browser source 1920 x 1080 in the in-game scene. A small title bar whose lines take turns
+     (Draft control -> On air -> Banner teks berputar: lines, seconds per line, position, width). -->
+<style>
+  @font-face { font-family: "Oswald"; src: url(/fonts/Oswald.woff) format("woff"); font-weight: 200 700; font-display: block; }
+  :root { --bn-bg: linear-gradient(180deg, #1f7a3a, #145a2a); --bn-edge: #e9c679; --bn-text: #ffffff; --ease: cubic-bezier(.16,1,.3,1); }
+  html[data-theme="uprising"] { --bn-bg: linear-gradient(180deg, #0f5a55, #073a37); --bn-edge: #e2c27a; --bn-text: #f5efdc; }
+  html[data-theme="direborn"] { --bn-bg: linear-gradient(180deg, #d7232f, #a5121b); --bn-edge: #ffffff; --bn-text: #ffffff; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; }
+  body.bg { background: #3b4a3f; }
+  #fit { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; transform: scale(var(--k, 1)); }
+  .bar { position: absolute; height: 40px; background: var(--bn-bg); box-shadow: inset 4px 0 0 var(--bn-edge), 0 4px 14px rgba(0,0,0,.35); overflow: hidden;
+    clip-path: inset(0 100% 0 0); transition: clip-path .6s var(--ease); }
+  .bar.in { clip-path: inset(0 0 0 0); }
+  .ln { position: absolute; left: 0; right: 0; top: 0; height: 40px; padding: 0 14px 0 16px; display: flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font: 600 20px/1 "Oswald", "Arial Narrow", sans-serif; letter-spacing: .04em; color: var(--bn-text); text-shadow: 0 1px 2px rgba(0,0,0,.35); transition: transform .6s var(--ease), opacity .4s ease; }
+  .ln.below { transform: translateY(100%); opacity: 0; transition: none; }
+  .ln.above { transform: translateY(-100%); opacity: 0; }
+</style>
+</head>
+<body>
+<div id="fit"><div class="bar" id="bar"><div class="ln" id="l1"></div><div class="ln below" id="l2"></div></div></div>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id), fit = $('fit'), bar = $('bar');
+  if (new URLSearchParams(location.search).get('bg') === '1') document.body.classList.add('bg');
+  const resize = () => fit.style.setProperty('--k', Math.min(innerWidth / 1920, innerHeight / 1080));
+  addEventListener('resize', resize); resize();
+  let B = null, i = 0, cur = $('l1'), next = $('l2'), timer = null, sig = '';
+  function roll() {                       // the next line rises in from below, the current one leaves upward
+    const msgs = (B && B.messages) || [];
+    if (msgs.length < 2) return;
+    i = (i + 1) % msgs.length;
+    next.textContent = msgs[i];
+    void next.offsetWidth;
+    next.classList.remove('below'); cur.classList.add('above');
+    const old = cur; cur = next; next = old;
+    setTimeout(() => { next.classList.remove('above'); next.classList.add('below'); }, 650);
+  }
+  function apply() {
+    const msgs = (B && B.messages) || [], show = !!B && B.visible !== false && msgs.length > 0;
+    bar.style.left = (B ? B.x : 0) + 'px'; bar.style.top = (B ? B.y : 0) + 'px'; bar.style.width = (B ? B.w : 430) + 'px';
+    const s2 = JSON.stringify([msgs, B && B.seconds]);
+    if (s2 !== sig) {                     // lines or timing changed: start again from the first line
+      sig = s2; i = 0; cur.textContent = msgs[0] || ''; cur.className = 'ln'; next.className = 'ln below';
+      clearInterval(timer); timer = msgs.length > 1 ? setInterval(roll, Math.max(2, Number(B.seconds) || 6) * 1000) : null;
+    }
+    bar.classList.toggle('in', show);
+  }
+  function connect() {
+    const es = new EventSource('/events');
+    es.onmessage = (e) => { B = JSON.parse(e.data).banner || null; apply(); };
+    es.onerror = () => { es.close(); setTimeout(connect, 2000); };
+  }
+  connect();
+})();
+</script>
+</body>
+</html>

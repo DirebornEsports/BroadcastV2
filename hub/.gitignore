@@ -1,0 +1,8 @@
+node_modules
+.wrangler
+.dev.vars
+.env*
+dev/.data
+test/out
+dev/.dev.json
+src/generated

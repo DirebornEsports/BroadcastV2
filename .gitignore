@@ -4,3 +4,4 @@ target/
 .env
 dist/
 studio/logs/
+studio-data/

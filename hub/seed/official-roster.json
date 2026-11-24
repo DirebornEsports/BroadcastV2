@@ -1,0 +1,397 @@
+{
+ "source": "Direbattle_CUP_by_Direborn_Esports.xlsx",
+ "teams": [
+  {
+   "name": "ULAR REBORN",
+   "players": [
+    {
+     "nick": "NotDrew",
+     "realName": "Andrew Aldrich Lee",
+     "accountId": "308044087",
+     "role": "carry",
+     "captain": false,
+     "roleNo": 1
+    },
+    {
+     "nick": "TheSpiaN",
+     "realName": "Azhar Yuditria Hidayah",
+     "accountId": "907769761",
+     "role": "mid",
+     "captain": false,
+     "roleNo": 2
+    },
+    {
+     "nick": "enzo",
+     "realName": "Akbar Ananda Putra Pratama",
+     "accountId": "410204312",
+     "role": "offlane",
+     "captain": false,
+     "roleNo": 3
+    },
+    {
+     "nick": "November Rain",
+     "realName": "Ivan Satria Wardhana",
+     "accountId": "100785249",
+     "role": "soft",
+     "captain": false,
+     "roleNo": 4
+    },
+    {
+     "nick": "BJNDT",
+     "realName": "Fauzan Dwi Priambudi",
+     "accountId": "368036465",
+     "role": "hard",
+     "captain": true,
+     "roleNo": 5
+    }
+   ]
+  },
+  {
+   "name": "BeBeK KingDom",
+   "players": [
+    {
+     "nick": "Kiyotaka倒れた",
+     "realName": "Paulus Adi Setiawan",
+     "accountId": "303764513",
+     "role": "carry",
+     "captain": false,
+     "roleNo": 1
+    },
+    {
+     "nick": "Mordred",
+     "realName": "Yosia Dany Garcia",
+     "accountId": "163230095",
+     "role": "mid",
+     "captain": false,
+     "roleNo": 2
+    },
+    {
+     "nick": "BeBeK",
+     "realName": "Akbarsyah Dhika Maulana Suhendar",
+     "accountId": "345318526",
+     "role": "offlane",
+     "captain": true,
+     "roleNo": 3
+    },
+    {
+     "nick": "Kiseki",
+     "realName": "Hans Richie Christian Handianto",
+     "accountId": "306373283",
+     "role": "soft",
+     "captain": false,
+     "roleNo": 4
+    },
+    {
+     "nick": "Alwaysempath",
+     "realName": "Trio Prio Utomo",
+     "accountId": "186065571",
+     "role": "hard",
+     "captain": false,
+     "roleNo": 5
+    }
+   ]
+  },
+  {
+   "name": "Maxwell+4",
+   "players": [
+    {
+     "nick": "Kaisora",
+     "realName": "Satria Dimas",
+     "accountId": "209096834",
+     "role": "carry",
+     "captain": false,
+     "roleNo": 1
+    },
+    {
+     "nick": "Maxwell",
+     "realName": "Reza Mahendra",
+     "accountId": "450107852",
+     "role": "mid",
+     "captain": false,
+     "roleNo": 2
+    },
+    {
+     "nick": "Alvyy",
+     "realName": "Yovandri Denimarta",
+     "accountId": "334765332",
+     "role": "offlane",
+     "captain": false,
+     "roleNo": 3
+    },
+    {
+     "nick": "Vy-",
+     "realName": "Excell Winston",
+     "accountId": "353957877",
+     "role": "soft",
+     "captain": true,
+     "roleNo": 4
+    },
+    {
+     "nick": "Icysnow",
+     "realName": "Hendry Prio Wibowo",
+     "accountId": "233706218",
+     "role": "hard",
+     "captain": false,
+     "roleNo": 5
+    },
+    {
+     "nick": "Faiq",
+     "realName": "Faiq",
+     "accountId": "1059587726",
+     "role": "standin",
+     "captain": false,
+     "roleNo": 0
+    }
+   ]
+  },
+  {
+   "name": "Chad",
+   "players": [
+    {
+     "nick": "Rin",
+     "realName": "Ryan Maulana",
+     "accountId": "387841410",
+     "role": "carry",
+     "captain": false,
+     "roleNo": 1
+    },
+    {
+     "nick": "ThrovY",
+     "realName": "Napoleon Fhontana",
+     "accountId": "304099844",
+     "role": "mid",
+     "captain": false,
+     "roleNo": 2
+    },
+    {
+     "nick": "Yorushika`",
+     "realName": "Gilang Ritzky DwiPutra",
+     "accountId": "264881180",
+     "role": "offlane",
+     "captain": false,
+     "roleNo": 3
+    },
+    {
+     "nick": "December",
+     "realName": "Darius Jaya Darfian",
+     "accountId": "2401960914",
+     "role": "soft",
+     "captain": true,
+     "roleNo": 4
+    },
+    {
+     "nick": "LooMisT",
+     "realName": "Alvin Surianto",
+     "accountId": "90676193",
+     "role": "hard",
+     "captain": false,
+     "roleNo": 5
+    }
+   ]
+  },
+  {
+   "name": "FARHAN+4",
+   "players": [
+    {
+     "nick": "Frz",
+     "realName": "Farhan Al Farizi",
+     "accountId": "179804421",
+     "role": "carry",
+     "captain": false,
+     "roleNo": 1
+    },
+    {
+     "nick": "JD♡",
+     "realName": "Daniel Chow",
+     "accountId": "389717427",
+     "role": "mid",
+     "captain": false,
+     "roleNo": 2
+    },
+    {
+     "nick": "MASERATI",
+     "realName": "Andino Hamutur Siregar",
+     "accountId": "315532830",
+     "role": "offlane",
+     "captain": true,
+     "roleNo": 3
+    },
+    {
+     "nick": "Suis",
+     "realName": "Hadi Muhammad Ichsan",
+     "accountId": "107129171",
+     "role": "soft",
+     "captain": false,
+     "roleNo": 4
+    },
+    {
+     "nick": "MJ",
+     "realName": "Marcellino Jeremy",
+     "accountId": "102107004",
+     "role": "hard",
+     "captain": false,
+     "roleNo": 5
+    }
+   ]
+  },
+  {
+   "name": "Antariksa Club",
+   "players": [
+    {
+     "nick": "Noobmaster",
+     "realName": "Eka Sandi K",
+     "accountId": "382298523",
+     "role": "carry",
+     "captain": true,
+     "roleNo": 1
+    },
+    {
+     "nick": "Monyet",
+     "realName": "Fahmi Firmansyah",
+     "accountId": "1026162981",
+     "role": "mid",
+     "captain": false,
+     "roleNo": 2
+    },
+    {
+     "nick": "sawako",
+     "realName": "Muhammad Dwi Pramudito",
+     "accountId": "1653287186",
+     "role": "offlane",
+     "captain": false,
+     "roleNo": 3
+    },
+    {
+     "nick": "Ky-",
+     "realName": "Rifky Novalla P",
+     "accountId": "130399854",
+     "role": "soft",
+     "captain": false,
+     "roleNo": 4
+    },
+    {
+     "nick": "Hikari",
+     "realName": "Muhammad Afiq",
+     "accountId": "167771678",
+     "role": "hard",
+     "captain": false,
+     "roleNo": 5
+    },
+    {
+     "nick": "Exgod",
+     "realName": "Ervin Rez F",
+     "accountId": "365561285",
+     "role": "standin",
+     "captain": false,
+     "roleNo": 0
+    }
+   ]
+  },
+  {
+   "name": "The Dudz",
+   "players": [
+    {
+     "nick": "Liolaeus",
+     "realName": "Willian Alexander",
+     "accountId": "105449244",
+     "role": "carry",
+     "captain": false,
+     "roleNo": 1
+    },
+    {
+     "nick": "CaptainKid",
+     "realName": "Andra Ramadhan",
+     "accountId": "857220486",
+     "role": "mid",
+     "captain": false,
+     "roleNo": 2
+    },
+    {
+     "nick": "Kyanite",
+     "realName": "Rio Ramli",
+     "accountId": "115660479",
+     "role": "offlane",
+     "captain": false,
+     "roleNo": 3
+    },
+    {
+     "nick": "Maximus",
+     "realName": "Rachmadi Seto Wardoyo",
+     "accountId": "130533558",
+     "role": "soft",
+     "captain": false,
+     "roleNo": 4
+    },
+    {
+     "nick": "Uthred",
+     "realName": "Hansen Verian",
+     "accountId": "382610839",
+     "role": "hard",
+     "captain": true,
+     "roleNo": 5
+    },
+    {
+     "nick": "Gumarang",
+     "realName": "Muhammad Dicky",
+     "accountId": "355877515",
+     "role": "standin",
+     "captain": false,
+     "roleNo": 0
+    }
+   ]
+  },
+  {
+   "name": "Escape Esports",
+   "players": [
+    {
+     "nick": "ndnc",
+     "realName": "Muhammad Gunawan",
+     "accountId": "174108445",
+     "role": "carry",
+     "captain": false,
+     "roleNo": 1
+    },
+    {
+     "nick": "Atréyu",
+     "realName": "Hakim Zeda Zilva Zias",
+     "accountId": "432734279",
+     "role": "mid",
+     "captain": false,
+     "roleNo": 2
+    },
+    {
+     "nick": "Serenity",
+     "realName": "I Dewa GD Arta Rudana",
+     "accountId": "166673010",
+     "role": "offlane",
+     "captain": false,
+     "roleNo": 3
+    },
+    {
+     "nick": "Boy pablo-",
+     "realName": "Muhammad Rizki Anshari",
+     "accountId": "155227837",
+     "role": "soft",
+     "captain": false,
+     "roleNo": 4
+    },
+    {
+     "nick": "Nerif",
+     "realName": "Aldi Sumarto",
+     "accountId": "906451006",
+     "role": "hard",
+     "captain": true,
+     "roleNo": 5
+    },
+    {
+     "nick": "messi",
+     "realName": "Muhammad Kafin Maulana",
+     "accountId": "845283987",
+     "role": "standin",
+     "captain": false,
+     "roleNo": 0
+    }
+   ]
+  }
+ ]
+}

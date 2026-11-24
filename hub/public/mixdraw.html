@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<script src="/vendor/anime.umd.min.js"></script><script src="/ui/motion.js"></script>
+<title>Mix Draw</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,500;0,600;0,700;0,800;0,900;1,800;1,900&display=swap" rel="stylesheet">
+<style>
+  :root { --gold: #e9c679; --gold-hi: #f8e6ad; --gold-lo: #a07a33; --text: #f3eee2; --muted: #c9c2ae;
+    --L: #e0303d; --L2: #7a0f19; --R: #2f7cf0; --R2: #0d2c6e; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; font-family: Poppins, "Segoe UI", sans-serif; color: var(--text); }
+  body.bg { background: #111; }
+  #fit { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform: translate(-50%, -50%) scale(var(--k, 1)); overflow: hidden; }
+  #stage { position: absolute; inset: 0; transition: opacity .8s; }
+  #stage.off { opacity: 0; }
+  #stage.shake { animation: shake .35s; }
+  @keyframes shake { 20% { transform: translate(-8px, 4px); } 40% { transform: translate(7px, -5px); } 60% { transform: translate(-5px, 3px); } 80% { transform: translate(3px, -2px); } }
+
+  /* ---------- backdrop: red left, blue right, light pillar in the middle ---------- */
+  .bg-base { position: absolute; inset: 0; background: linear-gradient(180deg, #120a10 0%, #0b0d16 60%, #06070b 100%); }
+  .bg-l { position: absolute; inset: 0 50% 0 0; background: radial-gradient(900px 900px at 20% 40%, rgba(224,48,61,.55), transparent 70%), linear-gradient(90deg, rgba(122,15,25,.85), rgba(122,15,25,.15)); }
+  .bg-r { position: absolute; inset: 0 0 0 50%; background: radial-gradient(900px 900px at 80% 40%, rgba(47,124,240,.5), transparent 70%), linear-gradient(270deg, rgba(13,44,110,.9), rgba(13,44,110,.15)); }
+  .pillar { position: absolute; left: 50%; top: -60px; width: 420px; height: 1200px; transform: translateX(-50%);
+    background: linear-gradient(90deg, transparent, rgba(150,190,255,.10) 30%, rgba(200,225,255,.18) 50%, rgba(150,190,255,.10) 70%, transparent); filter: blur(6px); }
+  .pillar::after { content: ""; position: absolute; inset: 0 150px; background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.04) 70%, transparent); }
+  .scan { position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 4px); mix-blend-mode: overlay; }
+  .vig { position: absolute; inset: 0; box-shadow: inset 0 0 260px rgba(0,0,0,.85); }
+  .gh { position: absolute; top: 0; bottom: 0; overflow: hidden; pointer-events: none; }
+  .gh.l { left: 0; right: 50%; } .gh.r { left: 50%; right: 0; }
+  .ghost { position: absolute; top: 120px; font: italic 900 230px/1 Poppins; text-transform: uppercase; white-space: nowrap; letter-spacing: -.02em; opacity: .08; }
+  .ghost.l { left: -30px; color: #ff6b75; } .ghost.r { right: -30px; color: #7fb1ff; }
+
+  /* ---------- header ---------- */
+  .top { position: absolute; left: 0; right: 0; top: 40px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .top .kick { font: 700 20px Poppins; letter-spacing: .45em; color: var(--gold); text-transform: uppercase; display: flex; align-items: center; gap: 18px; }
+  .top .kick::before, .top .kick::after { content: ""; width: 90px; height: 2px; background: linear-gradient(90deg, transparent, var(--gold-lo)); }
+  .top .kick::after { transform: scaleX(-1); }
+  .top h1 { margin: 0; font: italic 900 64px/1 Poppins; letter-spacing: .04em; text-transform: uppercase;
+    background: linear-gradient(180deg, #fff6d6 10%, #e7bf6a 60%, #b98a3a); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 4px 0 rgba(0,0,0,.5)); }
+  .tname { position: absolute; top: 44px; display: flex; align-items: center; gap: 14px; font: italic 900 40px/1 Poppins; text-transform: uppercase; letter-spacing: .02em; text-shadow: 0 3px 0 rgba(0,0,0,.6); }
+  .tname i { font: 900 18px/1 Poppins; font-style: normal; padding: 6px 10px; border-radius: 5px; letter-spacing: .05em; }
+  .tname.l { left: 60px; } .tname.l i { background: var(--L); }
+  .tname.r { right: 60px; flex-direction: row-reverse; } .tname.r i { background: var(--R); }
+
+  /* ---------- side: portrait + big name + tags + roster ---------- */
+  .side { position: absolute; top: 120px; width: 640px; height: 940px; }
+  .side.l { left: 0; } .side.r { right: 0; }
+  .por { position: absolute; top: 20px; width: 470px; height: 560px; opacity: 0; transition: opacity .6s; -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent 100%); mask-image: linear-gradient(180deg, #000 55%, transparent 100%); }
+  .side.l .por { left: 110px; } .side.r .por { right: 110px; }
+  .por.on { opacity: 1; }
+  .por.on.dim { opacity: .25; }
+  .por img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; }
+  .por .mono { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font: italic 900 300px/1 Poppins; text-transform: uppercase; color: transparent; -webkit-text-stroke: 3px rgba(255,255,255,.35); }
+  .side.l .por .mono { background: radial-gradient(circle at 50% 40%, rgba(224,48,61,.45), transparent 65%); }
+  .side.r .por .mono { background: radial-gradient(circle at 50% 40%, rgba(47,124,240,.45), transparent 65%); }
+  .por.wipe { animation: wipe .9s cubic-bezier(.16,1,.3,1); }
+  @keyframes wipe { from { clip-path: inset(0 100% 0 0); filter: brightness(3); } 60% { filter: brightness(1.6); } to { clip-path: inset(0 0 0 0); filter: brightness(1); } }
+  .side.r .por.wipe { animation-name: wipeR; }
+  @keyframes wipeR { from { clip-path: inset(0 0 0 100%); filter: brightness(3); } 60% { filter: brightness(1.6); } to { clip-path: inset(0 0 0 0); filter: brightness(1); } }
+
+  .big { position: absolute; top: 420px; font: italic 900 108px/1 Poppins; text-transform: uppercase; letter-spacing: -.01em; white-space: nowrap;
+    text-shadow: 0 6px 0 rgba(0,0,0,.55), 0 0 40px rgba(0,0,0,.6); }
+  .side.l .big { left: 56px; } .side.r .big { right: 56px; }
+  .big.spin { opacity: .55; filter: blur(1.5px); }
+  .big.wait { opacity: .35; }
+  .big.slam { animation: slam .7s cubic-bezier(.16,1,.3,1); }
+  @keyframes slam { from { transform: scale(1.9) skewX(-8deg); opacity: 0; filter: blur(12px); } 55% { opacity: 1; filter: blur(0); } to { transform: none; } }
+  .tags { position: absolute; top: 548px; display: grid; gap: 8px; }
+  .side.l .tags { left: 62px; } .side.r .tags { right: 62px; justify-items: end; }
+  .tag { display: flex; align-items: center; gap: 12px; font: 600 22px/1 Poppins; }
+  .side.r .tag { flex-direction: row-reverse; }
+  .tag b { font: 800 14px/1 Poppins; letter-spacing: .08em; text-transform: uppercase; padding: 5px 10px; border-radius: 3px; min-width: 92px; text-align: center; }
+  .side.l .tag b { background: var(--L); } .side.r .tag b { background: var(--R); }
+
+  .roster { position: absolute; top: 650px; width: 560px; display: grid; gap: 8px; }
+  .side.l .roster { left: 40px; } .side.r .roster { right: 40px; }
+  .slot { position: relative; height: 50px; display: flex; align-items: center; gap: 14px; padding: 0 16px; border-radius: 6px; overflow: hidden;
+    background: linear-gradient(90deg, rgba(0,0,0,.55), rgba(0,0,0,.2)); border: 1px solid rgba(255,255,255,.08); }
+  .side.r .slot { flex-direction: row-reverse; background: linear-gradient(270deg, rgba(0,0,0,.55), rgba(0,0,0,.2)); }
+  .slot .p { font: 900 15px/1 Poppins; width: 190px; flex: none; white-space: nowrap; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .side.r .slot .p { text-align: right; }
+  .slot .n { font: italic 800 26px/1 Poppins; text-transform: uppercase; color: rgba(255,255,255,.25); }
+  .slot.now { border-color: rgba(255,255,255,.45); }
+  .side.l .slot.now { box-shadow: inset 0 0 0 2px var(--L), 0 0 24px rgba(224,48,61,.5); }
+  .side.r .slot.now { box-shadow: inset 0 0 0 2px var(--R), 0 0 24px rgba(47,124,240,.5); }
+  .slot.done .n { color: #fff; }
+  .side.l .slot.done { background: linear-gradient(90deg, rgba(224,48,61,.55), rgba(122,15,25,.25)); }
+  .side.r .slot.done { background: linear-gradient(270deg, rgba(47,124,240,.55), rgba(13,44,110,.25)); }
+  .slot.flash::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.75), transparent); animation: sweep .7s forwards; }
+  @keyframes sweep { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+  /* ---------- center: status + grid ---------- */
+  .status { position: absolute; left: 50%; top: 300px; width: 600px; transform: translateX(-50%); text-align: center; }
+  .status .s1 { font: 800 22px/1 Poppins; letter-spacing: .3em; text-transform: uppercase; color: var(--gold); }
+  .status .s2 { margin-top: 12px; font: italic 900 46px/1.05 Poppins; text-transform: uppercase; text-shadow: 0 4px 0 rgba(0,0,0,.5); min-height: 50px; }
+  .status .s2.L { color: #ff8d95; } .status .s2.R { color: #9cc3ff; }
+  .status .s3 { margin-top: 10px; font: 600 18px/1 Poppins; color: var(--muted); letter-spacing: .1em; min-height: 20px; }
+  .banner { position: absolute; left: 50%; top: 420px; transform: translate(-50%, 0) scale(.6); opacity: 0; font: italic 900 92px/1 Poppins; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap;
+    background: linear-gradient(180deg, #fff6d6 10%, #e7bf6a 60%, #b98a3a); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 6px 0 rgba(0,0,0,.6)); transition: transform .7s cubic-bezier(.16,1,.3,1), opacity .5s; pointer-events: none; }
+  .banner.on { opacity: 1; transform: translate(-50%, 0) scale(1); }
+
+  .grid { position: absolute; left: 50%; top: 560px; transform: translateX(-50%); display: flex; gap: 12px; }
+  .col { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .col h3 { margin: 0 0 2px; font: 800 13px/1.2 Poppins; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); text-align: center; height: 34px; display: flex; flex-direction: column; justify-content: flex-end; }
+  .col h3 span { font-size: 24px; color: #fff; }
+  .col.focus h3 { color: var(--gold-hi); text-shadow: 0 0 14px rgba(233,198,121,.8); }
+  .tile { position: relative; width: 104px; height: 128px; border-radius: 6px; overflow: hidden; background: #1a1d28; border: 2px solid rgba(255,255,255,.14);
+    box-shadow: 0 6px 16px rgba(0,0,0,.5); transition: filter .4s, opacity .4s; }
+  .tile img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; }
+  .tile .mono { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: italic 900 50px/1 Poppins; color: rgba(255,255,255,.75);
+    background: linear-gradient(160deg, #3a3f55, #171a25); }
+  .tile .nm { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 4px 5px; font: 800 13px/1.1 Poppins; text-align: center; text-transform: uppercase; letter-spacing: .02em;
+    background: linear-gradient(180deg, transparent, rgba(0,0,0,.85)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tile .badge { position: absolute; top: 4px; left: 4px; font: 900 12px/1 Poppins; padding: 3px 6px; border-radius: 3px; display: none; }
+  .tile.curL { border-color: var(--L); box-shadow: 0 0 0 3px var(--L), 0 0 30px rgba(224,48,61,.9); transform: scale(1.06); z-index: 2; }
+  .tile.curR { border-color: var(--R); box-shadow: 0 0 0 3px var(--R), 0 0 30px rgba(47,124,240,.9); transform: scale(1.06); z-index: 2; }
+  .tile.curL .badge, .tile.curR .badge { display: block; }
+  .tile.curL .badge { background: var(--L); } .tile.curR .badge { background: var(--R); }
+  .tile.takenL, .tile.takenR { filter: grayscale(.9) brightness(.45); }
+  .tile.takenL::after, .tile.takenR::after { content: attr(data-t); position: absolute; top: 4px; right: 4px; font: 900 11px/1 Poppins; padding: 3px 5px; border-radius: 3px; filter: none; }
+  .tile.takenL::after { background: var(--L); } .tile.takenR::after { background: var(--R); }
+  .tile.hit { animation: hit .6s; }
+  @keyframes hit { 0% { filter: brightness(4); transform: scale(1.25); } 100% { filter: none; transform: scale(1.06); } }
+  .hint { position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%); font: 600 15px Poppins; letter-spacing: .2em; color: rgba(255,255,255,.35); text-transform: uppercase; }
+  .flashfx { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+  .flashfx.go { animation: flashfx .5s; }
+  @keyframes flashfx { 0% { opacity: .45; } 100% { opacity: 0; } }
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage" class="off">
+  <div class="bg-base"></div><div class="bg-l"></div><div class="bg-r"></div><div class="pillar"></div>
+  <div class="gh l"><div class="ghost l" id="ghL"></div></div><div class="gh r"><div class="ghost r" id="ghR"></div></div>
+  <div class="scan"></div><div class="vig"></div>
+
+  <div class="tname l"><i>P1</i><span id="tnL"></span></div>
+  <div class="tname r"><i>P2</i><span id="tnR"></span></div>
+  <div class="top"><h1 id="title">Mix Draw</h1></div>
+
+  <div class="side l" id="sideL">
+    <div class="por" id="porL"></div>
+    <div class="big wait" id="bigL">???</div>
+    <div class="tags"><div class="tag"><b>Posisi</b><span id="posL">—</span></div><div class="tag"><b>Tim</b><span id="teamL"></span></div></div>
+    <div class="roster" id="rosL"></div>
+  </div>
+  <div class="side r" id="sideR">
+    <div class="por" id="porR"></div>
+    <div class="big wait" id="bigR">???</div>
+    <div class="tags"><div class="tag"><b>Posisi</b><span id="posR">—</span></div><div class="tag"><b>Tim</b><span id="teamR"></span></div></div>
+    <div class="roster" id="rosR"></div>
+  </div>
+
+  <div class="status"><div class="s1" id="s1"></div><div class="s2" id="s2"></div><div class="s3" id="s3"></div></div>
+  <div class="banner" id="banner">Mix Draw</div>
+  <div class="grid" id="grid"></div>
+  <div class="hint" id="hint"></div>
+  <div class="flashfx" id="fx"></div>
+</div></div>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const q = new URLSearchParams(location.search);
+  if (q.get('bg') === '1') document.body.classList.add('bg');
+  const MUTE = q.get('mute') === '1';
+  const resize = () => $('fit').style.setProperty('--k', Math.min(innerWidth / 1920, innerHeight / 1080));
+  addEventListener('resize', resize); resize();
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const POS = { 1: 'Carry', 2: 'Mid', 3: 'Offlane', 4: 'Soft Support', 5: 'Hard Support' };
+  const DUR = { slow: 6500, normal: 4800, fast: 3200 };
+  const INTRO = 3200;
+  const initials = (n) => { const w = String(n).trim().split(/\s+/); return (w.length > 1 ? w[0][0] + w[1][0] : String(n).slice(0, 2)).toUpperCase(); };
+
+  // ---------- sound (synthesised, no files) ----------
+  let ac = null, sfxOn = true, vol = 0.6;
+  const actx = () => { if (!ac) { try { ac = new AudioContext(); } catch { return null; } } if (ac.state === 'suspended') ac.resume().catch(() => {}); return ac; };
+  addEventListener('pointerdown', () => actx());
+  function tone(type, f1, f2, dur, g, delay = 0) {
+    if (MUTE || !sfxOn) return; const c = actx(); if (!c) return;
+    const t = c.currentTime + delay, o = c.createOscillator(), a = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(f1, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+    a.gain.setValueAtTime(g * vol, t); a.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(a).connect(c.destination); o.start(t); o.stop(t + dur + 0.02);
+  }
+  function noise(dur, g, hp = 1200, delay = 0, rise = false) {
+    if (MUTE || !sfxOn) return; const c = actx(); if (!c) return;
+    const t = c.currentTime + delay, len = Math.ceil(c.sampleRate * dur), b = c.createBuffer(1, len, c.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const s = c.createBufferSource(), f = c.createBiquadFilter(), a = c.createGain();
+    s.buffer = b; f.type = 'highpass'; f.frequency.value = hp;
+    if (rise) { a.gain.setValueAtTime(0.0001, t); a.gain.exponentialRampToValueAtTime(g * vol, t + dur * 0.95); a.gain.linearRampToValueAtTime(0, t + dur); f.frequency.setValueAtTime(300, t); f.frequency.exponentialRampToValueAtTime(6000, t + dur); }
+    else { a.gain.setValueAtTime(g * vol, t); a.gain.exponentialRampToValueAtTime(0.0001, t + dur); }
+    s.connect(f).connect(a).connect(c.destination); s.start(t);
+  }
+  const snd = {
+    tick: (side) => tone('square', side === 'left' ? 740 : 988, 0, 0.045, 0.06),
+    land: () => { tone('sine', 140, 38, 0.55, 0.9); noise(0.35, 0.35, 1500); tone('sawtooth', 1320, 660, 0.4, 0.05, 0.02); },
+    intro: () => { noise(2.6, 0.25, 300, 0, true); tone('sine', 55, 110, 2.6, 0.35); },
+    done: () => { [523, 659, 784, 1046].forEach((f, i) => tone('triangle', f, 0, 1.6, 0.12, i * 0.09)); },
+  };
+
+  // ---------- deterministic randomness (same roulette on every OBS PC) ----------
+  function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+  let S = null, M = null, skew = 0, gridSig = '', tiles = new Map(), lastDrawId = null, schedules = new Map();
+  let prev = { phase: '', revealed: -1, cursor: null, drawId: null, k: -1 };
+  const now = () => Date.now() + skew;
+
+  function buildGrid(players) {
+    const sig = players.map((p) => p.id + p.name + p.pos + p.photo).join('|');
+    if (sig === gridSig) return;
+    gridSig = sig; tiles.clear();
+    $('grid').innerHTML = [1, 2, 3, 4, 5].map((pos) => `<div class="col" data-pos="${pos}"><h3><span>${pos}</span>${POS[pos]}</h3>` +
+      players.filter((p) => p.pos === pos).map((p) => `<div class="tile" data-id="${p.id}">${p.photo ? `<img src="${esc(p.photo)}" alt="">` : `<div class="mono">${esc(initials(p.name))}</div>`}<span class="badge"></span><div class="nm">${esc(p.name)}</div></div>`).join('') + '</div>').join('');
+    for (const el of $('grid').querySelectorAll('.tile')) tiles.set(el.dataset.id, el);
+  }
+  function buildRoster(side, picks, players, revealed, nowIdx) {
+    const mine = picks.map((p, i) => ({ ...p, i })).filter((p) => p.side === side);
+    const rows = (mine.length ? mine : [1, 2, 3, 4, 5].map((pos) => ({ pos, i: -1 }))).sort((a, b) => a.pos - b.pos || a.i - b.i);
+    const el = $(side === 'left' ? 'rosL' : 'rosR');
+    const html = rows.map((r) => {
+      const done = r.i >= 0 && r.i < revealed, pl = done ? players.find((x) => x.id === r.id) : null;
+      return `<div class="slot ${done ? 'done' : ''} ${r.i === nowIdx ? 'now' : ''}" data-i="${r.i}"><span class="p">${r.pos} · ${POS[r.pos]}</span><span class="n">${pl ? esc(pl.name) : '???'}</span></div>`;
+    }).join('');
+    if (el._h !== html) { el._h = html; el.innerHTML = html; }
+  }
+  function portrait(side, pl, animate) {
+    const el = $(side === 'left' ? 'porL' : 'porR');
+    const html = pl ? (pl.photo ? `<img src="${esc(pl.photo)}" alt="">` : `<div class="mono">${esc(initials(pl.name))}</div>`) : '';
+    if (el._h !== html) { el._h = html; el.innerHTML = html; }
+    el.classList.toggle('on', !!pl);
+    if (animate) { el.classList.remove('wipe'); void el.offsetWidth; el.classList.add('wipe'); }
+  }
+  function bigName(side, text, cls, animate) {
+    const el = $(side === 'left' ? 'bigL' : 'bigR');
+    if (el.textContent !== text) el.textContent = text;
+    el.className = 'big ' + (cls || '');
+    if (animate) { void el.offsetWidth; el.classList.add('slam'); }
+    // shrink long names to fit the side
+    el.style.fontSize = text.length > 9 ? Math.max(58, Math.round(108 * 9 / text.length)) + 'px' : '';
+  }
+
+  // roulette for pick k: random over every free tile first, then only the free tiles of the position, landing on the pick
+  function schedule(d, k, spin) {
+    const key = d.id + ':' + k;
+    if (schedules.has(key)) return schedules.get(key);
+    const r = rng(d.seed + (k + 1) * 7919);
+    const taken = new Set(d.picks.slice(0, k).map((p) => p.id));
+    const free = d.players.filter((p) => !taken.has(p.id)).map((p) => p.id);
+    const pick = d.picks[k], col = d.players.filter((p) => p.pos === pick.pos && !taken.has(p.id)).map((p) => p.id);
+    const steps = []; let t = 0, last = null;
+    while (t < spin) {
+      const x = t / spin, pool = x < 0.55 || col.length < 2 ? free : col;
+      let id = pool[Math.floor(r() * pool.length)];
+      if (id === last && pool.length > 1) id = pool[(pool.indexOf(id) + 1) % pool.length];
+      steps.push({ t, id }); last = id;
+      t += 65 + 420 * Math.pow(x, 2.3);
+    }
+    steps.push({ t: spin, id: pick.id });
+    schedules.set(key, steps);
+    return steps;
+  }
+
+  function frame() {
+    requestAnimationFrame(frame);
+    if (!M) return;
+    $('stage').classList.toggle('off', M.visible === false);
+    const d = M.draw;
+    const teamL = d ? d.left : M.left, teamR = d ? d.right : M.right;
+    if ($('tnL').textContent !== teamL) { $('tnL').textContent = teamL; $('ghL').textContent = teamL; $('teamL').textContent = teamL; }
+    if ($('tnR').textContent !== teamR) { $('tnR').textContent = teamR; $('ghR').textContent = teamR; $('teamR').textContent = teamR; }
+    const title = (d ? d.title : M.title) || 'Mix Draw';
+    if ($('title').textContent !== title) $('title').textContent = title;
+
+    if (!d) {
+      const players = M.players.filter((p) => p.active !== false);
+      buildGrid(players);
+      for (const el of tiles.values()) el.className = 'tile';
+      buildRoster('left', [], players, 0, -1); buildRoster('right', [], players, 0, -1);
+      portrait('left', null); portrait('right', null);
+      bigName('left', '???', 'wait'); bigName('right', '???', 'wait');
+      $('posL').textContent = '—'; $('posR').textContent = '—';
+      $('s1').textContent = 'Menunggu mix'; $('s2').textContent = `${players.length} pemain`; $('s2').className = 's2'; $('s3').textContent = 'satu tim · satu dari tiap posisi';
+      $('banner').classList.remove('on');
+      document.querySelectorAll('.col').forEach((c) => c.classList.remove('focus'));
+      prev = { phase: 'idle', revealed: 0, cursor: null, drawId: null, k: -1 };
+      return;
+    }
+
+    buildGrid(d.players);
+    const n = d.picks.length, dur = DUR[d.speed] || DUR.slow, spin = Math.round(dur * 0.68);
+    const e = now() - d.at;
+    let phase, revealed, k = -1, cursor = null;
+    if (d.all) { phase = 'done'; revealed = n; }
+    else if (e < 0) { phase = 'wait'; revealed = 0; }
+    else if (e < INTRO) { phase = 'intro'; revealed = 0; }
+    else {
+      k = Math.floor((e - INTRO) / dur);
+      if (k >= n) { phase = 'done'; revealed = n; k = -1; }
+      else {
+        const el = e - INTRO - k * dur;
+        if (el < spin) { phase = 'spin'; revealed = k; const st = schedule(d, k, spin); for (const s of st) { if (s.t <= el) cursor = s.id; else break; } }
+        else { phase = 'landed'; revealed = k + 1; cursor = d.picks[k].id; }
+      }
+    }
+    const fresh = prev.drawId === d.id;                       // watching it happen (not opening the page halfway)
+    const live = fresh && Math.abs(e - (prev.e ?? e)) < 1000;
+
+    // intro
+    if (phase === 'intro' && prev.phase !== 'intro' && live) snd.intro();
+    $('banner').textContent = phase === 'done' ? 'Mix Complete' : title;
+    $('banner').classList.toggle('on', phase === 'intro' || phase === 'wait' || (phase === 'done' && !d.all && e - INTRO - n * dur < 4000));
+    if (phase === 'done' && prev.phase && prev.phase !== 'done' && fresh) { snd.done(); }
+
+    // tiles
+    const pickOf = new Map(d.picks.slice(0, revealed).map((p) => [p.id, p]));
+    const side = k >= 0 ? d.picks[k].side : null;
+    for (const [id, el] of tiles) {
+      const pk = pickOf.get(id);
+      let cls = 'tile';
+      if (id === cursor && phase !== 'done') cls += side === 'left' ? ' curL' : ' curR';
+      else if (pk) cls += pk.side === 'left' ? ' takenL' : ' takenR';
+      if (el.className.replace(' hit', '') !== cls) el.className = cls;
+      if (pk) el.dataset.t = pk.side === 'left' ? 'P1' : 'P2';
+      el.querySelector('.badge').textContent = side === 'left' ? 'P1' : 'P2';
+    }
+    document.querySelectorAll('.col').forEach((c) => c.classList.toggle('focus', k >= 0 && phase === 'spin' && (e - INTRO - k * dur) > spin * 0.55 && Number(c.dataset.pos) === d.picks[k].pos));
+    if (phase === 'spin' && cursor !== prev.cursor && live) snd.tick(side);
+
+    // landing moment
+    const justLanded = live && revealed > prev.revealed && (phase === 'landed' || phase === 'done') && !d.all;
+    if (justLanded) {
+      snd.land();
+      const t = tiles.get(d.picks[revealed - 1].id); if (t) { t.classList.remove('hit'); void t.offsetWidth; t.classList.add('hit'); }
+      $('stage').classList.remove('shake'); void $('stage').offsetWidth; $('stage').classList.add('shake');
+      $('fx').classList.remove('go'); void $('fx').offsetWidth; $('fx').classList.add('go');
+    }
+
+    // sides: last revealed pick of each side, or the spinning name
+    for (const sd of ['left', 'right']) {
+      const S_ = sd === 'left' ? 'L' : 'R';
+      let lastIdx = -1; for (let i = revealed - 1; i >= 0; i--) if (d.picks[i].side === sd) { lastIdx = i; break; }
+      const nowIdx = k >= 0 && d.picks[k].side === sd ? k : -1;
+      buildRoster(sd, d.picks, d.players, revealed, phase === 'spin' ? nowIdx : -1);
+      $(sd === 'left' ? 'porL' : 'porR').classList.toggle('dim', phase === 'spin' && nowIdx >= 0);
+      if (phase === 'spin' && nowIdx >= 0) {
+        const pl = d.players.find((p) => p.id === cursor);
+        bigName(sd, pl ? pl.name : '???', 'spin');
+        $('pos' + S_).textContent = `${d.picks[k].pos} · ${POS[d.picks[k].pos]}`;
+      } else if (lastIdx >= 0) {
+        const pl = d.players.find((p) => p.id === d.picks[lastIdx].id);
+        const anim = justLanded && lastIdx === revealed - 1;
+        bigName(sd, pl.name, '', anim);
+        portrait(sd, pl, anim);
+        $('pos' + S_).textContent = `${d.picks[lastIdx].pos} · ${POS[d.picks[lastIdx].pos]}`;
+        if (anim) { const sl = $(sd === 'left' ? 'rosL' : 'rosR').querySelector(`[data-i="${lastIdx}"]`); if (sl) sl.classList.add('flash'); }
+      } else { bigName(sd, '???', 'wait'); portrait(sd, null); $('pos' + S_).textContent = '—'; }
+    }
+
+    // center status
+    if (phase === 'spin' || phase === 'landed') {
+      const pk = d.picks[k], team = pk.side === 'left' ? d.left : d.right;
+      $('s1').textContent = `Pick ${k + 1} / ${n} · Pos ${pk.pos} ${POS[pk.pos]}`;
+      $('s2').className = 's2 ' + (pk.side === 'left' ? 'L' : 'R');
+      $('s2').textContent = phase === 'spin' ? team : d.players.find((p) => p.id === pk.id).name;
+      $('s3').textContent = phase === 'spin' ? 'mengacak…' : '→ ' + team;
+    } else if (phase === 'done') { $('s1').textContent = 'Hasil mix'; $('s2').className = 's2'; $('s2').textContent = `${d.left} vs ${d.right}`; $('s3').textContent = ''; }
+    else { $('s1').textContent = 'Bersiap'; $('s2').className = 's2'; $('s2').textContent = ''; $('s3').textContent = ''; }
+
+    prev = { phase, revealed, cursor, drawId: d.id, k, e };
+  }
+  requestAnimationFrame(frame);
+  // OBS can pause animation frames for hidden sources: keep the state moving
+  setInterval(() => { if (document.hidden) frame(); }, 250);
+
+  function connect() {
+    const es = new EventSource('/events');
+    es.onmessage = (ev) => {
+      S = JSON.parse(ev.data);
+      if (S.serverNow) skew = S.serverNow - Date.now();
+      M = S.mix || null;
+      sfxOn = !!(M && M.sound !== false) && !(S.sfx && S.sfx.enabled === false);
+      vol = S.sfx && Number.isFinite(Number(S.sfx.volume)) ? Number(S.sfx.volume) : 0.6;
+      if (M && M.draw && M.draw.id !== lastDrawId) { lastDrawId = M.draw.id; schedules.clear(); }
+    };
+    es.onerror = () => { es.close(); setTimeout(connect, 2000); };
+  }
+  connect();
+})();
+</script>
+</body>
+</html>

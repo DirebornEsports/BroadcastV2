@@ -1,0 +1,220 @@
+/* =====================================================================
+   DIREBATTLE UPRISING — teal & gold, from the Uprising draft artwork
+   (themes/uprising/*.png, cut from the design files). Panel + every OBS
+   overlay except the player cam, while a tournament uses the "Uprising" design.
+   ===================================================================== */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800;900&display=swap");
+@font-face { font-family: "Teko"; src: url(/fonts/Teko.woff) format("woff"); font-weight: 300 700; font-display: block; }
+@font-face { font-family: "Oswald"; src: url(/fonts/Oswald.woff) format("woff"); font-weight: 200 700; font-display: block; }
+
+html[data-theme="uprising"] {
+  --up-gold: #e2c27a; --up-gold-hi: #f8e7b4; --up-gold-lo: #a07d3c; --up-teal: #0b4a46; --up-teal-dk: #06302e; --up-jade: #3fd0bd; --up-cream: #f5efdc;
+  --up-title: linear-gradient(180deg, #fff3cf 0%, #f0cf86 45%, #c9963f 100%);
+  /* control panel */
+  --bg: #052423; --panel: #0a3634; --panel2: #0f4a47; --panel3: #155e5a;
+  --line: rgba(222,190,118,.28); --line-hi: rgba(222,190,118,.62);
+  --text: #f3efdf; --muted: #a9c7c0; --gold: #dcbd76; --gold-hi: #f6e6b6; --gold-lo: #9c7e44;
+  --shade-rgb: 3,22,21; --bg-rgb: 5,36,35; --panel-rgb: 10,54,52; --panel2-rgb: 15,74,71; --line-rgb: 220,189,118; --hi-rgb: 246,230,182;
+}
+
+
+/* ---------------------------------------------------------------------
+   DRAFT OVERLAY (/overlay) — built from base / pick / ban / team / crest
+   positions measured on the 1920 x 1080 reference; the bar works on a 1600 grid (x1.2)
+   --------------------------------------------------------------------- */
+html[data-theme="uprising"][data-page="overlay"] { --display: "Oswald", "Arial Narrow", sans-serif; --gold-hi: #f8e7b4; --cream: #f5efdc; }
+html[data-theme="uprising"][data-page="overlay"] body.preview { background: #2e3b3a; }
+html[data-theme="uprising"][data-page="overlay"] .bar16 .panel,
+html[data-theme="uprising"][data-page="overlay"] .bar16 .corner,
+html[data-theme="uprising"][data-page="overlay"] .center .cbg,
+html[data-theme="uprising"][data-page="overlay"] .center .spike { display: none !important; }
+/* the whole bar artwork: 1920 x 576 at y 504 -> grid top -120, 1600 x 480 */
+html[data-theme="uprising"][data-page="overlay"] .bar16::before {
+  content: ""; position: absolute; left: 0; top: -120px; width: 1600px; height: 480px; z-index: 0;
+  background: url(/themes/uprising/base-square.png) 0 0 / 100% 100% no-repeat;   /* base.png with the bottom rail cut square */
+}
+/* seamless: a soft dark fade rising behind the artwork, so the bar melts into the game instead of a hard edge */
+html[data-theme="uprising"][data-page="overlay"] .bar16::after { content: ""; position: absolute; left: -40px; right: -40px; top: -190px; bottom: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(2,22,21,.45) 45%, rgba(2,22,21,.75)); }
+/* crest on top of the arch */
+html[data-theme="uprising"][data-page="overlay"] .center::before {
+  content: ""; position: absolute; left: 130.5px; top: -134px; width: 166px; height: 170px; z-index: 4;
+  background: url(/themes/uprising/crest.png) center / 100% 100% no-repeat; filter: drop-shadow(0 6px 10px rgba(0,0,0,.45));
+}
+/* pick card: Shape Player 129 x 194 -> 107.5 x 161.7 grid; art window above the name band */
+html[data-theme="uprising"][data-page="overlay"] .pick { width: 107.5px; height: 161.7px; }
+html[data-theme="uprising"][data-page="overlay"] .pick .pframe { content: url(/themes/uprising/pick.png); width: 107.5px; height: 161.7px; z-index: 0; }
+html[data-theme="uprising"][data-page="overlay"] .pick .clip { left: 3px; top: 3px; width: 97.5px; height: 125px; z-index: 1; border-radius: 6px; background: transparent; }
+html[data-theme="uprising"][data-page="overlay"] .pick .clip::after { display: none; }
+html[data-theme="uprising"][data-page="overlay"] .pick .glow { left: 0; top: 0; width: 103.5px; height: 161.7px; border-radius: 7px; }
+html[data-theme="uprising"][data-page="overlay"] .pick .ph .mark { width: 82px; height: 90px; background: url(/themes/uprising/watermark.png) center / contain no-repeat; opacity: .9; }
+html[data-theme="uprising"][data-page="overlay"] .pick .ph .mark img { display: none; }
+html[data-theme="uprising"][data-page="overlay"] .pick .ph .chev path { stroke: var(--up-gold); }
+html[data-theme="uprising"][data-page="overlay"] .pick .shade { background: linear-gradient(transparent, rgba(3,26,24,.85)); }
+html[data-theme="uprising"][data-page="overlay"] .pick .flash { left: 3px; top: 3px; width: 97.5px; height: 125px; background: #f8e7b4; border-radius: 6px; }
+html[data-theme="uprising"][data-page="overlay"] .pick .hname { bottom: 36px; color: var(--up-gold-hi); }
+html[data-theme="uprising"][data-page="overlay"] .plate { left: 5px; right: 8px; top: 131px; height: 26px; border-radius: 0 0 6px 6px; color: var(--up-cream); font: 500 14px/1 var(--display); letter-spacing: .02em; text-transform: none; }
+html[data-theme="uprising"][data-page="overlay"] .plate.long span { font-size: 11.5px; }
+html[data-theme="uprising"][data-page="overlay"] .plate.captain { background: rgba(226,194,122,.85); color: #0b2f2c; text-shadow: none; }
+html[data-theme="uprising"][data-page="overlay"] { --pulse-lo: 0 0 0 1.5px #f8e7b4, 0 0 6px 1px rgba(63,208,189,.3); --pulse-hi: 0 0 14px 3px rgba(63,208,189,.5); --turn-glow: rgba(63,208,189,.6); }
+/* ban: Shape Ban 103 x 71 shown at 85 x 58 -> 70.8 x 48.3 grid */
+html[data-theme="uprising"][data-page="overlay"] .ban { width: 70.8px; height: 48.3px; border-radius: 6px; }
+html[data-theme="uprising"][data-page="overlay"] .ban .bframe { content: url(/themes/uprising/ban.png); width: 70.8px; height: 48.3px; z-index: 0; }
+html[data-theme="uprising"][data-page="overlay"] .ban .in { inset: 2.5px 3px 3px 2.5px; border-radius: 5px; background: transparent; z-index: 1; }
+html[data-theme="uprising"][data-page="overlay"] .ban .mark { display: none; }
+html[data-theme="uprising"][data-page="overlay"] .ban .hero { filter: grayscale(1) brightness(.6) contrast(1.05); }
+/* center: title, score, team frames + names, clocks */
+html[data-theme="uprising"][data-page="overlay"] .ctitle { top: 60px; left: 0; right: 0; }
+html[data-theme="uprising"][data-page="overlay"] .stage-title {
+  display: inline-block; transform: scaleX(.8); white-space: nowrap; font: 600 66px/.8 "Teko", sans-serif; letter-spacing: .005em; color: #f3dc9e;
+  text-shadow: 0 2px 10px rgba(0,0,0,.45);
+}
+html[data-theme="uprising"][data-page="overlay"] .format { margin-top: 2px; font: 500 13px/1 "Oswald", sans-serif; letter-spacing: .24em; color: var(--up-jade); text-shadow: 0 1px 6px rgba(0,0,0,.5); }
+html[data-theme="uprising"][data-page="overlay"] .score { top: 168px; gap: 0; transform: scaleX(.8); }
+html[data-theme="uprising"][data-page="overlay"] .score b, html[data-theme="uprising"][data-page="overlay"] .score i {
+  display: inline-block; font: 600 100px/.8 "Teko", sans-serif; background: none; -webkit-text-fill-color: #fff; color: #fff; filter: none; text-shadow: 0 3px 14px rgba(0,0,0,.45);
+}
+html[data-theme="uprising"][data-page="overlay"] .score i { font-size: 92px; transform: translateY(-3px); }
+html[data-theme="uprising"][data-page="overlay"] .logo { top: 131px; width: 117.5px; height: 112.6px; }
+html[data-theme="uprising"][data-page="overlay"] .logo.left { left: 33.2px; }
+html[data-theme="uprising"][data-page="overlay"] .logo.right { left: 277.3px; }
+html[data-theme="uprising"][data-page="overlay"] .logo .lframe { content: url(/themes/uprising/team.png); width: 117.5px; height: 112.6px; z-index: 0; }
+html[data-theme="uprising"][data-page="overlay"] .logo .in { left: 16px; top: 22px; width: 85px; height: 76px; background: transparent; z-index: 1; }
+html[data-theme="uprising"][data-page="overlay"] .logo span { font: 700 22px/1 "Oswald", sans-serif; color: var(--up-gold-hi); }
+html[data-theme="uprising"][data-page="overlay"] .tnm { display: block; position: absolute; top: 245px; width: 150px; z-index: 3; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font: 500 19px/1 "Teko", sans-serif; letter-spacing: .03em; text-transform: none; color: var(--up-gold); text-shadow: 0 1px 6px rgba(0,0,0,.5); }
+html[data-theme="uprising"][data-page="overlay"] .tnm.left { left: 17px; }
+html[data-theme="uprising"][data-page="overlay"] .tnm.right { left: 262px; }
+html[data-theme="uprising"][data-page="overlay"] .clock { top: 264px; width: 120px; }
+html[data-theme="uprising"][data-page="overlay"] .clock.left { left: 32px; }
+html[data-theme="uprising"][data-page="overlay"] .clock.right { left: 277px; }
+html[data-theme="uprising"][data-page="overlay"] .clock .label { font: 500 9.5px/1 "Oswald", sans-serif; letter-spacing: .22em; color: rgba(63,208,189,.8); }
+html[data-theme="uprising"][data-page="overlay"] .clock .time { margin-top: 2px; font: 600 26px/.8 "Teko", sans-serif; color: var(--up-gold-hi); }
+html[data-theme="uprising"][data-page="overlay"] .clock.on .label { color: var(--up-jade); text-shadow: none; }
+html[data-theme="uprising"][data-page="overlay"] .clock.on .time { color: #fff; }
+html[data-theme="uprising"][data-page="overlay"] .fp { top: 38px; background: #ecd193; color: #0b2f2c; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,.3); z-index: 5; }
+/* hero stats popup */
+html[data-theme="uprising"][data-page="overlay"] .statpop { background: radial-gradient(500px 220px at 30% 0%, rgba(63,208,189,.18), transparent 70%), linear-gradient(180deg, #0d4c48, #06302e);
+  border: 2px solid var(--up-gold); box-shadow: 0 0 0 1px #031a19, inset 0 0 0 4px rgba(6,48,46,.9), inset 0 0 0 5px rgba(226,194,122,.35), 0 14px 30px rgba(0,0,0,.55); }
+html[data-theme="uprising"][data-page="overlay"] .statpop .orn { content: url(/themes/uprising/crest.png); width: 54px; top: -30px; }
+html[data-theme="uprising"][data-page="overlay"] .sp-box { background: rgba(2,24,22,.55); border-color: rgba(226,194,122,.4); }
+html[data-theme="uprising"][data-page="overlay"] .sp-sub, html[data-theme="uprising"][data-page="overlay"] .sp-box span,
+html[data-theme="uprising"][data-page="overlay"] .sp-row em, html[data-theme="uprising"][data-page="overlay"] .sp-foot em { color: var(--up-jade); }
+
+/* ---------------------------------------------------------------------
+   IN-GAME PLAYER LOWER THIRD (/ingame)
+   --------------------------------------------------------------------- */
+html[data-theme="uprising"][data-page="ingame"] { --gold: #e2c27a; --gold-hi: #f8e7b4; --cream: #f5efdc; --green-900: #031a19; }
+html[data-theme="uprising"][data-page="ingame"] .lt .plate {
+  background: linear-gradient(100deg, rgba(var(--c-rgb), .25), transparent 55%), radial-gradient(400px 160px at 20% 0%, rgba(63,208,189,.2), transparent 70%), linear-gradient(180deg, #0d4c48, #06302e);
+  border-top-color: var(--up-gold); border-bottom-color: var(--up-gold);
+}
+html[data-theme="uprising"][data-page="ingame"] .lt .team { color: var(--up-jade); }
+html[data-theme="uprising"][data-page="ingame"] .lt .pname { font-family: "Oswald", sans-serif; font-weight: 700; font-size: 34px; letter-spacing: .02em; }
+html[data-theme="uprising"][data-page="ingame"] .lt .stats { background: rgba(2,24,22,.65); border-top-color: rgba(226,194,122,.4); }
+html[data-theme="uprising"][data-page="ingame"] .lt .stats span { color: var(--up-jade); }
+
+/* ---------------------------------------------------------------------
+   Shared full-screen backdrop (next match, stat cards): deep teal sky, gold double frame, crest
+   --------------------------------------------------------------------- */
+html[data-theme="uprising"][data-page^="nextmatch"] .card,
+html[data-theme="uprising"][data-page="statcards"] .card .bgl {
+  background:
+    radial-gradient(1100px 620px at 50% -8%, rgba(78,214,190,.30), transparent 62%),
+    radial-gradient(900px 600px at 50% 112%, rgba(8,90,84,.55), transparent 70%),
+    linear-gradient(180deg, #0b4a46 0%, #073a37 55%, #04201f 100%) !important;
+}
+html[data-theme="uprising"][data-page^="nextmatch"] .orn, html[data-theme="uprising"][data-page="statcards"] .orn { background-image: url(/themes/uprising/watermark.png); opacity: .05; filter: brightness(2.2); }
+html[data-theme="uprising"][data-page^="nextmatch"] .frm, html[data-theme="uprising"][data-page="statcards"] .frm { border-color: rgba(226,194,122,.42); border-width: 1px; border-radius: 20px; }
+html[data-theme="uprising"][data-page^="nextmatch"] .frm::after, html[data-theme="uprising"][data-page="statcards"] .frm::after { border-color: rgba(63,208,189,.14); border-radius: 14px; }
+html[data-theme="uprising"][data-page^="nextmatch"] .cor, html[data-theme="uprising"][data-page="statcards"] .cor {
+  width: 18px; height: 18px; border: 0 !important; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #b6fff2, #2fc0ad 45%, #0a5a52 75%); box-shadow: 0 0 0 2px #c9a55c, 0 3px 8px rgba(0,0,0,.4);
+}
+html[data-theme="uprising"][data-page^="nextmatch"] .cor.tl, html[data-theme="uprising"][data-page="statcards"] .cor.tl { left: 14px; top: 14px; }
+html[data-theme="uprising"][data-page^="nextmatch"] .cor.tr, html[data-theme="uprising"][data-page="statcards"] .cor.tr { right: 14px; top: 14px; }
+html[data-theme="uprising"][data-page^="nextmatch"] .cor.bl, html[data-theme="uprising"][data-page="statcards"] .cor.bl { left: 14px; bottom: 14px; }
+html[data-theme="uprising"][data-page^="nextmatch"] .cor.br, html[data-theme="uprising"][data-page="statcards"] .cor.br { right: 14px; bottom: 14px; }
+
+/* ---------------------------------------------------------------------
+   NEXT MATCH (/nextmatch, /nextmatch-wide)
+   --------------------------------------------------------------------- */
+html[data-theme="uprising"][data-page^="nextmatch"] { --gold: #e2c27a; --gold-hi: #f8e7b4; --gold-lo: #a07d3c; --teal: #3fd0bd; --text: #f5efdc; --muted: #a9c7c0; }
+html[data-theme="uprising"][data-page^="nextmatch"] .card::before { content: ""; position: absolute; left: 50%; top: 30px; width: 170px; height: 162px; transform: translateX(-50%); z-index: 2;
+  background: url(/themes/uprising/crest.png) center / 100% 100% no-repeat; filter: drop-shadow(0 6px 12px rgba(0,0,0,.5)); }
+html[data-theme="uprising"][data-page^="nextmatch"] .kick { top: 200px; font-size: 20px; color: var(--up-jade); }
+html[data-theme="uprising"][data-page^="nextmatch"] .plq { top: 232px; border: 0; padding: 0; }
+html[data-theme="uprising"][data-page^="nextmatch"] .plq > div { border: 0; background: none; box-shadow: none; padding: 0 10px; }
+html[data-theme="uprising"][data-page^="nextmatch"] .plq .dia, html[data-theme="uprising"][data-page^="nextmatch"] .plq .shine { display: none; }
+html[data-theme="uprising"][data-page^="nextmatch"] .plq h1 { font: 600 76px/1.05 "Oswald", sans-serif; letter-spacing: .01em; color: #f3dc9e; background: none; -webkit-background-clip: border-box; background-clip: border-box; text-shadow: 0 3px 14px rgba(0,0,0,.4); filter: none; }
+html[data-theme="uprising"][data-page^="nextmatch"] .pill { top: 338px; border-color: rgba(226,194,122,.4); background: rgba(2,24,22,.45); color: var(--up-gold-hi); font-family: "Oswald", sans-serif; }
+html[data-theme="uprising"][data-page^="nextmatch"] .team { top: 400px; }
+html[data-theme="uprising"][data-page^="nextmatch"] .lg .box { border: 0; border-radius: 0; box-shadow: none; padding: 15% 19% 20%;   /* inside the frame's inner window (team.png: 15% sides, 12% top, 16% bottom) */
+  background: url(/themes/uprising/team.png) center / 100% 100% no-repeat; }
+html[data-theme="uprising"][data-page^="nextmatch"] .lg .glow { background: radial-gradient(closest-side, rgba(63,208,189,.35), transparent 72%); }
+html[data-theme="uprising"][data-page^="nextmatch"] .lg .tagtxt, html[data-theme="uprising"][data-page^="nextmatch"] .tname { font-family: "Oswald", sans-serif; font-weight: 700; }
+html[data-theme="uprising"][data-page^="nextmatch"] .lg .tbd { color: rgba(226,194,122,.45); font-family: "Oswald", sans-serif; }
+html[data-theme="uprising"][data-page^="nextmatch"] .tname { color: var(--up-gold-hi); letter-spacing: .02em; }
+html[data-theme="uprising"][data-page^="nextmatch"] .vs { top: 470px; }
+html[data-theme="uprising"][data-page^="nextmatch"] .vs .rays { background: repeating-conic-gradient(from 0deg, rgba(63,208,189,.07) 0 6deg, transparent 6deg 22deg); }
+html[data-theme="uprising"][data-page^="nextmatch"] .vs b { font: 600 120px/1 "Oswald", sans-serif; font-style: normal; color: #f3dc9e; background: none; -webkit-background-clip: border-box; background-clip: border-box; text-shadow: 0 3px 14px rgba(0,0,0,.4); }
+html[data-theme="uprising"][data-page^="nextmatch"] .dg { border-color: rgba(226,194,122,.6); background: linear-gradient(180deg, #0f5550 0%, #0a3f3c 50%, #072f2d 50.5%, #052524 100%); }
+html[data-theme="uprising"][data-page^="nextmatch"] .dg span { font-family: "Oswald", sans-serif; font-weight: 600; color: #f8e7b4; background: none; -webkit-background-clip: border-box; background-clip: border-box; }
+html[data-theme="uprising"][data-page^="nextmatch"] .colon { color: var(--up-gold); font-family: "Oswald", sans-serif; }
+html[data-theme="uprising"][data-page^="nextmatch"] .big { font-family: "Oswald", sans-serif; font-weight: 700; color: var(--up-gold-hi); }
+html[data-theme="uprising"][data-page^="nextmatch"] .when b, html[data-theme="uprising"][data-page^="nextmatch"] .nxt i, html[data-theme="uprising"][data-page^="nextmatch"] .nxt .dt { color: var(--up-gold); }
+html[data-theme="uprising"][data-page^="nextmatch"] .nxt { border-color: rgba(226,194,122,.3); background: rgba(2,24,22,.4); border-radius: 12px; }
+html[data-theme="uprising"][data-page^="nextmatch"] .nxt .lb, html[data-theme="uprising"][data-page^="nextmatch"] .tsub { color: var(--up-jade); }
+html[data-theme="uprising"][data-page^="nextmatch"] .foot { color: var(--up-gold); }
+html[data-theme="uprising"][data-page="nextmatch"] .cd { top: 768px; }
+html[data-theme="uprising"][data-page="nextmatch"] .when { top: 950px; }
+html[data-theme="uprising"][data-page="nextmatch"] .lg { width: 270px; height: 270px; }
+html[data-theme="uprising"][data-page="nextmatch"] .lg .box { width: 250px; height: 240px; }
+html[data-theme="uprising"][data-page="nextmatch-wide"] .card::before { top: 34px; width: 180px; height: 172px; }
+html[data-theme="uprising"][data-page="nextmatch-wide"] .kick { top: 210px; }
+html[data-theme="uprising"][data-page="nextmatch-wide"] .plq { top: 240px; }
+html[data-theme="uprising"][data-page="nextmatch-wide"] .plq h1 { font-size: 86px; }
+html[data-theme="uprising"][data-page="nextmatch-wide"] .pill { top: 352px; }
+html[data-theme="uprising"][data-page="nextmatch-wide"] .team { top: 360px; }
+html[data-theme="uprising"][data-page="nextmatch-wide"] .lg { width: 380px; height: 370px; }
+html[data-theme="uprising"][data-page="nextmatch-wide"] .lg .box { width: 350px; height: 335px; }
+html[data-theme="uprising"][data-page="nextmatch-wide"] .vs { top: 420px; }
+html[data-theme="uprising"][data-page="nextmatch-wide"] .cd { top: 650px; }
+html[data-theme="uprising"][data-page="nextmatch-wide"] .big { top: 668px; }
+html[data-theme="uprising"][data-page="nextmatch-wide"] .when { top: 846px; }
+
+/* ---------------------------------------------------------------------
+   RUNNING TEXT (/ticker)
+   --------------------------------------------------------------------- */
+html[data-theme="uprising"][data-page="ticker"] { --gold: #e2c27a; --gold-hi: #f8e7b4; --teal: #3fd0bd; --text: #f5efdc; --muted: #a9c7c0; }
+html[data-theme="uprising"][data-page="ticker"] .badge .b1 { background: #ecd193; color: #0b2f2c; font-family: "Oswald", sans-serif; font-weight: 600; }
+html[data-theme="uprising"][data-page="ticker"] .badge .b2 { background: linear-gradient(180deg, #0f5550, #073a37); color: var(--up-gold-hi); border-color: var(--up-gold); font-family: "Oswald", sans-serif; font-weight: 700; }
+html[data-theme="uprising"][data-page="ticker"] .track { background: linear-gradient(180deg, rgba(13,76,72,.97), rgba(5,36,35,.97)); border-color: var(--up-gold); }
+html[data-theme="uprising"][data-page="ticker"] .track::before { background-image: url(/themes/uprising/watermark.png); background-size: 90px auto; opacity: .05; }
+html[data-theme="uprising"][data-page="ticker"] .track::after { background: linear-gradient(90deg, #073a37, transparent); }
+html[data-theme="uprising"][data-page="ticker"] .it .cdx { background: #ecd193; color: #0b2f2c; }
+
+/* ---------------------------------------------------------------------
+   STAT CARDS (/statcards)
+   --------------------------------------------------------------------- */
+html[data-theme="uprising"][data-page="statcards"] { --gold: #e2c27a; --gold-hi: #f8e7b4; --gold-lo: #a07d3c; --teal: #3fd0bd; --text: #f5efdc; --muted: #a9c7c0; --line: rgba(226,194,122,.45); }
+html[data-theme="uprising"][data-page="statcards"] .card { --plq1: #0f5550; --plq2: #073a37; --pnl: rgba(2,24,22,.35); --green1: #138a7d; --green2: #3fd0bd; }
+html[data-theme="uprising"][data-page="statcards"] .card .bgl::after { content: ""; position: absolute; left: 50%; top: 22px; width: 92px; height: 88px; transform: translateX(-50%);
+  background: url(/themes/uprising/crest.png) center / 100% 100% no-repeat; opacity: .95; }
+html[data-theme="uprising"][data-page="statcards"] .kick { top: 112px; color: var(--up-jade); }
+html[data-theme="uprising"][data-page="statcards"] .card.fact .kick { top: 112px; }
+html[data-theme="uprising"][data-page="statcards"] .head, html[data-theme="uprising"][data-page="statcards"] .card.fact .head { top: 136px; }
+html[data-theme="uprising"][data-page="statcards"] .plq { border-color: rgba(226,194,122,.35); }
+html[data-theme="uprising"][data-page="statcards"] .plq > div { border-color: var(--up-gold); }
+html[data-theme="uprising"][data-page="statcards"] .plq h1 { font-family: "Oswald", sans-serif; font-weight: 600; color: #f3dc9e; background: none; -webkit-background-clip: border-box; background-clip: border-box; text-shadow: 0 3px 14px rgba(0,0,0,.4); }
+html[data-theme="uprising"][data-page="statcards"] .card.fact .plq h1 { font-size: 66px; }
+html[data-theme="uprising"][data-page="statcards"] .grid { top: 262px; height: 640px; }
+html[data-theme="uprising"][data-page="statcards"] .fwrap { top: 280px; }
+html[data-theme="uprising"][data-page="statcards"] .st .v, html[data-theme="uprising"][data-page="statcards"] .bar .bv { font-family: "Oswald", sans-serif; }
+html[data-theme="uprising"][data-page="statcards"] .rec .n { color: #f3dc9e; background: none; -webkit-background-clip: border-box; background-clip: border-box; text-shadow: 0 3px 14px rgba(0,0,0,.4); font-family: "Oswald", sans-serif; }
+html[data-theme="uprising"][data-page="statcards"] .rec .w, html[data-theme="uprising"][data-page="statcards"] .grp h4 { color: #9cd8cf; }
+html[data-theme="uprising"][data-page="statcards"] .fl.gold { background: linear-gradient(90deg, #a07d3c, #e2c27a 60%, #f8e7b4); }
+html[data-theme="uprising"][data-page="statcards"] .key { background: linear-gradient(90deg, rgba(255,255,255,.05), rgba(63,208,189,.3)); }
+html[data-theme="uprising"][data-page="statcards"] .brk .m { background: linear-gradient(180deg, rgba(12,72,68,.94), rgba(4,32,31,.95)); }
+html[data-theme="uprising"][data-page="statcards"] .brk .lab { color: var(--up-jade); }
+html[data-theme="uprising"][data-page="statcards"] .brk .tr.win { background: linear-gradient(90deg, rgba(226,194,122,.2), transparent 75%); }

@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<script src="/vendor/anime.umd.min.js"></script><script src="/ui/motion.js"></script>
+<script src="/theme.js"></script>
+<title>Next Match</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root { --gold: #e9c679; --gold-hi: #f8e6ad; --gold-lo: #a07a33; --teal: #5fd4a4; --text: #f3eee2; --muted: #c9c2ae; --red: #e0483a;
+    --ca: 214, 189, 134; --cb: 214, 189, 134; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; font-family: Poppins, "Segoe UI", sans-serif; color: var(--text); }
+  body.bg { background: #222 url(/assets/clouds.jpg) center / cover; }
+  /* square 1080 x 1080 canvas, scaled to the source */
+  #fit { position: absolute; left: 50%; top: 50%; width: 1080px; height: 1080px; transform: translate(-50%, -50%) scale(var(--k, 1)); }
+
+  .card { position: absolute; inset: 0; overflow: hidden; border-radius: 6px;
+    background: radial-gradient(900px 640px at 50% 18%, #1d4a35, transparent 70%), radial-gradient(700px 500px at 50% 100%, #10342a, transparent 70%), linear-gradient(#0f271c, #0a1b14); }
+  .orn { position: absolute; width: 470px; height: 260px; background: url(/assets/cloud-gold.png) center / contain no-repeat; opacity: .05; }
+  .orn.a { left: -90px; top: 70px; } .orn.b { right: -90px; top: 60px; transform: scaleX(-1); }
+  .orn.c { left: -60px; bottom: 30px; } .orn.d { right: -60px; bottom: 40px; transform: scaleX(-1); }
+  .frm { position: absolute; inset: 24px; border: 2px solid rgba(222,184,108,.6); }
+  .frm::after { content: ""; position: absolute; inset: 8px; border: 1px solid rgba(222,184,108,.22); }
+  .cor { position: absolute; width: 64px; height: 64px; border: 0 solid var(--gold); }
+  .cor.tl { left: 16px; top: 16px; border-left-width: 5px; border-top-width: 5px; } .cor.tr { right: 16px; top: 16px; border-right-width: 5px; border-top-width: 5px; }
+  .cor.bl { left: 16px; bottom: 16px; border-left-width: 5px; border-bottom-width: 5px; } .cor.br { right: 16px; bottom: 16px; border-right-width: 5px; border-bottom-width: 5px; }
+
+  .kick { position: absolute; left: 0; right: 0; top: 66px; display: flex; justify-content: center; align-items: center; gap: 22px;
+    font: 700 24px Poppins; letter-spacing: .38em; color: var(--gold); text-transform: uppercase; }
+  .kick::before, .kick::after { content: ""; width: 110px; height: 2px; background: linear-gradient(90deg, transparent, var(--gold-lo)); }
+  .kick::after { transform: scaleX(-1); }
+  .plq { position: absolute; left: 50%; top: 108px; transform: translateX(-50%); padding: 6px; border: 2px solid rgba(222,184,108,.5); border-radius: 12px; white-space: nowrap; }
+  .plq > div { position: relative; overflow: hidden; display: flex; align-items: center; gap: 18px; padding: 6px 34px 10px; border: 3px solid var(--gold); border-radius: 8px;
+    background: linear-gradient(180deg, #1d4a35, #12301f); box-shadow: inset 0 0 30px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.45); }
+  .plq .dia { font-size: 30px; color: var(--gold); }
+  .plq h1 { margin: 0; font: 800 62px/1.15 Poppins; text-transform: uppercase; letter-spacing: .01em;
+    background: linear-gradient(180deg, #fff3c9 10%, #e7bf6a 60%, #c99843); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 3px 0 rgba(0,0,0,.45)); }
+  .plq .shine { position: absolute; top: -30%; bottom: -30%; width: 110px; left: -160px; transform: skewX(-20deg); background: linear-gradient(90deg, transparent, rgba(255,240,200,.35), transparent); }
+  .pill { position: absolute; left: 50%; top: 238px; transform: translateX(-50%); padding: 9px 26px; border: 2px solid rgba(222,184,108,.55); border-radius: 40px; background: rgba(0,0,0,.28);
+    font: 700 22px Poppins; letter-spacing: .16em; text-transform: uppercase; color: var(--gold-hi); white-space: nowrap; }
+
+  /* teams */
+  .team { position: absolute; top: 312px; width: 330px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  .team.a { left: 70px; } .team.b { right: 70px; }
+  .lg { position: relative; width: 300px; height: 300px; display: grid; place-items: center; }
+  .lg .glow { position: absolute; inset: -40px; border-radius: 50%; background: radial-gradient(closest-side, rgba(var(--c), .55), transparent 72%); filter: blur(6px); }
+  .lg .box { position: relative; width: 268px; height: 268px; display: grid; place-items: center; padding: 22px; border: 3px solid var(--gold); border-radius: 18px;
+    background: radial-gradient(80% 80% at 50% 35%, rgba(var(--c), .25), transparent 70%), linear-gradient(180deg, #13321f, #08170f);
+    box-shadow: 0 0 0 6px rgba(10,27,20,.9), 0 0 0 8px rgba(222,184,108,.45), 0 18px 40px rgba(0,0,0,.55); }
+  .lg img { width: 100%; height: 100%; object-fit: contain; border-radius: 6px; filter: drop-shadow(0 6px 12px rgba(0,0,0,.55)); }
+  .lg .tagtxt { font: 800 74px/1 Poppins; color: var(--gold-hi); letter-spacing: .02em; }
+  .lg .tbd { font: 900 120px/1 Poppins; color: rgba(233,198,121,.55); }
+  .team.a { --c: var(--ca); } .team.b { --c: var(--cb); }
+  .tname { max-width: 330px; text-align: center; font: 800 38px/1.1 Poppins; color: var(--text); text-transform: uppercase; letter-spacing: .01em; text-shadow: 0 3px 8px rgba(0,0,0,.6); overflow-wrap: anywhere; }
+  .tname.small { font-size: 30px; }
+  .tsub { margin-top: -10px; font: 700 17px Poppins; letter-spacing: .24em; color: var(--teal); text-transform: uppercase; min-height: 20px; }
+
+  .vs { position: absolute; left: 50%; top: 404px; width: 180px; height: 180px; margin-left: -90px; display: grid; place-items: center; }
+  .vs .rays { position: absolute; inset: -60px; border-radius: 50%; opacity: .5;
+    background: repeating-conic-gradient(from 0deg, rgba(233,198,121,.22) 0 6deg, transparent 6deg 22deg);
+    -webkit-mask: radial-gradient(closest-side, #000 30%, transparent 78%); mask: radial-gradient(closest-side, #000 30%, transparent 78%); animation: spin 26s linear infinite; }
+  .vs b { position: relative; font: 900 108px/1 Poppins; font-style: italic; letter-spacing: -.02em;
+    background: linear-gradient(180deg, #fff6d6, #eac36f 55%, #b8862f); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 5px 0 rgba(0,0,0,.5)); }
+  .vs .score { position: absolute; top: 172px; white-space: nowrap; font: 800 30px Poppins; color: var(--gold-hi); letter-spacing: .06em; }
+
+  /* countdown */
+  .cd { position: absolute; left: 0; right: 0; top: 742px; display: flex; justify-content: center; align-items: flex-start; gap: 18px; }
+  .unit { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .digits { display: flex; gap: 8px; }
+  .dg { position: relative; width: 92px; height: 132px; overflow: hidden; border-radius: 12px; border: 2px solid rgba(222,184,108,.55);
+    background: linear-gradient(180deg, #1b4231 0%, #11301f 50%, #0b2016 50.5%, #0a1b13 100%); box-shadow: inset 0 1px 0 rgba(255,240,200,.14), 0 10px 22px rgba(0,0,0,.45); }
+  .dg::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 2px; background: rgba(0,0,0,.45); }
+  .dg span { position: absolute; inset: 0; display: grid; place-items: center; font: 800 96px/1 Poppins; font-variant-numeric: tabular-nums;
+    background: linear-gradient(180deg, #fff8e0, #f0d38f 60%, #d0a552); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .dg span.in { animation: flipIn .45s cubic-bezier(.16,1,.3,1) both; }
+  .dg span.out { animation: flipOut .35s ease-in both; }
+  @keyframes flipIn { from { transform: translateY(-62%) rotateX(70deg); opacity: 0; } to { transform: none; opacity: 1; } }
+  @keyframes flipOut { to { transform: translateY(55%) rotateX(-70deg); opacity: 0; } }
+  .ulabel { font: 700 17px Poppins; letter-spacing: .3em; color: var(--muted); text-transform: uppercase; }
+  .colon { font: 800 70px/132px Poppins; color: var(--gold); opacity: .8; animation: blink 1s steps(2) infinite; }
+  .cd.soon .dg { border-color: var(--gold-hi); animation: soon 1s ease-in-out infinite; }
+  @keyframes soon { 50% { box-shadow: inset 0 1px 0 rgba(255,240,200,.14), 0 0 26px rgba(248,230,173,.55); } }
+  .big { position: absolute; left: 60px; right: 60px; top: 760px; height: 132px; display: none; place-items: center; text-align: center;
+    font: 900 74px/1 Poppins; letter-spacing: .04em; text-transform: uppercase; color: var(--gold-hi); text-shadow: 0 4px 14px rgba(0,0,0,.6); }
+  .big.live { color: #fff; }
+  .big.live::before { content: ""; display: inline-block; width: 26px; height: 26px; margin-right: 20px; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 6px rgba(224,72,58,.3); animation: blink 1s steps(2) infinite; vertical-align: middle; }
+  .big.pulse { animation: pulseTxt 1.4s ease-in-out infinite; }
+  @keyframes pulseTxt { 50% { transform: scale(1.04); } }   /* transform only: an animated text-shadow repaints every frame */
+  .when { position: absolute; left: 0; right: 0; top: 942px; text-align: center; font: 700 26px Poppins; letter-spacing: .12em; color: var(--text); text-transform: uppercase; }
+  .when b { color: var(--gold); font-weight: 800; }
+  .foot { position: absolute; left: 0; right: 0; bottom: 44px; text-align: center; font: 700 15px Poppins; letter-spacing: .4em; color: #c6a35f; text-transform: uppercase; }
+
+  /* entrance / exit */
+  .card { opacity: 0; }
+  .card.in { animation: cardIn .6s cubic-bezier(.16,1,.3,1) forwards; }
+  .card.out { animation: cardOut .45s cubic-bezier(.7,0,.84,0) forwards; }
+  /* opens from a thin band across the middle and settles from a slight zoom (showreel band reveal) */
+  @keyframes cardIn { from { opacity: 0; transform: scale(1.04); clip-path: inset(49% 0 49% 0); } 25% { opacity: 1; } to { opacity: 1; transform: none; clip-path: inset(0 0 0 0); } }
+  @keyframes cardOut { from { opacity: 1; clip-path: inset(0 0 0 0); } 80% { opacity: 1; } to { opacity: 0; clip-path: inset(49% 0 49% 0); } }
+  .in .cor { animation: corIn .7s cubic-bezier(.16,1,.3,1) both .1s; }
+  .in .cor.tl { --dx: -36px; --dy: -36px; } .in .cor.tr { --dx: 36px; --dy: -36px; } .in .cor.bl { --dx: -36px; --dy: 36px; } .in .cor.br { --dx: 36px; --dy: 36px; }
+  @keyframes corIn { from { opacity: 0; transform: translate(var(--dx), var(--dy)); } }
+  .in .kick { animation: kick .9s cubic-bezier(.16,1,.3,1) both .2s; }
+  @keyframes kick { from { opacity: 0; letter-spacing: .8em; } }
+  .in .plq { animation: plq .75s cubic-bezier(.16,1,.3,1) both .3s; }
+  @keyframes plq { from { opacity: 0; transform: translateX(-50%) scale(.55); } }
+  .in .pill { animation: fadeUp .5s ease-out both .55s; }
+  @keyframes fadeUp { from { opacity: 0; transform: translate(-50%, 16px); } }
+  .in .team.a .lg { animation: fromL .8s cubic-bezier(.16,1,.3,1) both .6s, float 5s ease-in-out infinite 1.6s; }
+  .in .team.b .lg { animation: fromR .8s cubic-bezier(.16,1,.3,1) both .6s, float 5s ease-in-out infinite 2.1s; }
+  @keyframes fromL { from { opacity: 0; transform: translateX(-160px) rotate(-8deg) scale(.8); } }
+  @keyframes fromR { from { opacity: 0; transform: translateX(160px) rotate(8deg) scale(.8); } }
+  @keyframes float { 50% { transform: translateY(-8px); } }
+  .in .tname, .in .tsub { animation: rise .55s ease-out both 1.05s; }
+  .in .vs b { animation: slam .55s cubic-bezier(.16,1,.3,1) both .95s; }   /* no glow loop: an animated filter repaints every frame */
+  @keyframes slam { from { opacity: 0; transform: scale(2.6); } }
+  .in .vs .rays { animation: raysIn 1s ease-out both 1s, spin 26s linear infinite 1s; }
+  @keyframes raysIn { from { opacity: 0; transform: scale(.4); } }
+  .in .unit, .in .colon { animation: rise .5s cubic-bezier(.16,1,.3,1) both; }
+  .in .unit:nth-child(1) { animation-delay: 1.15s; } .in .colon:nth-child(2) { animation-delay: 1.2s; } .in .unit:nth-child(3) { animation-delay: 1.25s; }
+  .in .colon:nth-child(4) { animation-delay: 1.3s; } .in .unit:nth-child(5) { animation-delay: 1.35s; } .in .colon:nth-child(6) { animation-delay: 1.4s; } .in .unit:nth-child(7) { animation-delay: 1.45s; }
+  .in .big { animation: rise .6s ease-out both 1.2s; }
+  .in .when, .in .foot { animation: fadeIn .8s ease-out both 1.5s; }
+  @keyframes rise { from { opacity: 0; transform: translateY(26px); } }
+  @keyframes fadeIn { from { opacity: 0; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes blink { 50% { opacity: .35; } }
+  .in .plq .shine { animation: shine 1.2s ease-in-out 1.2s, shineLoop 7s ease-in-out infinite 3s; }
+  @keyframes shine { to { left: calc(100% + 160px); } }
+  @keyframes shineLoop { 0%, 80% { left: -160px; } 100% { left: calc(100% + 160px); } }
+  /* ---------- 16:9 layout (/nextmatch-wide) ---------- */
+  body.wide #fit { width: 1920px; height: 1080px; }
+  .wide .orn { width: 640px; height: 340px; opacity: .045; }
+  .wide .frm { inset: 28px; } .wide .cor { width: 76px; height: 76px; }
+  .wide .kick { top: 74px; font-size: 26px; }
+  .wide .plq { top: 116px; } .wide .plq h1 { font-size: 78px; } .wide .plq .dia { font-size: 36px; }
+  .wide .pill { top: 268px; font-size: 24px; }
+  .wide .team { top: 330px; width: 460px; gap: 22px; }
+  .wide .team.a { left: 150px; } .wide .team.b { right: 150px; }
+  .wide .lg { width: 400px; height: 400px; } .wide .lg .box { width: 360px; height: 360px; padding: 30px; border-radius: 22px; }
+  .wide .lg .tagtxt { font-size: 98px; } .wide .lg .tbd { font-size: 160px; }
+  .wide .tname { max-width: 460px; font-size: 46px; } .wide .tname.small { font-size: 38px; }
+  .wide .tsub { font-size: 19px; }
+  .wide .vs { top: 360px; width: 220px; height: 220px; margin-left: -110px; }
+  .wide .vs b { font-size: 150px; } .wide .vs .rays { inset: -90px; }
+  .wide .vs .score { top: 206px; font-size: 36px; }
+  .wide .cd { top: 624px; gap: 16px; }
+  .wide .big { top: 650px; left: 560px; right: 560px; font-size: 64px; height: 160px; }
+  .wide .when { top: 830px; font-size: 30px; }
+  .nxt { display: none; }
+  .wide .nxt { position: absolute; left: 50%; top: 908px; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; padding: 10px 26px; white-space: nowrap;
+    border: 1.5px solid rgba(222,184,108,.4); border-radius: 10px; background: rgba(0,0,0,.25); font: 600 22px Poppins; color: var(--muted); }
+  .nxt .lb { font: 800 16px Poppins; letter-spacing: .26em; color: var(--teal); text-transform: uppercase; }
+  .nxt b { color: var(--text); font-weight: 800; } .nxt .dt { color: var(--gold); opacity: .7; } .nxt i { font-style: normal; color: var(--gold); font-weight: 800; }
+  .in .nxt { animation: fadeUp .6s ease-out both 1.7s; }
+  .wide .foot { bottom: 46px; }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration: .01s !important; animation-iteration-count: 1 !important; } }
+</style>
+</head>
+<body>
+<div id="fit"></div>
+<script src="/sfx.js"></script>
+<script>
+(() => {
+  const q = new URLSearchParams(location.search);
+  if (q.get('bg') === '1') document.body.classList.add('bg');
+  const MUTE = q.get('mute') === '1';
+  const WIDE = q.get('layout') === 'wide' || /wide/.test(location.pathname);      // /nextmatch-wide = 16:9
+  if (WIDE) { document.body.classList.add('wide'); document.title = 'Next Match 16:9'; }
+  const W = WIDE ? 1920 : 1080, H = 1080;
+  const fit = document.getElementById('fit');
+  const resize = () => fit.style.setProperty('--k', Math.min(innerWidth / W, innerHeight / H));
+  addEventListener('resize', resize); resize();
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const rgb = (hex) => { const m = /^#?([0-9a-f]{6})$/i.exec(hex || ''); if (!m) return '214, 189, 134'; const n = parseInt(m[1], 16); return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`; };
+
+  let D = null, offset = 0, card = null, shownKey = null, visible = false;
+
+  function logo(t) {
+    if (t.tbd) return '<span class="tbd">?</span>';
+    if (t.logo) return `<img src="${esc(t.logo)}" alt="" onerror="this.outerHTML='<span class=&quot;tagtxt&quot;>${esc(t.tag || t.name.slice(0, 3).toUpperCase())}</span>'">`;
+    return `<span class="tagtxt">${esc(t.tag || t.name.replace(/[^A-Za-z0-9]/g, '').slice(0, 3).toUpperCase())}</span>`;
+  }
+  const teamHtml = (t, side) => `<div class="team ${side}"><div class="lg"><div class="glow"></div><div class="box">${logo(t)}</div></div>
+    <div class="tname${t.name.length > 13 ? ' small' : ''}">${esc(t.name)}</div><div class="tsub">${esc(t.tag && !t.tbd ? t.tag : '')}</div></div>`;
+  const unit = (id, label) => `<div class="unit" id="u-${id}"><div class="digits"><div class="dg"><span></span></div><div class="dg"><span></span></div></div><div class="ulabel">${label}</div></div>`;
+
+  function build() {
+    const el = document.createElement('div');
+    el.className = 'card';
+    if (!D || D.none) {
+      el.innerHTML = `<div class="orn a"></div><div class="orn b"></div><div class="orn c"></div><div class="orn d"></div><div class="frm"></div><div class="cor tl"></div><div class="cor tr"></div><div class="cor bl"></div><div class="cor br"></div>
+        <div class="kick">${esc(D?.event || 'Direbattle Cup')}</div><div class="plq"><div><span class="dia">❖</span><h1>${esc(D?.title || 'Next Match')}</h1><span class="dia">❖</span><span class="shine"></span></div></div>
+        <div class="big pulse" style="display:grid;top:470px">Nantikan<br>jadwal berikutnya</div><div class="foot">Untuk regenerasi Dota 2 Indonesia</div>`;
+      return el;
+    }
+    el.style.setProperty('--ca', rgb(D.a.color)); el.style.setProperty('--cb', rgb(D.b.color));
+    const pill = [D.round, D.bo ? 'BO' + D.bo : ''].filter(Boolean).join(' · ');
+    const when = D.dayTxt ? `${esc(D.dayTxt)}${D.time ? ` · <b>${esc(D.time)} ${esc(D.tz)}</b>` : ''}${D.delayMin ? ` <span style="color:var(--teal)">(${D.delayMin > 0 ? '+' : ''}${D.delayMin} mnt)</span>` : ''}` : 'Jadwal menyusul';
+    el.innerHTML = `<div class="orn a"></div><div class="orn b"></div><div class="orn c"></div><div class="orn d"></div><div class="frm"></div>
+      <div class="cor tl"></div><div class="cor tr"></div><div class="cor bl"></div><div class="cor br"></div>
+      <div class="kick">${esc(D.event)}</div>
+      <div class="plq"><div><span class="dia">❖</span><h1>${esc(D.title)}</h1><span class="dia">❖</span><span class="shine"></span></div></div>
+      ${pill ? `<div class="pill">${esc(pill)}</div>` : ''}
+      ${teamHtml(D.a, 'a')}${teamHtml(D.b, 'b')}
+      <div class="vs"><div class="rays"></div><b>VS</b>${D.score && (D.live || D.score[0] || D.score[1]) ? `<div class="score">${D.score[0]} – ${D.score[1]}</div>` : ''}</div>
+      <div class="cd" id="cd">${unit('m', 'Menit')}<div class="colon">:</div>${unit('s', 'Detik')}</div>
+      <div class="big" id="big"></div>
+      <div class="when">${when}</div>
+      ${WIDE && D.upcoming && D.upcoming[0] ? (() => { const u = D.upcoming[0];
+        return `<div class="nxt"><span class="lb">Selanjutnya</span>${[esc(u.round), `<span><b>${esc(u.a.name)}</b> vs <b>${esc(u.b.name)}</b></span>`, u.dayTxt ? esc(u.dayTxt) : '', u.time ? `<i>${esc(u.time)} ${esc(D.tz)}</i>` : ''].filter(Boolean).map((x) => `<span>${x}</span>`).join('<span class="dt">·</span>')}</div>`; })() : ''}
+      <div class="foot">Untuk regenerasi Dota 2 Indonesia</div>`;
+    // more than a day away: show days instead of the seconds column
+    return el;
+  }
+
+  const last = {};
+  function setDigit(unitId, idx, ch, animate) {
+    const box = card && card.querySelector(`#u-${unitId} .dg:nth-child(${idx + 1})`);
+    if (!box) return;
+    const k = unitId + idx;
+    if (last[k] === ch) return;
+    last[k] = ch;
+    const old = box.querySelector('span:not(.out)');
+    const span = document.createElement('span'); span.textContent = ch;
+    if (animate && old && old.textContent) { old.classList.add('out'); setTimeout(() => old.remove(), 360); span.classList.add('in'); }
+    else if (old) old.remove();
+    box.appendChild(span);
+  }
+  function tick() {
+    if (!card || !D || D.none) return;
+    const cd = card.querySelector('#cd'), big = card.querySelector('#big');
+    if (!cd) return;
+    const showBig = (txt, cls) => { cd.style.display = 'none'; big.style.display = 'grid'; big.className = 'big ' + cls; if (big.textContent !== txt) big.textContent = txt; };
+    if (D.live) return showBig('Live sekarang', 'live');
+    if (D.done) return showBig('Selesai', '');
+    if (!D.startTs) return showBig('Segera', 'pulse');
+    const left = Math.round((D.startTs - (Date.now() + offset)) / 1000);
+    if (left <= 0) return showBig('Segera dimulai', 'pulse');
+    cd.style.display = 'flex'; big.style.display = 'none';
+    // minutes only (no hours/days): 2h 12m shows as 132 : 08
+    const mins = String(Math.floor(left / 60)).padStart(2, '0'), secs = String(left % 60).padStart(2, '0');
+    const dm = card.querySelector('#u-m .digits');
+    if (dm && dm.children.length !== mins.length) {
+      dm.innerHTML = Array.from({ length: mins.length }, () => '<div class="dg"><span></span></div>').join('');
+      for (const k of Object.keys(last)) if (k.startsWith('m')) delete last[k];
+    }
+    [...mins].forEach((ch, i) => setDigit('m', i, ch, true));
+    [...secs].forEach((ch, i) => setDigit('s', i, ch, true));
+    cd.classList.toggle('soon', left <= 60);
+  }
+  setInterval(tick, 250);
+
+  function show() {
+    const key = D && !D.none ? [D.matchId, D.a.name, D.b.name, D.round, D.startTs, D.title, D.live, D.done, D.score && D.score.join('-'), D.a.logo, D.b.logo].join('|') : 'none|' + (D && D.title);
+    const want = !!(D && D.visible);
+    if (!want) { if (card) { const old = card; card = null; old.classList.remove('in'); old.classList.add('out'); setTimeout(() => old.remove(), 500); if (!MUTE && visible) SFX.play('card-out'); } visible = false; shownKey = null; return; }
+    if (key === shownKey && card) return;
+    if (card) { const old = card; old.classList.remove('in'); old.classList.add('out'); setTimeout(() => old.remove(), 500); }
+    for (const k in last) delete last[k];
+    card = build();
+    fit.appendChild(card);
+    void card.offsetWidth; card.classList.add('in');
+    if (!MUTE && (visible || shownKey !== null)) SFX.play('card-in');
+    visible = true; shownKey = key;
+    tick();
+  }
+
+  async function load() {
+    try {
+      const r = await fetch('/api/nextmatch', { cache: 'no-store' });
+      D = await r.json();
+      offset = (D.serverNow || Date.now()) - Date.now();
+      show();
+    } catch {}
+  }
+  load(); setInterval(load, 20000);
+  let sig = null;
+  function connect() {
+    const es = new EventSource('/events');
+    es.onmessage = (e) => {
+      const S = JSON.parse(e.data);
+      if (!MUTE) SFX.config(S.sfx, false);
+      const s2 = JSON.stringify(S.nextMatch) + '|' + S.statsVersion;     // settings changed or the bracket was saved
+      if (s2 !== sig) { sig = s2; load(); }
+    };
+    es.onerror = () => { es.close(); setTimeout(connect, 2000); };
+  }
+  connect();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script src="/vendor/anime.umd.min.js"></script><script src="/ui/motion.js"></script>
+<script src="/theme.js"></script>
+<script src="/ui/shell.js" defer></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stats Cards</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a1a12; --panel: #10291c; --panel2: #173d29; --panel3: #1f5236; --line: rgba(214,189,134,.28); --line-hi: rgba(214,189,134,.6);
+    --text: #f4e8c6; --muted: #a9b59f; --gold: #d6bd86; --gold-hi: #f3e4b8; --live: #e5604a; --font: Montserrat, "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--text); font: 500 14px var(--font); min-height: 100vh;
+    background: linear-gradient(180deg, rgba(var(--bg-rgb),.88), rgba(var(--bg-rgb),.97)), url(/assets/clouds.jpg) center top / 1400px auto fixed, var(--bg); }
+  button, select { font: inherit; color: inherit; }
+  button { background: linear-gradient(180deg, var(--panel3), var(--panel2)); border: 1px solid var(--line-hi); border-radius: 7px;
+    padding: 8px 14px; cursor: pointer; font-weight: 600; letter-spacing: 0; color: var(--text); }
+  button:hover { border-color: var(--gold-hi); color: var(--gold-hi); }
+  button.hide { border-color: rgba(229,96,74,.7); color: #ffc0b3; }
+  select { background: rgba(var(--shade-rgb),.7); border: 1px solid var(--line); border-radius: 7px; padding: 7px 10px; }
+  select option { background: var(--panel); }
+  a { color: var(--gold); }
+
+  header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 18px; position: sticky; top: 0; z-index: 5;
+    background: linear-gradient(180deg, var(--panel2), var(--panel)); border-bottom: 2px solid var(--gold); box-shadow: 0 4px 16px rgba(0,0,0,.4); }
+  header h1 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: 0; color: var(--gold-hi); }
+  .hdr-link { color: var(--gold); font-weight: 600; text-decoration: none; border: 1px solid var(--line-hi); padding: 7px 13px; border-radius: 7px; }
+  .sp { flex: 1; }
+  .conn { font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 20px; border: 1px solid var(--line); color: var(--muted); }
+  .conn.ok { color: var(--ok); border-color: rgba(36,138,61,.3); }
+
+  main { display: grid; grid-template-columns: minmax(420px, 620px) 1fr; gap: 18px; padding: 18px; align-items: start; }
+  .card { background: linear-gradient(180deg, rgba(var(--panel2-rgb),.86), rgba(var(--panel-rgb),.92)); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  h2 { margin: 0 0 12px; font-size: 13px; letter-spacing: 0; color: var(--gold); display: flex; align-items: center; gap: 10px; }
+  h2::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line-hi), transparent); }
+
+  .live { position: sticky; top: 74px; }
+  .screen { position: relative; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; border: 1px solid var(--line);
+    background: repeating-conic-gradient(var(--bg) 0 25%, var(--panel) 0 50%) 0 0 / 28px 28px; }
+  .screen iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .screen .empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-weight: 600; letter-spacing: 0; font-size: 12px; pointer-events: none; }
+  .onair { display: flex; align-items: center; gap: 10px; margin: 12px 0; font-weight: 600; font-size: 16px; min-height: 28px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: #c7c7cc; flex: none; }
+  .onair.on .dot { background: var(--live); box-shadow: 0 0 0 4px rgba(229,96,74,.25); animation: pulse 1.4s infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 8px rgba(229,96,74,0); } }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .row label { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--muted); }
+  .hint { color: var(--muted); font-size: 12px; line-height: 1.55; margin: 12px 0 0; }
+  .hint code { color: var(--gold-hi); background: rgba(0,0,0,.3); padding: 1px 6px; border-radius: 4px; }
+  kbd { font: 600 11px var(--font); border: 1px solid var(--line-hi); border-radius: 4px; padding: 1px 5px; color: var(--gold-hi); }
+
+  .grp { margin-bottom: 22px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+  .tile { position: relative; border: 0; border-radius: 14px; overflow: hidden; cursor: pointer; background: #fff; box-shadow: var(--shadow);
+    transition: transform .15s, border-color .15s, box-shadow .15s; }
+  .tile:hover { box-shadow: 0 2px 4px rgba(0,0,0,.06), 0 12px 32px rgba(0,0,0,.1); }
+  .tile .th { position: relative; aspect-ratio: 16 / 9; overflow: hidden; }
+  .tile iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
+  .tile .nm { display: flex; align-items: center; gap: 8px; padding: 8px 10px; font-weight: 600; font-size: 13px; background: #fff; }
+  .tile .nm .k { margin-left: auto; font-size: 11px; color: var(--muted); font-weight: 600; }
+  .tile .badge { position: absolute; top: 8px; left: 8px; display: none; padding: 3px 9px; border-radius: 4px; background: var(--live); color: #fff; font: 600 11px var(--font); letter-spacing: 0; }
+  .tile.on { box-shadow: 0 0 0 3px var(--live), 0 8px 24px rgba(215,0,21,.15); }
+  .tile.on .badge { display: block; }
+  .tile .hov { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; transition: opacity .15s; background: rgba(var(--shade-rgb),.55);
+    font: 600 15px var(--font); letter-spacing: 0; color: var(--gold-hi); }
+  .tile:hover .hov { opacity: 1; }
+  .filt { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
+  .filt input { flex: 1 1 260px; min-width: 0; background: rgba(var(--shade-rgb),.7); border: 1px solid var(--line); border-radius: 7px; padding: 9px 12px; color: var(--text); font: inherit; }
+  .filt input:focus { outline: 2px solid var(--gold); outline-offset: -1px; }
+  .tile .live { font: 600 9.5px var(--font); letter-spacing: 0; padding: 2px 6px; border-radius: 3px; background: rgba(36,138,61,.1); color: var(--ok); border: 0; }
+  details.grp > summary { cursor: pointer; list-style: none; }
+  details.grp > summary::-webkit-details-marker { display: none; }
+  details.grp > summary h2::before { content: "▸ "; } details.grp[open] > summary h2::before { content: "▾ "; }
+  details.grp:not([open]) > summary h2 { margin-bottom: 0; }
+  .warn { padding: 10px 12px; border: 0; background: rgba(178,80,0,.08); border-radius: 12px; color: #8a3d00; margin-bottom: 14px; }
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%) translateY(80px); background: #3a1b14; border: 1px solid var(--live); padding: 10px 18px; border-radius: 8px; font-weight: 600; transition: transform .25s; z-index: 9; }
+  .toast.show { transform: translateX(-50%); }
+  @media (max-width: 1000px) { main { grid-template-columns: 1fr; } .live { position: static; } }
+</style>
+<link rel="stylesheet" href="/ui/panel.css">
+</head>
+<body>
+<header>
+  <h1>Stat cards</h1>
+  <a href="/control" class="hdr-link">← Control panel</a>
+  <a href="/stats" class="hdr-link">Tournament stats</a>
+  <a href="/bracket" class="hdr-link">Edit bracket</a>
+  <span class="sp"></span>
+  <span class="conn" id="conn">connecting…</span>
+</header>
+
+<main>
+  <section class="card live">
+    <h2>On air in OBS</h2>
+    <div class="screen"><div class="empty" id="empty">Nothing on screen</div><iframe id="liveFrame" src="/statcards?mute=1" title="OBS output"></iframe></div>
+    <div class="onair" id="onair"><span class="dot"></span><span id="onairText">Nothing on screen</span></div>
+    <div class="row">
+      <button id="prev">◀ Prev</button>
+      <button id="next">Next ▶</button>
+      <button id="hide" class="hide">Hide</button>
+      <label>Auto-hide
+        <select id="auto">
+          <option value="0">never</option><option value="8">8 s</option><option value="10">10 s</option><option value="12">12 s</option>
+          <option value="15">15 s</option><option value="20">20 s</option><option value="30">30 s</option>
+        </select>
+      </label>
+    </div>
+    <p class="hint">
+      <b>OBS:</b> add a Browser source <code id="obsUrl">http://localhost:4747/statcards</code> at 1920 × 1080, on top of your scenes. It stays invisible until you pick a card here.<br>
+      <b>Click a card</b> to pop it in; click it again (or <b>Hide</b>) to take it off. Clicking another card swaps straight to it.<br>
+      Keys: <kbd>→</kbd> next · <kbd>←</kbd> prev · <kbd>Esc</kbd> hide.<br>
+      Text and numbers live in <code>data/statcards.json</code>; edit, save, and the next time a card is shown it's updated. Press <b>Reload cards</b> to refresh the thumbnails.
+    </p>
+    <div class="row" style="margin-top:10px"><button id="reload">Reload cards</button></div>
+  </section>
+
+  <section>
+    <div id="warn"></div>
+    <div class="card filt"><input id="q" placeholder="Search a player, team or card…" autocomplete="off"><span class="hint" id="liveInfo"></span></div>
+    <div id="groups"></div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  let SC = { cards: [], groups: [] }, S = null, stamp = Date.now();
+  $('obsUrl').textContent = location.origin + '/statcards';
+
+  let toastT;
+  function toast(m) { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600); }
+  async function send(payload) {
+    try {
+      const r = await fetch('/api/action', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type: 'statCard', ...payload }) });
+      const j = await r.json().catch(() => ({}));
+      if (!j.ok) toast(j.error || 'Something went wrong');
+    } catch { toast('Server not reachable'); }
+  }
+  const label = (c) => c.button || c.title || c.name || c.id;
+
+  async function load() {
+    try { SC = await (await fetch('/api/statcards', { cache: 'no-store' })).json(); } catch { toast('Could not load cards'); return; }
+    $('warn').innerHTML = SC.error ? `<div class="warn">${esc(SC.error)}</div>` : '';
+    const groups = SC.groups.length ? SC.groups : [{ label: 'Cards' }];
+    let n = 0;
+    const liveN = SC.cards.filter((c) => c.live).length;
+    $('liveInfo').textContent = liveN ? `${liveN} live cards, calculated from the active tournament every time they're shown.` + (SC.liveError ? ' (Live cards failed: ' + SC.liveError + ')' : '') : '';
+    $('groups').innerHTML = groups.map((g) => {
+      const cards = SC.cards.filter((c) => !SC.groups.length || c.group === g.id);
+      if (!cards.length) return '';
+      const tiles = cards.map((c) => {
+        n++;
+        const words = [label(c), c.name, c.team, c.title, g.label].filter(Boolean).join(' ').toLowerCase();
+        return `<div class="tile" data-id="${esc(c.id)}" data-q="${esc(words)}" title="${esc(label(c))}">
+          <div class="th"><iframe loading="lazy" tabindex="-1" src="/statcards?still=1&card=${encodeURIComponent(c.id)}&v=${stamp}"></iframe>
+          <span class="badge">ON AIR</span><div class="hov" data-hov>Show in OBS</div></div>
+          <div class="nm">${esc(label(c))}${c.live ? '<span class="live">LIVE</span>' : ''}<span class="k">#${n}</span></div></div>`;
+      }).join('');
+      // the hand-written cards stay available but folded away (their numbers don't update)
+      return /teks manual/.test(g.label)
+        ? `<details class="card grp"><summary><h2>${esc(g.label)} (${cards.length})</h2></summary><div class="tiles">${tiles}</div></details>`
+        : `<div class="card grp"><h2>${esc(g.label)}</h2><div class="tiles">${tiles}</div></div>`;
+    }).join('') || '<div class="warn">No cards in data/statcards.json</div>';
+    filter();
+    document.querySelectorAll('.tile').forEach((t) => t.onclick = () => send({ id: S?.statCard?.id === t.dataset.id ? null : t.dataset.id }));
+    render();
+  }
+
+  function step(dir) {
+    if (!SC.cards.length) return;
+    const i = SC.cards.findIndex((c) => c.id === S?.statCard?.id);
+    const n = i < 0 ? (dir > 0 ? 0 : SC.cards.length - 1) : (i + dir + SC.cards.length) % SC.cards.length;
+    send({ id: SC.cards[n].id });
+  }
+  $('prev').onclick = () => step(-1);
+  $('next').onclick = () => step(1);
+  $('hide').onclick = () => send({ id: null });
+  $('auto').onchange = (e) => send({ autoHide: Number(e.target.value) });
+  $('reload').onclick = () => { stamp = Date.now(); load(); };
+  function filter() {
+    const q = $('q').value.trim().toLowerCase();
+    document.querySelectorAll('.tile').forEach((t) => { t.hidden = !!q && !t.dataset.q.includes(q); });
+    document.querySelectorAll('.grp').forEach((g) => { g.hidden = !!q && !g.querySelector('.tile:not([hidden])'); if (q && g.tagName === 'DETAILS' && !g.hidden) g.open = true; });
+  }
+  $('q').oninput = filter;
+  addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT' || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+    else if (e.key === 'Escape') send({ id: null });
+  });
+
+  function render() {
+    if (!S) return;
+    const sc = S.statCard || {};
+    const c = SC.cards.find((x) => x.id === sc.id);
+    document.querySelectorAll('.tile').forEach((t) => {
+      const on = t.dataset.id === sc.id;
+      t.classList.toggle('on', on);
+      t.querySelector('[data-hov]').textContent = on ? 'Hide' : 'Show in OBS';
+    });
+    $('onair').classList.toggle('on', !!c);
+    $('onairText').textContent = c ? 'ON AIR: ' + label(c) + (sc.autoHide ? ` · hides after ${sc.autoHide} s` : '') : 'Nothing on screen';
+    $('empty').style.display = c ? 'none' : '';
+    if (document.activeElement !== $('auto')) $('auto').value = String(sc.autoHide || 0);
+  }
+
+  function connect() {
+    const es = new EventSource('/events');
+    es.onopen = () => { $('conn').textContent = 'connected'; $('conn').classList.add('ok'); };
+    let statsSig = null;
+    es.onmessage = (e) => {
+      S = JSON.parse(e.data); render();
+      // new games, an import or another tournament: refresh the live cards and their thumbnails
+      const sig = S.statsVersion + '|' + S.tournament;
+      if (statsSig !== null && sig !== statsSig && !S.statsSync?.running) { stamp = Date.now(); load(); }
+      statsSig = sig;
+    };
+    es.onerror = () => { $('conn').textContent = 'server offline'; $('conn').classList.remove('ok'); es.close(); setTimeout(connect, 2000); };
+  }
+  load(); connect();
+})();
+</script>
+</body>
+</html>

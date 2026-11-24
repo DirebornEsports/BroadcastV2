@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<script src="/vendor/anime.umd.min.js"></script><script src="/ui/motion.js"></script>
+<script src="/theme.js"></script>
+<title>Team Cam</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /* one camera filming a whole team, frameless in every design. Base size 480 x 270, scaled to the panel's width */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; font-family: Poppins, "Segoe UI", sans-serif; }
+  body.bg { background: #222 url(/assets/clouds.jpg) center / cover; }
+  #fit { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; transform: scale(var(--k, 1)); }
+  /* frameless in every design: the camera alone, opening from a thin band at its middle (expo ease-out, no bounce) */
+  .tc { position: absolute; left: var(--x); top: var(--y); width: 480px; height: 270px; transform-origin: 0 0; transform: scale(var(--s, 1)); opacity: 0; filter: drop-shadow(0 12px 26px rgba(0,0,0,.45)); transition: opacity .2s ease; }
+  .tc.in { opacity: 1; }
+  .vid { position: absolute; left: 0; top: 0; width: 480px; height: 270px; }
+  .vid .in { position: relative; width: 100%; height: 100%; border-radius: 6px; overflow: hidden; background: #050807; clip-path: inset(50% 0 50% 0 round 6px); transition: clip-path .55s cubic-bezier(.16,1,.3,1); }
+  .tc.in .vid .in { clip-path: inset(0 0 0 0 round 6px); }
+  .vid canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .28s ease; }
+  .vid canvas.on { opacity: 1; }
+  .vid .in::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 90px; background: linear-gradient(180deg, transparent, rgba(0,0,0,.6)); pointer-events: none; }
+  .noname .vid .in::after { display: none; }
+  .live { position: absolute; right: 12px; top: 11px; z-index: 2; display: flex; align-items: center; gap: 6px; padding: 4px 9px 4px 8px; border-radius: 6px; background: rgba(0,0,0,.5); color: #fff; font: 600 11px/1 Poppins, "Segoe UI", sans-serif; letter-spacing: .04em; }
+  .live i { width: 7px; height: 7px; border-radius: 50%; background: #ff3b30; }
+  /* team logo and name over the bottom of the picture */
+  .plate { position: absolute; left: 0; right: 0; top: 214px; height: 56px; padding: 0 16px 0 70px; display: flex; align-items: center; gap: 10px; z-index: 2; }
+  .plate .nm { flex: 1; min-width: 0; color: #fff; font: 700 22px/1 Poppins, "Segoe UI", sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
+  .plate .sub { color: rgba(255,255,255,.72); font: 600 12px/1 Poppins, "Segoe UI", sans-serif; white-space: nowrap; }
+  .badge { position: absolute; left: 14px; top: 220px; width: 44px; height: 44px; z-index: 3; }
+  .badge .in { width: 100%; height: 100%; display: grid; place-items: center; overflow: hidden; }
+  .badge img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 1px 3px rgba(0,0,0,.5)); }
+  .badge span { color: #fff; font: 700 16px/1 Poppins, "Segoe UI", sans-serif; }
+  .plate .nm, .plate .sub, .badge { transition: opacity .3s ease .25s, transform .45s cubic-bezier(.16,1,.3,1) .25s; }
+  .tc:not(.in) .plate .nm, .tc:not(.in) .plate .sub, .tc:not(.in) .badge { opacity: 0; transform: translateY(6px); }
+  .noname .plate, .noname .badge { display: none; }
+  /* ?full=1 : the camera alone, filling the whole 16:9 source — no frame, name or label */
+  .full .tc, .full .tc.in { left: 0; top: 0; width: 1920px; height: 1080px; transform: none; }
+  .full .vid { width: 1920px; height: 1080px; padding: 0; border-radius: 0; background: none; box-shadow: none; }
+  .full .vid .in { border-radius: 0; background: transparent; }
+  .full .tc { filter: none; } .full .tc.in .vid .in, .full .vid .in { clip-path: none; }   /* full screen: no shadow, no rounded clip, no reveal */
+  .full .vid .in::after, .full .vid::before, .full .vid::after, .full .live, .full .plate, .full .badge { display: none !important; }
+  #dbg { position: absolute; left: 10px; top: 10px; padding: 8px 10px; background: rgba(0,0,0,.7); color: #cfe; font: 12px/1.5 monospace; white-space: pre; display: none; }
+  .debug #dbg { display: block; }
+</style>
+</head>
+<body>
+<div id="fit">
+  <div class="tc" id="box">
+    <div class="vid"><div class="in" id="frame"><div class="live"><i></i>TEAM CAM</div></div></div>
+    <div class="plate"><span class="nm" id="nm"></span><span class="sub" id="sub"></span></div>
+    <div class="badge"><div class="in" id="badge"></div></div>
+  </div>
+  <div id="dbg"></div>
+</div>
+<script src="/camrtc.js"></script>
+<script>
+(() => {
+  const q = new URLSearchParams(location.search);
+  if (q.get('bg') === '1') document.body.classList.add('bg');
+  if (q.get('debug') === '1') document.body.classList.add('debug');
+  const FULL = q.get('full') === '1'; if (FULL) document.body.classList.add('full');
+  const fit = document.getElementById('fit'), box = document.getElementById('box'), frame = document.getElementById('frame');
+  const resize = () => fit.style.setProperty('--k', Math.min(innerWidth / 1920, innerHeight / 1080));
+  addEventListener('resize', resize); resize();
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  // OBS URL: /teamcam?k=<VIEW_KEY> (copy it from the Player cam panel, Team cam card)
+  const KEY = q.get('k') || '', BASE = location.origin;
+  let S = null, C = null, T = null, ice = null, pollTimer = null, skew = 0, lastError = KEY ? '' : 'URL overlay belum ada kunci lihat (?k=…). Copy URL dari panel Player cam.';
+  const cams = new Map();                  // lower-case name -> { name, dc, conn, since, state, canvas, online, connecting }
+  let current = null;
+
+  // ---------- audio: the shown team's mic, delayed like the video (OBS: "Control audio via OBS") ----------
+  let actx = null, master = null;
+  function audioCtx() {
+    if (!actx) { actx = new AudioContext({ latencyHint: 'playback' }); master = actx.createGain(); master.connect(actx.destination); }
+    if (actx.state === 'suspended') actx.resume().catch(() => {});
+    return actx;
+  }
+  addEventListener('pointerdown', () => { if (actx) actx.resume().catch(() => {}); });
+  function retainMs() {
+    const d = (Number(C && C.delay) || 0) * 1000;
+    // a mark older than the 17 min sync window can no longer be used: stop holding history for it
+    const age = C && C.syncAt ? Date.now() + skew - C.syncAt : 0;
+    const mark = age && age < 1040000 ? age + 20000 : 0;
+    return Math.max(d + 20000, mark);
+  }
+  function audioGain(c) {
+    if (!c.au || !C) return;
+    const m = (C.mics || {})[c.name.toLowerCase()] || {};
+    const v = C.audio === false || m.muted || c !== current ? 0 : (m.vol ?? 1);
+    c.au.gain.gain.setTargetAtTime(v, actx.currentTime, 0.03);
+  }
+  function attachAudio(c, track) {
+    const ctx = audioCtx();
+    if (!c.au) {
+      const pre = ctx.createGain(), an = ctx.createAnalyser(), gain = ctx.createGain();
+      an.fftSize = 4096; gain.gain.value = 0;
+      pre.connect(an); pre.connect(gain); gain.connect(master);
+      c.au = { pre, an, gain, da: new DBCam.DelayAudio(ctx, pre), peak: 0, buf: new Float32Array(4096), el: new Audio() };
+      c.au.el.muted = true;
+    }
+    try { c.au.el.srcObject = new MediaStream([track]); c.au.el.play().catch(() => {}); } catch {}
+    audioGain(c);
+  }
+  function dropCam(k) {
+    const c = cams.get(k); if (!c) return;
+    try { c.conn && c.conn.close(); } catch {}
+    if (c.au) { try { c.au.da.clear(); c.au.pre.disconnect(); c.au.gain.disconnect(); c.au.el.srcObject = null; } catch {} }
+    c.dc.clear(); c.canvas.remove(); cams.delete(k);
+    if (current === c) hide();
+  }
+  setInterval(() => {
+    if (!actx || !C) return;
+    master.gain.setTargetAtTime(Number(C.master ?? 1), actx.currentTime, 0.03);
+    for (const c of cams.values()) {
+      if (!c.au) continue;
+      audioGain(c);
+      c.au.an.getFloatTimeDomainData(c.au.buf);
+      let sum = 0; for (let i = 0; i < c.au.buf.length; i++) sum += c.au.buf[i] * c.au.buf[i];
+      const db = 20 * Math.log10(Math.sqrt(sum / c.au.buf.length) + 1e-9);
+      c.au.peak = Math.max(c.au.peak, Math.max(0, Math.min(1, (db + 60) / 60)));
+    }
+  }, 100);
+  function tickAll() {
+    if (!C) return;
+    const d = (Number(C.delay) || 0) * 1000, keep = retainMs();
+    for (const c of cams.values()) { c.dc.tick(d, keep); if (c.au) c.au.da.tick(d, keep); }
+  }
+
+  // only the cameras set as team cams (left / right) are pulled — both keep buffering so a switch is instant
+  const wanted = () => [T && T.left, T && T.right].filter(Boolean).map((n) => n.toLowerCase());
+  function ensureCam(name) {
+    const k = name.toLowerCase();
+    let c = cams.get(k);
+    if (!c) {
+      const canvas = document.createElement('canvas'); canvas.width = 16; canvas.height = 9;
+      frame.appendChild(canvas);
+      c = { name, dc: new DBCam.DelayCam(canvas), conn: null, since: 0, state: 'new', canvas, online: false, connecting: false, err: '' };
+      cams.set(k, c);
+    }
+    return c;
+  }
+  let resetSeq = null;
+  function checkReset() {
+    const r = C.reset || { seq: 0, name: '' };
+    if (resetSeq !== null && r.seq !== resetSeq) {
+      for (const c of cams.values()) {
+        if (r.name && c.name.toLowerCase() !== r.name.toLowerCase()) continue;
+        c.dc.clear(); if (c.au) c.au.da.clear();
+        if (c === current) hide();
+      }
+    }
+    resetSeq = r.seq;
+  }
+  async function connect(c) {
+    if (c.connecting) return;
+    c.connecting = true; c.err = '';
+    try { c.conn && c.conn.close(); } catch {}
+    c.dc.newSource();
+    try {
+      c.conn = await DBCam.pull({ base: BASE, key: KEY, name: c.name, iceServers: ice, onFrame: (f) => c.dc.push(f), onAudio: (t) => attachAudio(c, t), onAudioFrame: (f) => { if (c.au) c.au.da.push(f); }, onState: (s) => { c.state = s; } });
+      c.dc.watch(c.conn.pc);
+      c.mic = !!c.conn.mic;
+      c.state = c.conn.pc.connectionState;
+    } catch (e) { c.err = e.message; c.state = 'error'; c.since = 0; }
+    c.connecting = false;
+  }
+  async function poll() {
+    if (!C || !KEY) return;
+    const want = wanted();
+    for (const k of [...cams.keys()]) if (!want.includes(k)) dropCam(k);
+    if (!want.length) return;
+    try {
+      if (!ice) ice = await DBCam.getIce(BASE, KEY);
+      const d = await DBCam.api(BASE, '/api/cam/cams', { key: KEY });
+      lastError = '';
+      for (const cam of d.cams) {
+        if (!want.includes(cam.name.toLowerCase())) continue;
+        const c = ensureCam(cam.name);
+        c.online = cam.online;
+        if (!cam.online) continue;
+        const dead = !c.conn || ['failed', 'closed', 'disconnected', 'error'].includes(c.state);
+        if (c.since !== cam.since || dead) { c.since = cam.since; connect(c); }
+      }
+      for (const k of want) if (!d.cams.some((x) => x.name.toLowerCase() === k) && cams.get(k)) cams.get(k).online = false;
+    } catch (e) { lastError = e.message; }
+  }
+  if (KEY) setInterval(poll, 4000);
+
+  let wantSig = '';
+  function applyConfig() {
+    T = C.teamCam || {};
+    const sig = wanted().join('|');
+    if (sig !== wantSig) { wantSig = sig; poll(); }
+    fit.style.setProperty('--x', (T.x ?? 1392) + 'px'); fit.style.setProperty('--y', (T.y ?? 96) + 'px');
+    fit.style.setProperty('--s', ((T.w || 480) / 480).toFixed(4));
+    document.body.classList.toggle('noname', T.showName === false);
+  }
+
+  let plateSig = '';
+  function plate(side) {
+    const t = (S && S.teams && S.teams[side]) || {};
+    const sig = side + '|' + (t.name || '') + '|' + (t.logo || '') + '|' + (t.tag || '');
+    if (sig === plateSig) return;
+    plateSig = sig;
+    document.getElementById('nm').textContent = t.name || (side === 'left' ? 'Tim kiri' : 'Tim kanan');
+    document.getElementById('sub').textContent = t.tag || '';
+    document.getElementById('badge').innerHTML = t.logo ? `<img src="${esc(t.logo)}" alt="">` : `<span>${esc((t.tag || t.name || '?').slice(0, 4))}</span>`;
+  }
+  function show(c, side) {
+    if (c !== current) { for (const x of cams.values()) x.canvas.classList.toggle('on', x === c); current = c; }
+    plate(side);
+    box.classList.add('in');
+  }
+  function hide() { box.classList.remove('in'); current = null; for (const x of cams.values()) x.canvas.classList.remove('on'); }
+
+  function frameLoop() {
+    if (C && T) {
+      const delayMs = (Number(C.delay) || 0) * 1000;
+      tickAll();
+      const side = T.visible !== false ? T.show : 'off';
+      const name = side === 'left' || side === 'right' ? T[side] : '';
+      const c = name ? cams.get(name.toLowerCase()) : null;
+      if (c && c.dc.status(delayMs).showing) show(c, side); else hide();
+    }
+    requestAnimationFrame(frameLoop);
+  }
+  requestAnimationFrame(frameLoop);
+  setInterval(tickAll, 100);
+
+  // report to the control panel (Team cam card)
+  setInterval(() => {
+    if (!C || !KEY) return;
+    const delayMs = (Number(C.delay) || 0) * 1000;
+    const list = [...cams.values()].map((c) => { const st = c.dc.status(delayMs); return { name: c.name, online: c.online, state: c.state, err: c.err, codec: st.codec, decErr: st.decErr, h264Broken: st.h264Broken, filled: Math.round(st.filled * 100), showing: !!st.showing, width: st.width, height: st.height, mic: !!(c.au && c.mic), level: c.au ? Math.round(c.au.peak * 100) / 100 : 0, audio: actx ? actx.state : '', age: c.dc.firstAt ? Math.round((performance.now() - c.dc.firstAt) / 1000) : 0 }; });
+    for (const c of cams.values()) if (c.au) c.au.peak = 0;
+    if (document.body.classList.contains('debug')) document.getElementById('dbg').textContent = (lastError ? 'ERROR ' + lastError + '\n' : '') + list.map((c) => `${c.name.padEnd(14)} ${c.online ? 'on ' : 'off'} ${String(c.state).padEnd(12)} buf ${c.filled}% ${c.showing ? 'READY' : ''} ${c.width}x${c.height}`).join('\n');
+    fetch('/api/playercam/status?src=team&k=' + encodeURIComponent(KEY), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cams: list, error: lastError, showing: current ? current.name : '', h264: !list.some((x) => x.h264Broken), up: Math.round(performance.now() / 1000) }) }).catch(() => {});
+  }, 2000);
+
+  function connectSse() {
+    const es = new EventSource('/events');
+    es.onmessage = (e) => { S = JSON.parse(e.data); if (S.serverNow) skew = S.serverNow - Date.now(); C = S.playerCam; if (C) { applyConfig(); checkReset(); } };
+    es.onerror = () => { es.close(); setTimeout(connectSse, 2000); };
+  }
+  connectSse();
+})();
+</script>
+</body>
+</html>

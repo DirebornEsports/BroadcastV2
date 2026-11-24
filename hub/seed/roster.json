@@ -1,0 +1,18 @@
+[
+ { "name": "Antariksa club", "tag": "ATC", "color": "#c4473a", "captain": 0,
+   "players": [["Noobmaster","carry"],["Monyet","mid"],["sawako","offlane"],["Ky-","soft"],["Hikari","hard"],["Exgod","standin"]] },
+ { "name": "BeBeK KingDom", "tag": "BEB", "color": "#c9a24a", "captain": 2,
+   "players": [["Kiyotaka倒れた","carry"],["BEB.Mordred","mid"],["BEB.BeBeK","offlane"],["BEB.kiseki","soft"],["Alwaysempath","hard"]] },
+ { "name": "Escape Esports", "tag": "ESC", "color": "#3fc3d6", "captain": 4,
+   "players": [["ndnc","carry"],["Atréyu","mid"],["serenity","offlane"],["Boy pablo-","soft"],["Nerif","hard"],["Messi","standin"]] },
+ { "name": "FARHAN+4", "tag": "FH4", "color": "#3a6fd8", "captain": 2,
+   "players": [["Frz","carry"],["JD ♥","mid"],["MASERATI","offlane"],["Suis","soft"],["MJ","hard"]] },
+ { "name": "Maxwell+4", "tag": "MXW", "color": "#d8323c", "captain": 3,
+   "players": [["kaisora","carry"],["Maxwell","mid"],["Alvyy","offlane"],["Vy-","soft"],["icysnow","hard"],["Faiq","standin"]] },
+ { "name": "The Dudz", "tag": "TDZ", "color": "#2f7de0", "captain": 4,
+   "players": [["Liolaeus","carry"],["CaptainKid","mid"],["Kyanite","offlane"],["Maximus","soft"],["Uthred","hard"],["Gumarang","standin"]] },
+ { "name": "ULAR REBORN", "tag": "ULR", "color": "#7b4fd6", "captain": 4,
+   "players": [["ULAR.NotDrew","carry"],["ULAR.TheSpiaN","mid"],["ULAR.Enzo","offlane"],["ULAR.November Rain","soft"],["ULAR.BJNDT","hard"]] },
+ { "name": "chad", "tag": "CHAD", "color": "#8a3df0", "captain": 3,
+   "players": [["Rin","carry"],["ThrovY","mid"],["Yorushika`","offlane"],["december","soft"],["LooMisT","hard"]] }
+]

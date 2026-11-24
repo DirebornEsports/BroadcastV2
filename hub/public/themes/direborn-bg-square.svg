@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" preserveAspectRatio="xMidYMid slice">
+<defs><pattern id="dot" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="8" cy="8" r="2.2" fill="#e9d79c"/></pattern>
+<pattern id="rdot" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="6" cy="6" r="2.2" fill="#8f0f17" opacity=".55"/></pattern>
+<radialGradient id="fade" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".55" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<mask id="dm"><rect width="100%" height="100%" fill="url(#fade)"/></mask>
+<linearGradient id="red" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e32b36"/><stop offset="1" stop-color="#b8141e"/></linearGradient></defs>
+<rect width="1080" height="1080" fill="#ffffff"/>
+<rect width="1080" height="1080" fill="url(#dot)" mask="url(#dm)" opacity=".7"/>
+<polyline points="0,108 560,540 300,540 120,648" fill="none" stroke="#d9c28a" stroke-width="2.4" stroke-linejoin="miter" opacity=".85"/>
+<polyline points="0,756 250,572 520,572" fill="none" stroke="#d9c28a" stroke-width="2.4" stroke-linejoin="miter" opacity=".85"/>
+<polyline points="180,432 330,508 250,508" fill="none" stroke="#d9c28a" stroke-width="2.4" stroke-linejoin="miter" opacity=".85"/>
+<polyline points="0,929 420,929 560,1015" fill="none" stroke="#d9c28a" stroke-width="2.4" stroke-linejoin="miter" opacity=".85"/>
+<polyline points="1080,108 520,540 780,540 960,648" fill="none" stroke="#d9c28a" stroke-width="2.4" stroke-linejoin="miter" opacity=".85"/>
+<polyline points="1080,756 830,572 560,572" fill="none" stroke="#d9c28a" stroke-width="2.4" stroke-linejoin="miter" opacity=".85"/>
+<polyline points="900,432 750,508 830,508" fill="none" stroke="#d9c28a" stroke-width="2.4" stroke-linejoin="miter" opacity=".85"/>
+<polyline points="1080,929 660,929 520,1015" fill="none" stroke="#d9c28a" stroke-width="2.4" stroke-linejoin="miter" opacity=".85"/>
+<polygon points="0,151 95,227 95,680 330,1080 0,1080" fill="url(#red)"/>
+<polygon points="0,151 95,227 95,680 330,1080 0,1080" fill="url(#rdot)" opacity=".5"/>
+<polygon points="1080,151 985,227 985,680 750,1080 1080,1080" fill="url(#red)"/>
+<polygon points="1080,151 985,227 985,680 750,1080 1080,1080" fill="url(#rdot)" opacity=".5"/>
+<polygon points="0,432 52,486 52,842 170,1080 0,1080" fill="#a5101a" opacity=".55"/>
+<polygon points="1080,432 1028,486 1028,842 910,1080 1080,1080" fill="#a5101a" opacity=".55"/>
+</svg>

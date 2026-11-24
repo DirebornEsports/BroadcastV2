@@ -10,6 +10,7 @@ param(
   [string]$Camera = 'test',
   [string]$Mic = '',          # empty = no sound; 'test' = a beep every second (with -Camera test)
   [string]$Bridge = 'http://127.0.0.1:8787',
+  [string]$Pin = '',          # Direborn Studio: the player's 4-digit PIN
   [int]$Kbps = 4500,
   [string]$Size = '1920x1080',
   [int]$Fps = 30
@@ -23,7 +24,7 @@ if ($List) {
   }
   exit
 }
-if (-not $Name) { throw 'Isi -Name (nama pemain), atau -List untuk melihat kamera' }
+if (-not $Name -and -not $Pin) { throw 'Isi -Pin (dari operator) atau -Name, atau -List untuk melihat kamera' }
 
 # first encoder that opens on this PC wins: NVIDIA, AMD, Intel, then software
 $encoders = [ordered]@{
@@ -42,26 +43,31 @@ Write-Host "Encoder: $enc ($(if ($enc -eq 'libx264') { 'software / CPU' } else {
 
 if ($Camera -eq 'test') {
   # test pattern; with -Mic test the picture flashes white while a beep plays, every 2 s (A/V sync check)
-  $input = @('-re', '-f', 'lavfi', '-i', "testsrc2=s=${Size}:r=${Fps},drawbox=c=white:t=fill:enable='lt(mod(t,2),0.1)'")
-  if ($Mic -eq 'test') { $input += @('-re', '-f', 'lavfi', '-i', "aevalsrc='if(lt(mod(t,2),0.1),0.5*sin(2*PI*1000*t),0)':s=48000") }
+  $src = @('-re', '-f', 'lavfi', '-i', "testsrc2=s=${Size}:r=${Fps},drawbox=c=white:t=fill:enable='lt(mod(t,2),0.1)'")
+  if ($Mic -eq 'test') { $src += @('-re', '-f', 'lavfi', '-i', "aevalsrc='if(lt(mod(t,2),0.1),0.5*sin(2*PI*1000*t),0)':s=48000") }
 } else {
   # one dshow input for camera and mic keeps their timestamps on the same clock
   $dev = "video=$Camera" + $(if ($Mic) { ":audio=$Mic" } else { '' })
   # 20 ms mic chunks: with the default (~0.5 s) the muxer sends video and sound in bursts and ~70% of the
   # packets never reached the bridge
-  $input = @('-f', 'dshow', '-rtbufsize', '256M', '-audio_buffer_size', '20', '-vcodec', 'mjpeg', '-video_size', $Size, '-framerate', "$Fps", '-i', $dev)
+  $src = @('-f', 'dshow', '-rtbufsize', '256M', '-audio_buffer_size', '20', '-vcodec', 'mjpeg', '-video_size', $Size, '-framerate', "$Fps", '-i', $dev)
 }
-$audio = if ($Mic) { @('-c:a', 'libopus', '-b:a', '64k', '-ar', '48000', '-ac', '2', '-application', 'lowdelay') } else { @('-an') }
-$rate = @('-rc', 'cbr', '-b:v', "${Kbps}k", '-maxrate', "${Kbps}k", '-bufsize', "$($Kbps / 2)k")
-if ($enc -eq 'libx264') { $rate = @('-b:v', "${Kbps}k", '-maxrate', "${Kbps}k", '-bufsize', "$($Kbps / 2)k") }
-# AMD ignores the buffer size on keyframes: a 1080p keyframe came out as one burst big enough that packets
-# were lost before the bridge. Cap every frame at 4x the average frame (keyframes are the only ones that hit it).
-if ($enc -eq 'h264_amf') { $rate += @('-enforce_hrd', '1', '-max_au_size', [int]($Kbps * 1000 / $Fps * 4)) }
+# @(...) around the if: a one-item result (-an) would otherwise be a plain string, and splatting it sends '-' 'a' 'n'
+$audio = @(if ($Mic) { '-c:a', 'libopus', '-b:a', '64k', '-ar', '48000', '-ac', '2', '-application', 'lowdelay' } else { '-an' })
+# A 1080p keyframe leaves as one burst; when it is too big, packets are lost before the bridge. Every encoder
+# gets the same cap: no frame larger than 4x the average frame (only keyframes reach it).
+$capKbit = [int]($Kbps * 4 / $Fps)
+$rate = @('-b:v', "${Kbps}k", '-maxrate', "${Kbps}k", '-bufsize', "${capKbit}k")   # NVIDIA, Intel, x264: the VBV buffer is the cap
+if ($enc -ne 'libx264') { $rate = @('-rc', 'cbr') + $rate }
+if ($enc -eq 'h264_nvenc') { $rate += @('-zerolatency', '1') }
+# AMD ignores the buffer size on keyframes, so it gets a hard per-frame limit instead
+if ($enc -eq 'h264_amf') { $rate = @('-rc', 'cbr', '-b:v', "${Kbps}k", '-maxrate', "${Kbps}k", '-bufsize', "$($Kbps / 2)k", '-enforce_hrd', '1', '-max_au_size', "$($capKbit * 1000)") }   # in a list, "x, $a * 1000" repeats the whole list 1000x
 
 # keyframe every 2 s: a viewer (or the delay buffer after a lost packet) never waits longer than that
-$url = "$Bridge/whip/$([uri]::EscapeDataString($Name))"
+# with a PIN the studio knows who this is, so the name never travels (kanji / emoji names broke the ffmpeg call)
+$url = if ($Pin) { "$Bridge/whip/cam?pin=$Pin" } else { "$Bridge/whip/$([uri]::EscapeDataString($Name))" }
 while ($true) {
-  & ffmpeg -hide_banner -loglevel warning @input @audio -pix_fmt nv12 -c:v $enc @($encoders[$enc]) @rate -g ($Fps * 2) -bf 0 -ts_buffer_size 1048576 -f whip $url   # 1 MB UDP buffer: a 1080p keyframe burst otherwise fails with "UDP send blocked" and ends the sender
+  & ffmpeg -hide_banner -loglevel warning @src @audio -pix_fmt nv12 '-c:v' $enc @($encoders[$enc]) @rate -g ($Fps * 2) -bf 0 -ts_buffer_size 1048576 -f whip $url   # 1 MB UDP buffer: a 1080p keyframe burst otherwise fails with "UDP send blocked" and ends the sender
   Write-Host 'Koneksi putus, sambung ulang dalam 3 detik...'
   Start-Sleep -Seconds 3
 }

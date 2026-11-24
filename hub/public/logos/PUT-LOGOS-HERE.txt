@@ -1,0 +1,1 @@
+Put team and event logos here (PNG/SVG with transparent background works best). Reference them as /logos/<file> in the control panel.

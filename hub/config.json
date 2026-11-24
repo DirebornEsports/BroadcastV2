@@ -1,0 +1,41 @@
+{
+  "port": 4747,
+
+  "event": {
+    "title": "DIRE BATTLE CUP",
+    "stage": "GRAND FINAL",
+    "logo": "",
+    "format": "BO3"
+  },
+
+  "teams": {
+    "left":  { "name": "TEAM A", "tag": "TMA", "logo": "", "color": "#ff2d87", "score": 0 },
+    "right": { "name": "TEAM B", "tag": "TMB", "logo": "", "color": "#3d5afe", "score": 0 }
+  },
+
+  "reserveSeconds": 130,
+  "timers": {
+    "firstBanPhase": 15,
+    "default": 30
+  },
+
+  "display": {
+    "animatedPortraits": true,
+    "portraitWaist": 0.58,
+    "portraitTop": 0.06,
+    "showScore": true,
+    "showHeroNames": true,
+    "showPlayerNames": true,
+    "sounds": true,
+    "soundVolume": 0.9,
+    "heroFraming": {
+      "jakiro": { "waist": 0.9, "top": 0.02 }
+    }
+  },
+
+  "gsi": {
+    "token": "direbattle"
+  },
+
+  "sequence": "F:ban F:ban S:ban S:ban F:ban S:ban S:ban F:pick S:pick F:ban F:ban S:ban S:pick F:pick F:pick S:pick S:pick F:pick F:ban S:ban S:ban F:ban F:pick S:pick"
+}

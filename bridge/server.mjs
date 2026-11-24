@@ -16,6 +16,8 @@ const KEY = process.env.KEY || '';
 const CF = process.env.CF_APP_ID && process.env.CF_APP_SECRET;
 const NAME_RE = /^[\p{L}\p{N}_.\- ]{1,24}$/u;
 const { localSfu = null, localSfuIdle = null, localSfuLost = null } = CF ? {} : await import('./localsfu.mjs');
+// STUDIO=1: running inside Direborn Studio (PINs, discovery, receivers, dashboard): see studio.mjs
+const studio = process.env.STUDIO === '1' ? await import('./studio.mjs') : null;
 
 async function sfu(method, path, body) {
   let status, j;
@@ -49,9 +51,17 @@ const mid = (sdp, kind) => (new RegExp(`m=${kind}[^]*?a=mid:(\\S+)`).exec(sdp) |
 async function route(req, url, body) {
   const p = url.pathname.split('/').filter(Boolean).map(decodeURIComponent);
   prune();
+  const own = studio && (await studio.studioRoute(req, url, body));
+  if (own) return own;
   if (req.method === 'GET' && p[0] === 'cams') return [200, 'application/json', JSON.stringify([...cams.values()].map(({ name, since, sessionId }) => ({ name, since, ...(localSfuLost ? { lostFromPlayer: localSfuLost(sessionId) } : {}) })))];
   if (p[0] === 'whip' && req.method === 'POST' && p.length === 2) {
-    const name = p[1]; if (!NAME_RE.test(name)) return [400, 'text/plain', 'nama tidak valid'];
+    let name = p[1];
+    if (studio && studio.pinsActive()) {
+      // the PIN decides who this is (the name in the URL may have been mangled on the way: emoji, kanji)
+      const who = studio.pinFor(url.searchParams.get('pin'));
+      if (!who) return [403, 'text/plain', 'PIN salah'];
+      name = who.name;
+    } else if (!NAME_RE.test(name)) return [400, 'text/plain', 'nama tidak valid'];
     const vmid = mid(body, 'video'), amid = mid(body, 'audio');
     if (!vmid) return [400, 'text/plain', 'offer tanpa video'];
     const s = await sfu('POST', '/sessions/new');
@@ -93,4 +103,5 @@ http.createServer(async (req, res) => {
     console.error('[error]', e.message);
     res.writeHead(502, { ...cors, 'content-type': 'text/plain' }).end(e.message);
   }
-}).listen(PORT, () => console.log(`bridge on :${PORT} (${CF ? 'Cloudflare Realtime' : 'LAN SFU'})`));
+}).listen(PORT, () => console.log(`bridge on :${PORT} (${CF ? 'Cloudflare Realtime' : 'LAN SFU'})${studio ? ' + studio' : ''}`));
+if (studio) for (const sig of ['SIGINT', 'SIGTERM', 'exit']) process.on(sig, () => { studio.stopAll(); if (sig !== 'exit') process.exit(0); });

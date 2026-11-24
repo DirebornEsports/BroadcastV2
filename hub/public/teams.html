@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script src="/vendor/anime.umd.min.js"></script><script src="/ui/motion.js"></script>
+<script src="/theme.js"></script>
+<script src="/ui/shell.js" defer></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teams Database</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a1a12; --panel: #10291c; --panel2: #173d29; --panel3: #1f5236; --line: rgba(214,189,134,.28); --line-hi: rgba(214,189,134,.6);
+    --text: #f4e8c6; --muted: #a9b59f; --gold: #d6bd86; --gold-hi: #f3e4b8; --ok: #9fd67a; --danger: #e5604a;
+    --font: Montserrat, "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: var(--text); font: 500 14px var(--font); min-height: 100vh;
+    background: linear-gradient(180deg, rgba(var(--bg-rgb),.86), rgba(var(--bg-rgb),.96)), url(/assets/clouds.jpg) center top / 1400px auto fixed, var(--bg);
+  }
+  button, input { font: inherit; color: inherit; }
+  button {
+    background: linear-gradient(180deg, var(--panel3), var(--panel2)); border: 1px solid var(--line-hi); border-radius: 7px;
+    padding: 8px 14px; cursor: pointer; font-weight: 600; color: var(--text);
+  }
+  button:hover { border-color: var(--gold-hi); color: var(--gold-hi); }
+  button.primary { background: linear-gradient(180deg, var(--gold-hi), var(--gold)); color: var(--panel); border-color: var(--gold-hi); }
+  button.danger { border-color: rgba(229,96,74,.6); color: #ffc0b3; }
+  input { width: 100%; background: rgba(var(--shade-rgb),.7); border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; min-width: 0; color: var(--text); }
+  input:focus { outline: 2px solid var(--gold); outline-offset: -1px; }
+  input[type=color] { padding: 2px; height: 38px; }
+  label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; font-weight: 600; color: var(--muted); min-width: 0; }
+
+  header {
+    display: flex; align-items: center; gap: 12px; padding: 10px 18px; position: sticky; top: 0; z-index: 5;
+    background: linear-gradient(180deg, var(--panel2), var(--panel)); border-bottom: 2px solid var(--gold); box-shadow: 0 4px 16px rgba(0,0,0,.4);
+  }
+  header img { width: 54px; }
+  header h1 { margin: 0; font: 600 17px var(--font); letter-spacing: 0; color: var(--gold-hi); }
+  header .spacer { flex: 1; }
+  header a { color: var(--gold); font-weight: 600; text-decoration: none; border: 1px solid var(--line-hi); padding: 7px 13px; border-radius: 7px; }
+  header a:hover { color: var(--gold-hi); border-color: var(--gold-hi); }
+
+  main { max-width: 1300px; margin: 0 auto; padding: 18px; display: grid; grid-template-columns: 560px 1fr; gap: 18px; align-items: start; }
+  .card {
+    background: linear-gradient(180deg, rgba(var(--panel2-rgb),.9), rgba(var(--panel-rgb),.94)); border: 1.5px solid var(--line-hi); border-radius: 10px; padding: 16px;
+    box-shadow: inset 0 1px 0 rgba(var(--hi-rgb),.12), 0 6px 18px rgba(0,0,0,.3);
+  }
+  .card h2 { margin: 0 0 14px; font: 600 12px var(--font); letter-spacing: 0; color: var(--gold); display: flex; align-items: center; gap: 10px; }
+  .card h2::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line-hi), transparent); }
+  form { display: grid; gap: 12px; }
+  .row2 { display: grid; grid-template-columns: 1fr 110px 70px; gap: 8px; }
+
+  /* logo drop zone */
+  .drop {
+    position: relative; display: grid; grid-template-columns: 120px 1fr; gap: 14px; align-items: center;
+    border: 1.5px dashed var(--line-hi); border-radius: 9px; padding: 12px; cursor: pointer; background: rgba(var(--shade-rgb),.35);
+    transition: border-color .15s, background .15s;
+  }
+  .drop:hover, .drop.over { border-color: var(--gold-hi); background: rgba(var(--line-rgb),.08); }
+  .drop .prev {
+    width: 120px; height: 120px; border-radius: 8px; display: grid; place-items: center; overflow: hidden;
+    background: repeating-conic-gradient(var(--panel2) 0% 25%, var(--panel) 0% 50%) 50% / 16px 16px; border: 1px solid var(--line);
+  }
+  .drop .prev img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .drop .prev span { font: 600 26px var(--font); color: var(--gold); }
+  .drop b { display: block; color: var(--gold-hi); margin-bottom: 4px; }
+  .drop small { color: var(--muted); line-height: 1.5; }
+  .drop input { display: none; }
+  .players { display: grid; gap: 6px; }
+  .players .prow { display: grid; grid-template-columns: 24px 1fr 132px 108px 46px; align-items: center; gap: 7px; }
+  .players .prow[hidden] { display: none; }
+  .players .phead { display: grid; grid-template-columns: 24px 1fr 132px 108px 46px; gap: 7px; font-size: 10px; font-weight: 600; letter-spacing: 0; color: var(--muted); }
+  .players select.role { padding: 8px 6px; font-size: 12px; font-weight: 600; }
+  .pph.over { border-color: var(--gold-hi); background: rgba(var(--line-rgb),.15); }
+  .team .rl { color: var(--muted); font-size: 10px; font-weight: 600; letter-spacing: 0; margin-left: 5px; }
+  .players .acc { font-size: 12px; padding: 8px 7px; }
+  .pph {
+    position: relative; width: 46px; height: 46px; border-radius: 7px; cursor: pointer; overflow: hidden;
+    border: 1.5px dashed var(--line-hi); background: rgba(var(--shade-rgb),.45); display: grid; place-items: center;
+    color: var(--gold); font: 600 18px var(--font);
+  }
+  .pph:hover { border-color: var(--gold-hi); }
+  .pph.has { border-style: solid; }
+  .pph img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+  .pph .x { position: absolute; top: 1px; right: 1px; width: 15px; height: 15px; border-radius: 3px; background: rgba(var(--bg-rgb),.9); color: var(--danger); font: 600 10px/15px var(--font); text-align: center; display: none; }
+  .pph.has:hover .x { display: block; }
+  .team li img { width: 18px; height: 18px; object-fit: cover; object-position: 50% 15%; border-radius: 50%; vertical-align: -4px; margin-right: 5px; border: 1px solid var(--line-hi); }
+  .players em { font-style: normal; font-weight: 600; color: var(--gold); text-align: center; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  select { width: 100%; background: rgba(var(--shade-rgb),.7); border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; color: var(--text); font: inherit; font-weight: 600; }
+  select option { background: var(--panel); }
+  .capsel { border-color: rgba(var(--line-rgb),.7); background: rgba(var(--line-rgb),.16); color: var(--gold-hi); }
+  .team li.cap { color: var(--gold-hi); font-weight: 600; }
+  .team li.cap::after { content: " (C)"; color: var(--gold); font-weight: 600; }
+
+  .search { margin-bottom: 14px; }
+  .list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+  .team {
+    position: relative; border: 1.5px solid var(--line); border-radius: 9px; padding: 12px; background: rgba(var(--shade-rgb),.4);
+    display: grid; grid-template-columns: 72px 1fr; gap: 12px; align-items: start; cursor: pointer;
+  }
+  .team:hover { border-color: var(--gold-hi); }
+  .team.editing { border-color: var(--gold-hi); box-shadow: 0 0 14px rgba(var(--hi-rgb),.35); }
+  .team::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 9px 0 0 9px; background: var(--c, var(--gold)); }
+  .team .lg { width: 72px; height: 72px; border-radius: 7px; display: grid; place-items: center; background: rgba(0,0,0,.25); border: 1px solid var(--line); overflow: hidden; }
+  .team .lg img { max-width: 92%; max-height: 92%; object-fit: contain; }
+  .team .lg span { font: 600 18px var(--font); color: var(--gold); }
+  .team h3 { margin: 0 0 2px; font: 600 15px var(--font); letter-spacing: 0; }
+  .team .tag { font: 600 11px var(--font); letter-spacing: 0; color: var(--gold); }
+  .team ol { margin: 8px 0 0; padding-left: 18px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+  .team ol li::marker { color: var(--gold); font-weight: 600; }
+  .syncbox { margin-bottom: 14px; padding: 12px 14px; border-radius: 9px; border: 1px solid rgba(159,214,122,.4); background: rgba(159,214,122,.07); font-size: 13px; line-height: 1.55; }
+  .syncbox b { color: var(--gold-hi); }
+  .syncbox ul { margin: 6px 0 0; padding-left: 18px; color: var(--muted); }
+  .syncbox .x { float: right; cursor: pointer; color: var(--muted); }
+  .empty { color: var(--muted); padding: 30px; text-align: center; border: 1.5px dashed var(--line); border-radius: 9px; }
+  .toast {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #3a1a12; border: 1px solid var(--danger);
+    color: #ffd6cc; padding: 10px 16px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; font-weight: 600; z-index: 9;
+  }
+  .toast.ok { background: var(--panel2); border-color: var(--ok); color: #dff3d0; }
+  .toast.show { opacity: 1; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+</style>
+<link rel="stylesheet" href="/ui/panel.css">
+</head>
+<body>
+<header>
+  <img src="/assets/cloud-ornament.png" alt="">
+  <h1>Teams database</h1>
+  <div class="spacer"></div>
+  <a href="/stats">Tournament stats</a>
+  <a href="/control">← Draft control</a>
+</header>
+
+<main>
+  <section class="card">
+    <h2 id="formTitle">Add team</h2>
+    <form id="form" autocomplete="off">
+      <input type="hidden" name="id">
+      <div class="row2">
+        <label>Team name<input name="name" required placeholder="MAXWELL+4"></label>
+        <label>Tag<input name="tag" maxlength="8" placeholder="MXW"></label>
+        <label>Color<input name="color" type="color" value="#d6bd86"></label>
+      </div>
+      <label>Logo</label>
+      <div class="drop" id="drop" tabindex="0">
+        <div class="prev" id="prev"><span>LOGO</span></div>
+        <div><b>Click to choose a file</b><small>or drag &amp; drop it here.<br>PNG with transparent background works best. Max 5 MB.</small></div>
+        <input type="file" id="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif">
+      </div>
+      <label>Players</label>
+      <div class="players" id="players">
+        <div class="phead"><span></span><span>NAME</span><span>Steam ID</span><span>ROLE</span><span>Picture</span></div>
+      </div>
+      <input type="file" id="pfile" accept="image/png,image/jpeg,image/webp" style="display:none">
+      <button type="button" id="addRow" style="justify-self:start;padding:6px 12px;font-size:12px">+ Add stand-in</button>
+      <p class="hint" style="margin:-4px 0 0;color:var(--muted);font-size:12px;line-height:1.5"><b>Steam ID:</b> Steam64 (7656…) or Dota friend ID — both work. A player with two accounts: separate them with a comma. It lets the overlay, GSI and the stats recognise them even after a name change. The Stats page can fill these in for you.<br><b>Picture:</b> click or drop a cut-out PNG (transparent background, like your MVP posters). It appears in the pick card when the player picks a hero.</p>
+      <label>Captain<select name="captain" class="capsel"><option value="">— no captain —</option></select></label>
+      <div class="actions">
+        <button type="submit" class="primary" id="saveBtn">Save team</button>
+        <button type="button" id="newBtn">New team</button>
+        <button type="button" class="danger" id="delBtn" style="display:none">Delete</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Impor tim dari tiket liga</h2>
+    <p class="hint" style="margin:0;color:var(--muted);font-size:12.5px;line-height:1.55">Paste link liga dari Dotabuff (atau ID-nya), lalu <b>Ambil tim</b>. Kalau liganya belum ada di OpenDota, tambah per tim pakai link tim Dotabuff. Tim yang pernah main di tiket itu muncul di bawah — centang yang mau dimasukkan. Pemain aktif + Steam ID ikut terisi. Tiket yang sama dipakai juga untuk <b>Update from OpenDota</b> di Statistik.</p>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px">
+      <input id="lgId" placeholder="Paste link Dotabuff liga, mis. dotabuff.com/esports/leagues/20277-…" style="flex:1;min-width:200px">
+      <button type="button" id="lgFind" class="primary">Ambil tim</button>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px">
+      <input id="tmIds" placeholder="Atau per tim: paste link tim Dotabuff / ID tim (boleh beberapa, pisahkan koma)" style="flex:1;min-width:200px">
+      <button type="button" id="tmAdd">Tambah tim</button>
+    </div>
+    <div id="lgBox" hidden style="margin-top:12px;display:grid;gap:8px">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px"><b id="lgName"></b><span class="sp" style="flex:1"></span>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)">Main sejak <input type="date" id="lgSince" style="width:auto;padding:4px 6px"></label>
+        <button type="button" id="lgAll" style="padding:5px 10px;font-size:12px">Pilih semua</button>
+        <button type="button" id="lgImport" class="primary" style="padding:6px 14px">Impor tim terpilih</button></div>
+      <div id="lgList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px;max-height:340px;overflow:auto"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Saved teams <span id="count" style="color:var(--muted);letter-spacing: 0"></span></h2>
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+      <input class="search" id="search" placeholder="Search teams or players…" style="margin:0;flex:1">
+      <button type="button" id="rosterBtn" title="Sheet with columns TEAM, POSITION, ROLE, NAME, NICKNAME, STEAM ID">Import roster .xlsx</button>
+      <input type="file" id="rosterFile" accept=".xlsx" style="display:none">
+    </div>
+    <div id="syncBox" class="syncbox" hidden></div>
+    <div class="list" id="list"></div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const form = $('form');
+  let teams = [];
+  let pendingFile = null;     // logo chosen but not uploaded yet
+  let currentLogo = '';       // logo path of the team being edited
+  const MAXP = 7;
+  const ROLES = [['', '— role —'], ['carry', 'Carry'], ['mid', 'Mid'], ['offlane', 'Offlane'], ['soft', 'Soft sup.'], ['hard', 'Hard sup.'], ['standin', 'Stand-in'], ['coach', 'Coach']];
+  let photos = Array(MAXP).fill('');            // saved photo paths
+  let pendingPhotos = Array(MAXP).fill(null);   // new files to upload on save
+  let photoSlot = 0;
+  for (let i = 0; i < MAXP; i++) {
+    const row = document.createElement('div'); row.className = 'prow'; row.dataset.row = i;
+    row.innerHTML = `<em>${i < 5 ? i + 1 : 'S' + (i - 4)}</em><input name="p${i}" placeholder="${i < 5 ? 'Player ' + (i + 1) : 'Stand-in'}">` +
+      `<input class="acc" name="a${i}" placeholder="optional">` +
+      `<select class="role" name="r${i}">${ROLES.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>` +
+      `<div class="pph" data-i="${i}" title="Upload player picture">+</div>`;
+    $('players').appendChild(row);
+  }
+  function showRows(n) {
+    document.querySelectorAll('.prow').forEach((r) => { r.hidden = Number(r.dataset.row) >= n; });
+    $('addRow').style.display = n >= MAXP ? 'none' : '';
+    showRows.n = n;
+  }
+  showRows(5);
+  $('addRow').onclick = () => { showRows(Math.min(MAXP, showRows.n + 1)); form.elements['r' + (showRows.n - 1)].value ||= 'standin'; };
+  function drawPhoto(i) {
+    const el = document.querySelector(`.pph[data-i="${i}"]`);
+    const src = pendingPhotos[i] ? URL.createObjectURL(pendingPhotos[i]) : photos[i];
+    el.classList.toggle('has', !!src);
+    el.innerHTML = src ? `<img src="${esc(src)}" alt=""><span class="x" title="Remove picture">✕</span>` : '+';
+  }
+  function takePhoto(i, f) {
+    if (!f) return;
+    if (!/^image\//.test(f.type)) return toast('That file is not an image');
+    if (f.size > 5 * 1024 * 1024) return toast('Picture is too big (max 5 MB)');
+    pendingPhotos[i] = f; drawPhoto(i);
+  }
+  document.querySelectorAll('.pph').forEach((el) => {
+    const i = Number(el.dataset.i);
+    el.addEventListener('click', (e) => {
+      if (e.target.classList.contains('x')) { photos[i] = ''; pendingPhotos[i] = null; drawPhoto(i); return; }
+      photoSlot = i; $('pfile').value = ''; $('pfile').click();
+    });
+    ['dragenter', 'dragover'].forEach((ev) => el.addEventListener(ev, (e) => { e.preventDefault(); el.classList.add('over'); }));
+    ['dragleave', 'drop'].forEach((ev) => el.addEventListener(ev, (e) => { e.preventDefault(); el.classList.remove('over'); }));
+    el.addEventListener('drop', (e) => takePhoto(i, e.dataTransfer.files[0]));
+  });
+  $('pfile').onchange = (e) => takePhoto(photoSlot, e.target.files[0]);
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  let tt;
+  function toast(msg, ok) { const t = $('toast'); t.textContent = msg; t.className = 'toast show' + (ok ? ' ok' : ''); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2600); }
+
+  // ---------- logo picking ----------
+  function setPreview(src) { $('prev').innerHTML = src ? `<img src="${esc(src)}" alt="">` : '<span>LOGO</span>'; }
+  function takeFile(f) {
+    if (!f) return;
+    if (!/^image\//.test(f.type)) return toast('That file is not an image');
+    if (f.size > 5 * 1024 * 1024) return toast('Logo is too big (max 5 MB)');
+    pendingFile = f;
+    setPreview(URL.createObjectURL(f));
+  }
+  $('drop').onclick = () => $('file').click();
+  $('drop').onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('file').click(); } };
+  $('file').onchange = (e) => takeFile(e.target.files[0]);
+  ['dragenter', 'dragover'].forEach((ev) => $('drop').addEventListener(ev, (e) => { e.preventDefault(); $('drop').classList.add('over'); }));
+  ['dragleave', 'drop'].forEach((ev) => $('drop').addEventListener(ev, (e) => { e.preventDefault(); $('drop').classList.remove('over'); }));
+  $('drop').addEventListener('drop', (e) => takeFile(e.dataTransfer.files[0]));
+
+  async function uploadLogo(f) {
+    const r = await fetch('/api/upload-logo', { method: 'POST', headers: { 'x-filename': encodeURIComponent(f.name), 'content-type': 'application/octet-stream' }, body: f });
+    const j = await r.json().catch(() => ({}));
+    if (!j.ok) throw new Error(j.error || 'Upload failed');
+    return j.path;
+  }
+
+  // captain dropdown follows the player names as you type
+  function refreshCaptain(keep) {
+    const f = form.elements; const sel = f.captain;
+    const cur = keep !== undefined ? keep : sel.value;
+    sel.innerHTML = '<option value="">— no captain —</option>' + [...Array(MAXP).keys()].map((i) => f['p' + i].value.trim() ? `<option value="${i}">${esc(f['p' + i].value.trim())}</option>` : '').join('');
+    sel.value = [...sel.options].some((o) => o.value === String(cur)) ? String(cur) : '';
+  }
+  for (let i = 0; i < MAXP; i++) form.elements['p' + i].addEventListener('input', () => refreshCaptain());
+
+  // ---------- form ----------
+  function resetForm() {
+    form.reset(); form.elements.id.value = ''; form.elements.color.value = '#d6bd86';
+    pendingFile = null; currentLogo = ''; $('file').value = ''; setPreview('');
+    refreshCaptain('');
+    photos = Array(MAXP).fill(''); pendingPhotos = Array(MAXP).fill(null); for (let i = 0; i < MAXP; i++) drawPhoto(i);
+    showRows(5);
+    $('formTitle').textContent = 'Add team'; $('delBtn').style.display = 'none';
+    renderList();
+  }
+  function edit(t) {
+    const f = form.elements;
+    f.id.value = t.id; f.name.value = t.name; f.tag.value = t.tag; f.color.value = t.color;
+    for (let i = 0; i < MAXP; i++) { f['p' + i].value = t.players[i] || ''; f['a' + i].value = (t.accountIds || [])[i] || ''; f['r' + i].value = (t.roles || [])[i] || ''; }
+    let last = 4; for (let i = 0; i < MAXP; i++) if (t.players[i]) last = Math.max(last, i);
+    showRows(last + 1);
+    refreshCaptain(t.captain ?? '');
+    photos = [...Array(MAXP).keys()].map((i) => (t.photos || [])[i] || ''); pendingPhotos = Array(MAXP).fill(null); for (let i = 0; i < MAXP; i++) drawPhoto(i);
+    pendingFile = null; currentLogo = t.logo; $('file').value = ''; setPreview(t.logo);
+    $('formTitle').textContent = 'Edit team'; $('delBtn').style.display = '';
+    renderList();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const f = form.elements;
+    $('saveBtn').disabled = true;
+    try {
+      let logo = currentLogo;
+      if (pendingFile) logo = await uploadLogo(pendingFile);
+      for (let i = 0; i < MAXP; i++) if (pendingPhotos[i]) photos[i] = await uploadLogo(pendingPhotos[i]);
+      const idx = [...Array(MAXP).keys()];
+      const body = { photos, roles: idx.map((i) => f['r' + i].value), accountIds: idx.map((i) => f['a' + i].value), id: f.id.value || undefined, name: f.name.value, tag: f.tag.value, color: f.color.value, logo, players: idx.map((i) => f['p' + i].value), captain: f.captain.value === '' ? null : Number(f.captain.value) };
+      const r = await fetch('/api/teams', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error);
+      toast(`Saved ${j.team.name}`, true);
+      await load();
+      resetForm();
+    } catch (err) { toast(err.message || 'Could not save'); }
+    $('saveBtn').disabled = false;
+  });
+  $('newBtn').onclick = resetForm;
+  $('delBtn').onclick = async () => {
+    const id = form.elements.id.value; const t = teams.find((x) => x.id === id);
+    if (!t || !confirm(`Delete ${t.name} from the database?`)) return;
+    await fetch('/api/teams/delete', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id }) });
+    toast(`Deleted ${t.name}`, true); await load(); resetForm();
+  };
+
+  // ---------- list ----------
+  function renderList() {
+    const q = $('search').value.toLowerCase().trim();
+    const shown = teams.filter((t) => !q || [t.name, t.tag, ...t.players].join(' ').toLowerCase().includes(q));
+    $('count').textContent = teams.length ? `(${teams.length})` : '';
+    const editing = form.elements.id.value;
+    $('list').innerHTML = shown.length ? shown.map((t) => `
+      <div class="team ${t.id === editing ? 'editing' : ''}" data-id="${t.id}" style="--c:${esc(t.color)}" title="Click to edit">
+        <div class="lg">${t.logo ? `<img src="${esc(t.logo)}" alt="">` : `<span>${esc(t.tag || t.name.slice(0, 3))}</span>`}</div>
+        <div><h3>${esc(t.name)}</h3><div class="tag">${esc(t.tag)}</div>
+          <ol>${t.players.map((p, i) => p ? `<li class="${t.captain === i ? 'cap' : ''}">${(t.photos || [])[i] ? `<img src="${esc(t.photos[i])}" alt="">` : ''}${esc(p)}${(t.roles || [])[i] ? `<span class="rl">${esc({ soft: 'soft sup', hard: 'hard sup', standin: 'stand-in' }[t.roles[i]] || t.roles[i])}</span>` : ''}${(t.accountIds || [])[i] ? ' <span title="Steam ID linked" style="color:var(--ok)">●</span>' : ''}</li>` : '').join('') || '<li style="list-style:none;margin-left:-18px">No players yet</li>'}</ol></div>
+      </div>`).join('') : `<div class="empty">${teams.length ? 'No team matches your search.' : 'No teams yet — add your first one on the left.'}</div>`;
+    $('list').querySelectorAll('.team').forEach((el) => el.onclick = () => edit(teams.find((t) => t.id === el.dataset.id)));
+  }
+  $('search').oninput = renderList;
+
+  async function load() { teams = await fetch('/api/teams').then((r) => r.json()); renderList(); }
+
+  // ---------- official roster sync ----------
+  function showSync(r) {
+    if (!r || !r.source) return;
+    const li = (arr) => arr.map((x) => `<li>${esc(x)}</li>`).join('');
+    const parts = [];
+    if (r.moved.length) parts.push(`<b>Corrected</b><ul>${li(r.moved)}</ul>`);
+    if (r.playersAdded.length) parts.push(`<b>Players added</b><ul>${li(r.playersAdded)}</ul>`);
+    if (r.teamsCreated.length) parts.push(`<b>Teams added</b><ul>${li(r.teamsCreated)}</ul>`);
+    if (r.kept.length) parts.push(`<b>Second accounts kept</b><ul>${li(r.kept)}</ul>`);
+    if (r.skipped.length) parts.push(`<b>Not added</b><ul>${li(r.skipped)}</ul>`);
+    $('syncBox').innerHTML = `<span class="x" title="Hide">✕</span>✔ Steam IDs synced from <b>${esc(r.source)}</b> — ${r.idsAdded} new IDs, ${r.roles} roles and ${r.captains} captains updated.<br>` + parts.join('');
+    $('syncBox').hidden = false;
+    $('syncBox').querySelector('.x').onclick = () => { $('syncBox').hidden = true; };
+  }
+  fetch('/api/roster-sync').then((r) => r.json()).then(showSync).catch(() => {});
+  $('rosterBtn').onclick = () => $('rosterFile').click();
+  $('rosterFile').onchange = async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = await fetch('/api/teams/import-roster', { method: 'POST', headers: { 'x-filename': encodeURIComponent(f.name), 'content-type': 'application/octet-stream' }, body: f }).then((x) => x.json()).catch(() => ({}));
+    e.target.value = '';
+    if (!r.ok) return toast(r.error || 'Import failed');
+    showSync(r.report); toast('Roster synced', true); load();
+  };
+  // ---- league ticket import ----
+  // OpenDota is asked from this browser (your own connection): the server's shared address gets rate-limited (HTTP 429)
+  const sleepMs = (ms) => new Promise((r) => setTimeout(r, ms));
+  async function od(path) {
+    for (let i = 0; ; i++) {
+      const r = await fetch('https://api.opendota.com/api' + path, { cache: 'no-store' }).catch(() => null);
+      if (r && r.ok) return r.json();
+      if (i < 4 && (!r || r.status === 429 || r.status >= 500)) { await sleepMs(1500 * (i + 1)); continue; }
+      throw new Error(r ? 'OpenDota: HTTP ' + r.status + (r.status === 429 ? ' (terlalu banyak permintaan — tunggu 1 menit)' : '') : 'OpenDota tidak bisa dihubungi');
+    }
+  }
+  const leagueIdOf = (v) => { const m = String(v).match(/leagues\/(\d+)/) || String(v).match(/(\d{3,})/); return m ? m[1] : ''; };
+  let lg = null;
+  const day = (ts) => (ts ? new Date(ts).toISOString().slice(0, 10) : '');
+  function renderLeague() {
+    const since = $('lgSince').value ? Date.parse($('lgSince').value) : 0;
+    const rows = lg.teams.filter((t) => !since || t.last >= since);
+    $('lgList').innerHTML = rows.length ? rows.map((t) => `<label style="display:flex;gap:8px;align-items:center;padding:6px 8px;border-radius:7px;background:rgba(var(--shade-rgb),.45);font-size:12.5px;cursor:pointer">
+      <input type="checkbox" data-id="${t.teamId}" ${t.checked ? 'checked' : ''} style="width:auto">
+      ${t.logo ? `<img src="${esc(t.logo)}" alt="" style="width:24px;height:24px;object-fit:contain">` : '<span style="width:24px"></span>'}
+      <span style="flex:1;min-width:0"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.name)}</b><small style="color:var(--muted)">${t.games} game · terakhir ${day(t.last) || '—'}${t.inDb ? ' · <span style="color:var(--ok)">sudah ada</span>' : ''}</small></span></label>`).join('') : '<p class="hint">Tidak ada tim yang main sejak tanggal itu.</p>';
+  }
+  $('lgFind').onclick = async () => {
+    const id = leagueIdOf($('lgId').value.trim()); if (!id) { toast('Paste link liga Dotabuff atau ID-nya'); $('lgId').focus(); return; }
+    $('lgFind').disabled = true; $('lgFind').textContent = 'Mengambil…';
+    try {
+      const [list, info] = await Promise.all([od(`/leagues/${id}/teams`).catch(() => []), od(`/leagues/${id}`).catch(() => null)]);
+      let raw = (list || []).filter((t) => t && t.team_id).map((t) => ({ teamId: t.team_id, name: t.name || t.tag || '', tag: t.tag || '', logo: t.logo_url || '',
+        last: t.last_match_time ? t.last_match_time * 1000 : 0, games: (t.wins || 0) + (t.losses || 0) }));
+      // OpenDota's team list for a new ticket is often still empty: build it from the ticket's matches instead
+      if (!raw.length) {
+        $('lgFind').textContent = 'Cek match liga…';
+        const by = new Map();
+        const add = (tid, name, ts) => { if (!tid) return; const t = by.get(tid) || { teamId: tid, name: name || '', tag: '', logo: '', last: 0, games: 0 }; t.games++; t.last = Math.max(t.last, (ts || 0) * 1000); if (!t.name && name) t.name = name; by.set(tid, t); };
+        let ms = await od(`/leagues/${id}/matches`).catch(() => []);
+        for (const m of ms || []) { add(m.radiant_team_id, m.radiant_name, m.start_time); add(m.dire_team_id, m.dire_name, m.start_time); }
+        if (!by.size) {                                     // not in the league index yet: look through the newest pro matches
+          let before = '';
+          for (let page = 0; page < 6 && !by.size; page++) {
+            $('lgFind').textContent = `Cek pro match ${page + 1}/6…`;
+            const pm = await od('/proMatches' + (before ? '?less_than_match_id=' + before : '')).catch(() => []);
+            if (!pm || !pm.length) break;
+            for (const m of pm) if (String(m.leagueid) === String(id)) { add(m.radiant_team_id, m.radiant_name, m.start_time); add(m.dire_team_id, m.dire_name, m.start_time); }
+            before = pm[pm.length - 1].match_id;
+          }
+        }
+        raw = [...by.values()];
+        for (const t of raw.filter((x) => !x.name || !x.tag).slice(0, 30)) {        // names, tags and logos
+          try { const d = await od(`/teams/${t.teamId}`); t.name = t.name || d.name || d.tag || 'Team ' + t.teamId; t.tag = d.tag || ''; t.logo = d.logo_url || ''; } catch { t.name = t.name || 'Team ' + t.teamId; }
+        }
+      }
+      const key = (n) => String(n || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const have = new Set(teams.map((t) => key(t.name)));
+      const all = raw.map((t) => ({ ...t, name: t.name || 'Team ' + t.teamId, inDb: have.has(key(t.name)) })).sort((a, b) => b.last - a.last);
+      if (!all.length) throw new Error(`OpenDota belum punya match dari tiket ${id}${info && info.name ? ' (' + info.name + ')' : ''} — kalau season-nya belum mulai, tim belum bisa diambil. Tambah tim manual dulu, atau coba lagi setelah match pertama.`);
+      lg = { leagueId: id, leagueName: (info && info.name) || '', teams: all };
+      // one ticket often covers a whole year of seasons: default to teams that played in the last 45 days
+      $('lgSince').value = all.some((t) => t.last > Date.now() - 45 * 864e5) ? day(Date.now() - 45 * 864e5) : '';
+      $('lgName').textContent = (lg.leagueName || 'Liga ' + id) + ` — ${all.length} tim`;
+      $('lgBox').hidden = false; renderLeague();
+    } catch (e) { toast(e.message); }
+    $('lgFind').disabled = false; $('lgFind').textContent = 'Ambil tim';
+  };
+  // add teams one by one from their team ID / Dotabuff team link (when the league is not on OpenDota yet)
+  $('tmAdd').onclick = async () => {
+    const raw = $('tmIds').value.split(/[\s,;]+/).filter(Boolean);
+    const ids = []; const slugs = {};
+    for (const v of raw) { const m = v.match(/teams\/(\d+)(?:-([\w-]+))?/) || v.match(/^(\d{3,})$/); if (m && !ids.includes(m[1])) { ids.push(m[1]); if (m[2]) slugs[m[1]] = m[2]; } }
+    if (!ids.length) { toast('Paste link tim Dotabuff (…/esports/teams/10150434-direborn) atau ID tim'); $('tmIds').focus(); return; }
+    $('tmAdd').disabled = true;
+    const pick = [], missing = [];
+    for (const [i, id] of ids.entries()) {
+      $('tmAdd').textContent = `Mengambil ${i + 1}/${ids.length}…`;
+      const d = await od(`/teams/${id}`).catch(() => null);
+      const slugName = slugs[id] ? slugs[id].replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '';
+      const name = (d && (d.name || d.tag)) || slugName;
+      if (!name) { missing.push(id); continue; }
+      let players = [];
+      try { players = ((await od(`/teams/${id}/players`)) || []).filter((x) => x.is_current_team_member).map((x) => ({ account_id: x.account_id, name: x.name, games_played: x.games_played, is_current_team_member: true })); } catch {}
+      pick.push({ teamId: id, name, tag: (d && d.tag) || '', logo: (d && d.logo_url) || '', players });
+      await sleepMs(250);
+    }
+    try {
+      if (pick.length) {
+        const lid = leagueIdOf($('lgId').value.trim());
+        const r = await fetch('/api/teams/league-import', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ leagueId: lid || '', teams: pick }) }).then((x) => x.json());
+        if (!r.ok) throw new Error(r.error || 'Gagal');
+        const noPlayers = pick.filter((t) => !t.players.length).map((t) => t.name);
+        toast(`${r.created.length} tim baru, ${r.updated.length} diperbarui` + (noPlayers.length ? ` · tanpa data pemain: ${noPlayers.join(', ')} (isi manual)` : '') + (missing.length ? ` · tidak ketemu: ${missing.join(', ')}` : ''), true);
+        $('tmIds').value = ''; await load();
+      } else toast('Tim tidak ketemu di OpenDota: ' + missing.join(', ') + ' — pakai link Dotabuff lengkap supaya namanya terbaca');
+    } catch (e) { toast(e.message); }
+    $('tmAdd').disabled = false; $('tmAdd').textContent = 'Tambah tim';
+  };
+  $('tmIds').onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); $('tmAdd').click(); } };
+  $('lgId').onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); $('lgFind').click(); } };
+  $('lgSince').onchange = () => renderLeague();
+  $('lgList').onchange = (e) => { const t = lg.teams.find((x) => String(x.teamId) === e.target.dataset.id); if (t) t.checked = e.target.checked; };
+  $('lgAll').onclick = () => { const since = $('lgSince').value ? Date.parse($('lgSince').value) : 0; lg.teams.forEach((t) => { t.checked = !since || t.last >= since; }); renderLeague(); };
+  $('lgImport').onclick = async () => {
+    const pick = lg.teams.filter((t) => t.checked);
+    if (!pick.length) return toast('Centang tim yang mau diimpor');
+    $('lgImport').disabled = true; $('lgImport').textContent = `Mengimpor ${pick.length} tim…`;
+    try {
+      for (const [i, t] of pick.entries()) {
+        $('lgImport').textContent = `Mengambil pemain ${i + 1}/${pick.length}…`;
+        try { t.players = ((await od(`/teams/${t.teamId}/players`)) || []).filter((x) => x.is_current_team_member).map((x) => ({ account_id: x.account_id, name: x.name, games_played: x.games_played, is_current_team_member: true })); }
+        catch { t.players = null; }
+        await sleepMs(250);
+      }
+      const r = await fetch('/api/teams/league-import', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ leagueId: lg.leagueId, leagueName: lg.leagueName, teams: pick }) }).then((x) => x.json());
+      if (!r.ok) throw new Error(r.error || 'Gagal');
+      toast(`${r.created.length} tim baru, ${r.updated.length} diperbarui${r.failed.length ? ', gagal: ' + r.failed.join(', ') : ''}`, true);
+      await load(); pick.forEach((t) => { t.inDb = true; t.checked = false; }); renderLeague();
+    } catch (e) { toast(e.message); }
+    $('lgImport').disabled = false; $('lgImport').textContent = 'Impor tim terpilih';
+  };
+
+  load().catch(() => toast('Cannot reach the server — is start.bat running?'));
+})();
+</script>
+</body>
+</html>

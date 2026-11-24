@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script src="/vendor/anime.umd.min.js"></script><script src="/ui/motion.js"></script>
+<script src="/theme.js"></script>
+<title>In-game Player Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --c-rgb: 214, 189, 134;
+    --green-900: #0a1d13; --green-800: #10291c; --green-600: #1f5236;
+    --gold: #d6bd86; --gold-hi: #f3e4b8; --cream: #f4e8c6;
+    --font: "Montserrat", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; color: var(--cream); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+  body.preview { background: radial-gradient(1200px 700px at 40% 40%, #3b4a3a, #151b16); }
+  /* 1920x1080 canvas scaled to the source size */
+  .canvas { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; transform: scale(var(--fit, 1)); }
+
+  /* ---------- lower third ---------- */
+  .lt {
+    position: absolute; left: var(--x, 300px); bottom: var(--y, 8px);
+    width: 540px; height: 236px; transform-origin: 0 100%; transform: scale(var(--s, 1));
+    pointer-events: none;
+  }
+  .lt .photo {
+    position: absolute; left: 0; bottom: 0; width: 176px; height: 236px; z-index: 3;
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .lt .photo img { max-width: 100%; max-height: 100%; object-fit: contain; object-position: 50% 100%; filter: drop-shadow(0 6px 12px rgba(0,0,0,.55)); }
+  .lt .photo svg { width: 130px; height: 180px; opacity: .6; }
+  .lt .plate {
+    position: absolute; left: 112px; right: 0; bottom: 0; height: 136px; z-index: 2; overflow: hidden;
+    padding: 12px 16px 0 82px;
+    background:
+      linear-gradient(100deg, rgba(var(--c-rgb), .32), transparent 55%),
+      linear-gradient(180deg, rgba(23,61,41,.9), rgba(10,29,19,.96)),
+      url(/assets/clouds.jpg) center / 520px auto;
+    border-top: 3px solid var(--gold); border-bottom: 3px solid var(--gold);
+    box-shadow: inset 0 3px 0 var(--green-900), inset 0 4px 0 rgba(214,189,134,.45), 0 8px 22px rgba(0,0,0,.45);
+    clip-path: polygon(0 0, 100% 0, calc(100% - 22px) 100%, 0 100%);
+  }
+  .lt .plate::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: rgb(var(--c-rgb)); }
+  .team { display: flex; align-items: center; gap: 8px; font: 800 12px/1 var(--font); letter-spacing: .14em; color: var(--gold); text-transform: uppercase; white-space: nowrap; }
+  .team img { width: 22px; height: 22px; object-fit: contain; }
+  .pname { margin-top: 7px; font: 900 30px/1 var(--font); letter-spacing: .01em; text-transform: uppercase; color: var(--cream); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 9px; }
+  .pname .c { flex: none; font: 900 12px/20px var(--font); width: 22px; height: 20px; text-align: center; border-radius: 4px; background: linear-gradient(180deg, var(--gold-hi), var(--gold)); color: var(--green-900); letter-spacing: 0; }
+  .heroline { margin-top: 7px; display: flex; align-items: center; gap: 8px; font: 700 13px/1 var(--font); color: var(--gold-hi); text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
+  .heroline img { width: 44px; height: 25px; object-fit: cover; border: 1px solid rgba(214,189,134,.7); border-radius: 2px; }
+  .heroline .lvl { color: var(--gold); }
+  .stats { position: absolute; left: 0; right: 0; bottom: 0; height: 30px; display: flex; align-items: center; gap: 16px; padding: 0 30px 0 82px; background: rgba(5,16,10,.6); border-top: 1px solid rgba(214,189,134,.35); }
+  .stats span { font: 700 11px/1 var(--font); letter-spacing: .1em; color: var(--gold); white-space: nowrap; }
+  .stats b { font: 900 15px/1 var(--font); color: var(--cream); letter-spacing: .02em; margin-left: 5px; font-variant-numeric: tabular-nums; }
+  .stats.none { display: none; }
+  /* photo only (default): just the player's picture beside the hero portrait */
+  body.photo-only .plate { display: none; }
+  body.photo-only .lt .photo img { filter: drop-shadow(0 4px 10px rgba(0,0,0,.6)); }
+
+  /* ---------- switch animation ---------- */
+  .lt { opacity: 0; }
+  .lt.show { opacity: 1; }
+  .lt.show .plate { animation: wipe .5s cubic-bezier(.16,1,.3,1) both; }
+  .lt.show .photo { animation: rise .55s .08s cubic-bezier(.16,1,.3,1) both; }
+  .lt.show .pname span { animation: widen .6s .2s cubic-bezier(.16,1,.3,1) both; display: inline-block; }
+  .lt.show .heroline, .lt.show .stats, .lt.show .team { animation: fadeUp .4s .3s ease-out both; }
+  .lt.leave { opacity: 0; transition: opacity .18s ease-in; }
+  .lt.leave .photo { transform: translateY(20px); transition: transform .18s ease-in; }
+  @keyframes wipe   { from { clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); } to { clip-path: polygon(0 0, 100% 0, calc(100% - 22px) 100%, 0 100%); } }
+  @keyframes rise   { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: none; } }
+  @keyframes widen  { from { opacity: 0; letter-spacing: .4em; } to { opacity: 1; letter-spacing: .01em; } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <div class="lt" id="lt">
+    <div class="plate">
+      <div class="team" id="team"></div>
+      <div class="pname" id="pname"></div>
+      <div class="heroline" id="hero"></div>
+      <div class="stats" id="stats"></div>
+    </div>
+    <div class="photo" id="photo"></div>
+  </div>
+</div>
+<script src="/sfx.js"></script>
+<script>
+(() => {
+  const qs = new URLSearchParams(location.search);
+  if (qs.has('bg')) document.body.classList.add('preview');
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const hexToRgb = (hex) => { const m = /^#?([0-9a-f]{6})$/i.exec(hex || ''); if (!m) return '214, 189, 134'; const n = parseInt(m[1], 16); return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`; };
+  const SILHOUETTE = '<svg viewBox="0 0 130 180"><circle cx="65" cy="52" r="34" fill="#d6bd86"/><path d="M5 180 C8 118 36 98 65 98 C94 98 122 118 125 180 Z" fill="#d6bd86"/></svg>';
+  const kfmt = (n) => n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 1 : 2).replace(/\.?0+$/, '') + 'k' : String(n);
+
+  let heroes = new Map();
+  let shownKey = null;
+  let swapTimer = null;
+  let booted = false;          // no sound when OBS first loads the source
+
+  function fit() {
+    document.documentElement.style.setProperty('--fit', Math.min(innerWidth / 1920, innerHeight / 1080).toFixed(4));
+  }
+  addEventListener('resize', fit); fit();
+
+  function fillCard(c) {
+    const lt = $('lt');
+    lt.style.setProperty('--c-rgb', hexToRgb(c.teamColor));
+    $('team').innerHTML = (c.teamLogo ? `<img src="${esc(c.teamLogo)}" alt="" onerror="this.remove()">` : '') + esc(c.teamName || '');
+    $('pname').innerHTML = (c.captain ? '<i class="c">C</i>' : '') + `<span>${esc(c.name)}</span>`;
+    $('photo').innerHTML = c.photo ? `<img src="${esc(c.photo)}" alt="">` : SILHOUETTE;
+    const img = $('photo').querySelector('img'); if (img) img.onerror = () => { $('photo').innerHTML = SILHOUETTE; };
+    updateLive(c);
+  }
+  function updateLive(c) {
+    const h = c.heroId != null ? heroes.get(c.heroId) : null;
+    $('hero').innerHTML = h ? `<img src="/img/icon/${h.slug}" alt="" onerror="this.remove()">${esc(h.name)}${c.stats && c.stats.level ? ` <span class="lvl">· LVL ${c.stats.level}</span>` : ''}` : '';
+    const st = $('stats');
+    if (c.stats) {
+      const html = `<span>K/D/A<b>${c.stats.kills}/${c.stats.deaths}/${c.stats.assists}</b></span><span>GPM<b>${c.stats.gpm}</b></span><span>NET WORTH<b>${kfmt(c.stats.netWorth)}</b></span>`;
+      if (st._html !== html) { st.innerHTML = html; st._html = html; }
+      st.classList.remove('none');
+    } else st.classList.add('none');
+  }
+
+  function apply(S) {
+    SFX.config(S.sfx, false);
+    const lt = $('lt');
+    const ic = S.ingameCard || {};
+    lt.style.setProperty('--x', (ic.x ?? 300) + 'px');
+    lt.style.setProperty('--y', (ic.y ?? 8) + 'px');
+    lt.style.setProperty('--s', ic.scale ?? 1);
+    const photoOnly = (ic.style || 'photo') !== 'full';
+    document.body.classList.toggle('photo-only', photoOnly);
+    // photo only: a player without a photo shows nothing
+    const c = S.card && (!photoOnly || S.card.photo) ? S.card : null;
+    const key = c ? c.key + (photoOnly ? '|p' : '|f') : null;
+    const wasBooted = booted; booted = true;
+    if (key === shownKey) { if (c) updateLive(c); return; }
+    clearTimeout(swapTimer);
+    const prev = shownKey;
+    if (prev) { lt.classList.remove('show'); lt.classList.add('leave'); }
+    shownKey = key;
+    swapTimer = setTimeout(() => {
+      lt.classList.remove('leave');
+      if (!c) return;
+      fillCard(c);
+      void lt.offsetWidth;
+      lt.classList.add('show');
+      if (wasBooted) SFX.play('ingame');
+    }, prev ? 190 : 0);
+  }
+
+  fetch('/api/heroes').then((r) => r.json()).then((list) => {
+    heroes = new Map(list.map((h) => [h.id, h]));
+    const es = new EventSource('/events');
+    es.onmessage = (e) => { try { apply(JSON.parse(e.data)); } catch (err) { console.error(err); } };
+  }).catch(() => setTimeout(() => location.reload(), 3000));
+})();
+</script>
+</body>
+</html>

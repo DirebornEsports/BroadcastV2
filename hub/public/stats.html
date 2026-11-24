@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script src="/vendor/anime.umd.min.js"></script><script src="/ui/motion.js"></script>
+<script src="/theme.js"></script>
+<script src="/ui/shell.js" defer></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tournament Stats</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a1a12; --panel: #10291c; --panel2: #173d29; --panel3: #1f5236; --line: rgba(214,189,134,.28); --line-hi: rgba(214,189,134,.6);
+    --text: #f4e8c6; --muted: #a9b59f; --gold: #d6bd86; --gold-hi: #f3e4b8; --ok: #9fd67a; --warn: #f0b94d; --danger: #e5604a;
+    --font: Montserrat, "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--text); font: 500 14px var(--font); min-height: 100vh;
+    background: linear-gradient(180deg, rgba(var(--bg-rgb),.86), rgba(var(--bg-rgb),.96)), url(/assets/clouds.jpg) center top / 1400px auto fixed, var(--bg); }
+  button, input, select { font: inherit; color: inherit; }
+  button { background: linear-gradient(180deg, var(--panel3), var(--panel2)); border: 1px solid var(--line-hi); border-radius: 7px; padding: 8px 14px; cursor: pointer; font-weight: 600; color: var(--text); }
+  button:hover { border-color: var(--gold-hi); color: var(--gold-hi); }
+  button:disabled { opacity: .5; cursor: default; }
+  button.primary { background: linear-gradient(180deg, var(--gold-hi), var(--gold)); color: var(--panel); border-color: var(--gold-hi); }
+  button.small { padding: 4px 9px; font-size: 12px; }
+  button.danger { border-color: rgba(229,96,74,.6); color: #ffc0b3; }
+  input, select { background: rgba(var(--shade-rgb),.7); border: 1px solid var(--line); border-radius: 7px; padding: 7px 9px; color: var(--text); min-width: 0; }
+  select option, select optgroup { background: var(--panel); }
+  input:focus, select:focus { outline: 2px solid var(--gold); outline-offset: -1px; }
+  header { display: flex; align-items: center; gap: 12px; padding: 10px 18px; position: sticky; top: 0; z-index: 5;
+    background: linear-gradient(180deg, var(--panel2), var(--panel)); border-bottom: 2px solid var(--gold); box-shadow: 0 4px 16px rgba(0,0,0,.4); }
+  header img { width: 54px; }
+  header h1 { margin: 0; font: 600 17px var(--font); letter-spacing: 0; color: var(--gold-hi); }
+  header .spacer { flex: 1; }
+  header a { color: var(--gold); font-weight: 600; text-decoration: none; border: 1px solid var(--line-hi); padding: 7px 13px; border-radius: 7px; }
+  header a:hover { color: var(--gold-hi); border-color: var(--gold-hi); }
+  main { max-width: 1400px; margin: 0 auto; padding: 18px; display: grid; gap: 18px; }
+  .card { background: linear-gradient(180deg, rgba(var(--panel2-rgb),.9), rgba(var(--panel-rgb),.94)); border: 1.5px solid var(--line-hi); border-radius: 10px; padding: 16px; box-shadow: inset 0 1px 0 rgba(var(--hi-rgb),.12), 0 6px 18px rgba(0,0,0,.3); }
+  .card h2 { margin: 0 0 12px; font: 600 12px var(--font); letter-spacing: 0; color: var(--gold); display: flex; align-items: center; gap: 10px; }
+  .card h2::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line-hi), transparent); }
+  .hint { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 0; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
+  .kpi { padding: 12px; border-radius: 8px; background: rgba(var(--shade-rgb),.45); border: 1px solid var(--line); }
+  .kpi b { display: block; font: 600 26px var(--font); color: var(--gold-hi); }
+  .kpi span { font-size: 11px; font-weight: 600; letter-spacing: 0; color: var(--muted); }
+  .kpi small { display: block; color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .bar { height: 8px; border-radius: 4px; background: rgba(var(--shade-rgb),.6); overflow: hidden; margin-top: 8px; }
+  .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-hi)); width: 0; transition: width .3s; }
+  .status { font-size: 13px; color: var(--gold-hi); margin-top: 8px; min-height: 1.4em; white-space: pre-line; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 10.5px; letter-spacing: 0; color: var(--muted); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel2); }
+  td { padding: 6px 8px; border-bottom: 1px solid rgba(var(--line-rgb),.1); vertical-align: middle; }
+  tr:hover td { background: rgba(var(--line-rgb),.05); }
+  .scroll { max-height: 560px; overflow: auto; border-radius: 8px; border: 1px solid var(--line); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .badge { display: inline-block; padding: 2px 7px; border-radius: 99px; font-size: 10.5px; font-weight: 600; letter-spacing: 0; white-space: nowrap; }
+  .b-linked { background: rgba(159,214,122,.16); color: var(--ok); border: 1px solid rgba(159,214,122,.4); }
+  .b-name { background: rgba(159,214,122,.1); color: var(--ok); border: 1px solid rgba(159,214,122,.3); }
+  .b-confirmed { background: rgba(var(--hi-rgb),.16); color: var(--gold-hi); border: 1px solid var(--gold); }
+  .b-role { background: rgba(240,185,77,.12); color: var(--warn); border: 1px solid rgba(240,185,77,.45); }
+  .b-none { background: rgba(215,0,21,.07); color: var(--danger); border: 0; }
+  .b-src { background: rgba(var(--shade-rgb),.6); color: var(--muted); border: 1px solid var(--line); margin-right: 3px; }
+  .note { display: block; color: var(--muted); font-size: 11.5px; margin-top: 2px; max-width: 420px; }
+  .heroes-small { color: var(--muted); font-size: 12px; }
+  .hicon { width: 48px; height: 27px; object-fit: cover; border-radius: 3px; vertical-align: middle; margin-right: 8px; border: 1px solid var(--line); }
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--panel2); border: 1px solid var(--ok); color: #dff3d0; padding: 10px 16px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; font-weight: 600; z-index: 9; }
+  .toast.err { background: #3a1a12; border-color: var(--danger); color: #ffd6cc; }
+  .toast.show { opacity: 1; }
+  .two { display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 1000px) { .two, .kpis { grid-template-columns: 1fr; } }
+</style>
+<link rel="stylesheet" href="/ui/panel.css">
+</head>
+<body>
+<header>
+  <img src="/assets/cloud-ornament.png" alt="">
+  <h1>Tournament stats</h1>
+  <div class="spacer"></div>
+  <a href="/teams">Teams database</a>
+  <a href="/control">← Draft control</a>
+</header>
+<main>
+  <section class="card" id="tourCard">
+    <h2>Tournament</h2>
+    <div class="row">
+      <label class="hint" style="display:flex;gap:8px;align-items:center">Active tournament <select id="tSel" style="min-width:240px"></select></label>
+      <button id="tNew" class="small">+ New tournament</button>
+      <button id="tDel" class="small danger">Delete</button>
+      <span class="hint">Everything on this page and the hero stats popup use the active tournament. Each tournament has its own teams &amp; players, stats, bracket and next match.</span>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <input id="mId" placeholder="Match ID or Dotabuff / OpenDota link" style="width:330px">
+      <label class="hint" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="mTeams" checked> Add both teams to the Teams database</label>
+      <label class="hint" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="mLoad" checked> Load them into the overlay (Radiant left)</label>
+      <button id="mAdd" class="primary">Add match</button>
+    </div>
+    <div class="status" id="mStatus"></div>
+  </section>
+
+  <section class="card">
+    <h2>Overview</h2>
+    <div class="kpis" id="kpis"></div>
+    <div class="row">
+      <label class="hint" style="display:flex;gap:6px;align-items:center">Popup title <input id="label" style="width:220px"></label>
+      <button id="saveLabel" class="small">Save</button>
+      <span style="flex:1"></span>
+      <button id="importBtn">Upload dashboard .xlsx</button>
+      <input type="file" id="xlsx" accept=".xlsx" style="display:none">
+      <button id="syncBtn" class="primary">Update from OpenDota</button>
+      <button id="exportBtn" title="Download all stats of the active tournament as an Excel file">Export Excel</button>
+    </div>
+    <div class="bar"><i id="syncBar"></i></div>
+    <div class="status" id="syncStatus"></div>
+    <p class="hint">The dashboard gives pick counts and who played what. <b>Update from OpenDota</b> fetches every match (league <span id="league"></span>) for bans, hero win rates and average K/D/A/GPM. Games the overlay sees through GSI are added automatically when they end.</p>
+  </section>
+
+  <section class="card">
+    <h2>Link players — stats accounts → your rosters</h2>
+    <p class="hint" style="margin-bottom:10px">In-game names in the stats don't always match your roster (e.g. <i>jungler</i> is Kaisora). Each account below has a suggested roster player. <span class="badge b-name">Name</span> same name · <span class="badge b-confirmed">Official</span> from the official roster sheet · <span class="badge b-role">Guess</span> worked out from heroes played — please check these. Linking stores the account ID on the player, so the overlay, GSI and the stats popup all recognise them.</p>
+    <div class="row" style="margin-bottom:10px">
+      <button id="createTeams">Add missing Dire Battle Cup teams</button>
+      <label class="hint" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="fillRoles" checked> also fill empty roles from the roster</label>
+      <span style="flex:1"></span>
+      <span class="hint" id="linkCount"></span>
+      <button id="applyLinks" class="primary">Link selected</button>
+    </div>
+    <div class="scroll"><table>
+      <thead><tr><th style="width:28px"><input type="checkbox" id="all" checked></th><th>In-game name</th><th>Stats team</th><th>Heroes</th><th class="num">GPM</th><th>Roster player</th><th>Match</th></tr></thead>
+      <tbody id="accRows"></tbody>
+    </table></div>
+  </section>
+
+  <div class="two">
+    <section class="card">
+      <h2>Heroes</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>Hero</th><th class="num">Picks</th><th class="num">Pick %</th><th class="num">Bans</th><th class="num">Win %</th><th class="num">Avg K/D/A</th><th class="num">GPM</th><th>Played by</th></tr></thead>
+        <tbody id="heroRows"></tbody>
+      </table></div>
+    </section>
+    <section class="card">
+      <h2>Matches</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>Ended</th><th>Radiant vs Dire</th><th>Data</th><th></th></tr></thead>
+        <tbody id="matchRows"></tbody>
+      </table></div>
+    </section>
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  let tt; const toast = (m, err) => { const t = $('toast'); t.textContent = m; t.className = 'toast show' + (err ? ' err' : ''); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 3200); };
+  const post = (url, body) => fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body || {}) }).then((r) => r.json());
+  const pct = (a, b) => (b ? Math.round((a / b) * 100) + '%' : '–');
+  let teams = [], accounts = [], stats = null;
+  const choice = {};      // accountId -> "teamId:index" chosen in the table
+  const checked = {};
+
+  async function loadAll() {
+    [teams, accounts, stats] = await Promise.all([fetch('/api/teams').then((r) => r.json()), fetch('/api/stats/accounts').then((r) => r.json()), fetch('/api/stats').then((r) => r.json())]);
+    renderOverview(); renderAccounts(); renderHeroes(); renderMatches();
+  }
+
+  function renderOverview() {
+    const s = stats.summary;
+    $('kpis').innerHTML = [
+      [s.matches, 'Matches', `${stats.accounts} player accounts`],
+      [s.drafts + ' / ' + s.matches, 'With draft', 'needed for ban rates'],
+      [s.detailed + ' / ' + s.matches, 'With hero detail', 'needed for win rate & K/D/A'],
+      [stats.heroes.length, 'Heroes played', stats.imports.length ? 'last import: ' + esc(stats.imports[stats.imports.length - 1].file) : ''],
+    ].map(([b, sp, sm]) => `<div class="kpi"><b>${b}</b><span>${sp}</span><small>${sm}</small></div>`).join('');
+    if (document.activeElement !== $('label')) $('label').value = stats.label;
+    $('league').textContent = stats.leagueId ? stats.leagueId + (stats.leagueName ? ' — ' + stats.leagueName : '') : 'unknown';
+    renderSync(stats.sync);
+  }
+  function renderSync(sync) {
+    if (!sync) return;
+    $('syncBtn').disabled = sync.running;
+    $('syncBar').style.width = sync.total ? Math.round((sync.done / sync.total) * 100) + '%' : (sync.running ? '5%' : '0');
+    $('syncStatus').textContent = sync.running ? `Updating… ${sync.done}/${sync.total || '?'}  ${sync.message || ''}` : (sync.message || '');
+  }
+
+  const HOW = { linked: ['b-linked', 'Linked'], official: ['b-confirmed', 'Official'], name: ['b-name', 'Name'], confirmed: ['b-confirmed', 'Confirmed'], role: ['b-role', 'Guess'] };
+  function rosterOptions(sel) {
+    return '<option value="">— not linked —</option>' + teams.map((t) => `<optgroup label="${esc(t.name)}">` +
+      t.players.map((p, i) => p ? `<option value="${t.id}:${i}" ${sel === t.id + ':' + i ? 'selected' : ''}>${esc(p)}${t.roles?.[i] ? ' · ' + esc(t.roles[i]) : ''}</option>` : '').join('') + '</optgroup>').join('');
+  }
+  function renderAccounts() {
+    let html = '';
+    for (const a of accounts) {
+      const def = a.link ? `${a.link.teamId}:${a.link.index}` : '';
+      if (!(a.accountId in choice)) choice[a.accountId] = def;
+      if (!(a.accountId in checked)) checked[a.accountId] = !!a.link && a.link.how !== 'linked';
+      const how = a.link ? HOW[a.link.how] || ['b-name', a.link.how] : ['b-none', 'No match'];
+      const isLinked = a.link && a.link.how === 'linked';
+      html += `<tr>
+        <td>${isLinked ? '' : `<input type="checkbox" data-chk="${a.accountId}" ${checked[a.accountId] ? 'checked' : ''}>`}</td>
+        <td><b>${esc(a.name)}</b><span class="note">ID ${a.accountId} · ${a.games} games · ${a.wins}W</span></td>
+        <td>${esc(a.team)}</td>
+        <td class="heroes-small">${esc(a.heroes.join(', '))}</td>
+        <td class="num">${a.avgGpm}</td>
+        <td><select data-acc="${a.accountId}" style="max-width:220px">${rosterOptions(choice[a.accountId])}</select>${!a.link && a.hint ? `<span class="note">Suggested: ${esc(a.hint)} — add that team first</span>` : ''}</td>
+        <td><span class="badge ${how[0]}">${how[1]}</span>${isLinked ? ` <button class="small" data-unlink="${a.accountId}">Unlink</button>` : ''}${a.link?.note ? `<span class="note">${esc(a.link.note)}</span>` : ''}</td>
+      </tr>`;
+    }
+    $('accRows').innerHTML = html || '<tr><td colspan="7" class="hint">No player accounts in the stats yet — upload a dashboard.</td></tr>';
+    $('accRows').querySelectorAll('select[data-acc]').forEach((s) => s.onchange = () => { choice[s.dataset.acc] = s.value; checked[s.dataset.acc] = !!s.value; renderAccounts(); });
+    $('accRows').querySelectorAll('input[data-chk]').forEach((c) => c.onchange = () => { checked[c.dataset.chk] = c.checked; count(); });
+    $('accRows').querySelectorAll('[data-unlink]').forEach((b) => b.onclick = async () => { await post('/api/stats/unlink', { accountId: b.dataset.unlink }); delete choice[b.dataset.unlink]; delete checked[b.dataset.unlink]; toast('Unlinked'); loadAll(); });
+    count();
+    const missing = accounts.filter((a) => !a.link && a.hint).length;
+    $('createTeams').style.display = missing || !teams.length ? '' : 'none';
+  }
+  function count() {
+    const n = accounts.filter((a) => checked[a.accountId] && choice[a.accountId] && !(a.link && a.link.how === 'linked')).length;
+    const linked = accounts.filter((a) => a.link && a.link.how === 'linked').length;
+    $('linkCount').textContent = `${linked} of ${accounts.length} linked · ${n} selected`;
+    $('applyLinks').disabled = !n;
+  }
+  $('all').onchange = (e) => { for (const a of accounts) if (!(a.link && a.link.how === 'linked')) checked[a.accountId] = e.target.checked && !!choice[a.accountId]; renderAccounts(); };
+  $('applyLinks').onclick = async () => {
+    const links = accounts.filter((a) => checked[a.accountId] && choice[a.accountId] && !(a.link && a.link.how === 'linked'))
+      .map((a) => { const [teamId, index] = choice[a.accountId].split(':'); return { accountId: a.accountId, teamId, index: Number(index) }; });
+    const r = await post('/api/stats/link', { links, fillRoles: $('fillRoles').checked });
+    if (r.ok) { toast(`Linked ${r.linked} account${r.linked === 1 ? '' : 's'}`); for (const l of links) { delete choice[l.accountId]; delete checked[l.accountId]; } loadAll(); }
+    else toast(r.error || 'Could not link', true);
+  };
+  $('createTeams').onclick = async () => {
+    const r = await post('/api/stats/create-teams');
+    toast(r.created ? `Added ${r.created} team${r.created === 1 ? '' : 's'}${r.roles ? ' and ' + r.roles + ' roles' : ''}` : r.roles ? `Filled ${r.roles} roles` : 'All Dire Battle Cup teams are already in the database');
+    for (const k of Object.keys(choice)) { delete choice[k]; delete checked[k]; }
+    loadAll();
+  };
+
+  function renderHeroes() {
+    const s = stats.summary;
+    $('heroRows').innerHTML = stats.heroes.map((h) => `<tr>
+      <td><img class="hicon" src="/img/icon/${esc(h.slug)}" alt="" onerror="this.style.visibility='hidden'">${esc(h.name)}</td>
+      <td class="num">${h.picks}</td><td class="num">${pct(h.picks, h.pickBase)}</td>
+      <td class="num">${h.banBase ? h.bans : '–'}</td>
+      <td class="num">${h.winBase ? pct(h.wins, h.winBase) : '–'}</td>
+      <td class="num">${h.avg ? `${h.avg.kills.toFixed(1)}/${h.avg.deaths.toFixed(1)}/${h.avg.assists.toFixed(1)}` : '–'}</td>
+      <td class="num">${h.avg ? Math.round(h.avg.gpm) : '–'}</td>
+      <td class="heroes-small">${esc(h.players.map((p) => p.name + ' ×' + p.games).join(', '))}</td></tr>`).join('') ||
+      '<tr><td colspan="8" class="hint">No hero data yet.</td></tr>';
+  }
+  function renderMatches() {
+    const fmt = (ts) => ts ? new Date(ts).toLocaleString('en-GB', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
+    $('matchRows').innerHTML = stats.matches.map((m) => `<tr>
+      <td>${fmt(m.endedTs)}<span class="note">${m.matchId}</span></td>
+      <td>${m.winner === 'radiant' ? '<b>' + esc(m.radiant) + '</b>' : esc(m.radiant)} vs ${m.winner === 'dire' ? '<b>' + esc(m.dire) + '</b>' : esc(m.dire)}</td>
+      <td>${m.sources.map((x) => `<span class="badge b-src">${x}</span>`).join('')}<span class="note">${m.hasDraft ? 'draft ✓' : 'no draft'} · ${m.hasPlayers ? 'heroes ✓' : 'no hero detail'}</span></td>
+      <td><button class="small danger" data-del="${m.matchId}" title="Remove from stats (e.g. a test lobby)">✕</button></td></tr>`).join('');
+    $('matchRows').querySelectorAll('[data-del]').forEach((b) => b.onclick = async () => { if (!confirm('Remove match ' + b.dataset.del + ' from the stats?')) return; await post('/api/stats/delete-match', { matchId: b.dataset.del }); loadAll(); });
+  }
+
+  // ---- tournaments + add match by ID ----
+  let tours = null;
+  async function loadTours() {
+    tours = await fetch('/api/tournaments').then((r) => r.json());
+    $('tSel').innerHTML = tours.list.map((t) => `<option value="${esc(t.id)}" ${t.id === tours.active ? 'selected' : ''}>${esc(t.name)} · ${t.matches} match${t.matches === 1 ? '' : 'es'}</option>`).join('');
+    const cur = tours.list.find((t) => t.id === tours.active);
+    $('tDel').disabled = !cur || cur.isDefault;
+    document.querySelector('header h1').textContent = 'Tournament stats · ' + (cur ? cur.name : '');
+  }
+  $('tSel').onchange = async (e) => {
+    const r = await post('/api/tournaments/switch', { id: e.target.value });
+    if (!r.ok) { toast(r.error, true); return loadTours(); }
+    for (const k in choice) delete choice[k];
+    await loadTours(); loadAll(); toast('Switched tournament');
+  };
+  $('tNew').onclick = async () => {
+    const name = prompt('Name of the new tournament (e.g. Test Match):');
+    if (!name) return;
+    const r = await post('/api/tournaments/create', { name });
+    if (!r.ok) return toast(r.error, true);
+    await loadTours(); loadAll(); toast('Created and switched to ' + name); $('mId').focus();
+  };
+  $('tDel').onclick = async () => {
+    const cur = tours.list.find((t) => t.id === tours.active);
+    if (!cur || !confirm(`Delete the tournament "${cur.name}" and its stats? (Teams stay in the Teams database.)`)) return;
+    const r = await post('/api/tournaments/delete', { id: cur.id });
+    if (!r.ok) return toast(r.error, true);
+    await loadTours(); loadAll(); toast('Deleted');
+  };
+  $('mAdd').onclick = async () => {
+    const v = $('mId').value.trim(); if (!v) return $('mId').focus();
+    $('mAdd').disabled = true; $('mStatus').textContent = 'Fetching the match from OpenDota…';
+    try {
+      const r = await post('/api/stats/add-match', { matchId: v, createTeams: $('mTeams').checked, loadTeams: $('mTeams').checked && $('mLoad').checked });
+      if (!r.ok) { $('mStatus').textContent = r.error; toast(r.error, true); return; }
+      const m = r.match;
+      let msg = `${m.isNew ? 'Added' : 'Updated'} match ${m.matchId}: ${m.radiant} vs ${m.dire} · ${m.score} · ${m.duration}` + (m.winner ? ` · ${m.winner === 'radiant' ? m.radiant : m.dire} won` : '') + (m.league ? ` · ${m.league}` : '') + (m.hasDraft ? '' : ' · no captains-mode draft in this match');
+      for (const t of r.teams) msg += `\n${t.side === 'radiant' ? 'Radiant' : 'Dire'}: ${t.created ? 'created' : 'updated'} team "${t.team.name}" (${t.team.players.join(', ')})` + (t.linked ? ` · ${t.linked} Steam IDs linked` : '') + (t.elsewhere.length ? ` · already on another team: ${t.elsewhere.join('; ')}` : '');
+      if (r.loaded) msg += '\nBoth teams are loaded in the overlay (Radiant on the left).';
+      $('mStatus').textContent = msg; $('mId').value = '';
+      await loadTours(); loadAll();
+    } finally { $('mAdd').disabled = false; }
+  };
+  $('mId').onkeydown = (e) => { if (e.key === 'Enter') $('mAdd').click(); };
+  loadTours();
+
+  $('saveLabel').onclick = async () => { await post('/api/stats/label', { label: $('label').value }); toast('Saved'); };
+  $('syncBtn').onclick = async () => { const r = await post('/api/stats/sync', { league: true }); if (!r.ok) toast(r.error, true); };
+  $('importBtn').onclick = () => $('xlsx').click();
+  $('exportBtn').onclick = () => { location.href = '/api/stats/export.xlsx'; toast('Downloading the Excel file…'); };
+  $('xlsx').onchange = async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = await fetch('/api/stats/import', { method: 'POST', headers: { 'x-filename': encodeURIComponent(f.name), 'content-type': 'application/octet-stream' }, body: f }).then((x) => x.json());
+    if (r.ok) { toast(`Imported ${r.report.matches} matches, ${r.report.accounts} player accounts` + (r.report.unknownHeroes.length ? ` (unknown heroes: ${r.report.unknownHeroes.join(', ')})` : '')); loadAll(); }
+    else toast(r.error || 'Import failed', true);
+    e.target.value = '';
+  };
+
+  // live progress of the OpenDota update
+  let lastVersion = null;
+  const es = new EventSource('/events');
+  es.onmessage = (e) => {
+    const S = JSON.parse(e.data);
+    renderSync(S.statsSync);
+    if (lastVersion !== null && S.statsVersion !== lastVersion && !S.statsSync?.running) loadAll();
+    lastVersion = S.statsVersion;
+  };
+  loadAll().catch(() => toast('Cannot reach the server — is start.bat running?', true));
+})();
+</script>
+</body>
+</html>
