@@ -110,3 +110,25 @@ body[data-tab="air"] #uxAirDiv { display: flex; }
 .ux-acc.open > h2::after { content: "Tutup" !important; }
 .ux-acc:not(.open) > :not(h2) { display: none !important; }
 .ux-acc.open { grid-column: 1 / -1; }   /* opened settings get the full width their own layout expects */
+
+/* Draft tab (ui/ux.js): whose turn it is, big and in the team's colour */
+#uxTurn { display: flex; align-items: center; gap: 14px; margin: -4px 0 16px; padding: 12px 16px; border-radius: 14px;
+  background: rgba(255,255,255,.75); box-shadow: 0 0 0 1px var(--line); }
+#uxTurn > i { width: 6px; align-self: stretch; border-radius: 3px; background: var(--team); }
+#uxTurn .ux-turn-k { display: block; font-size: 12px; color: var(--muted); }
+#uxTurn b { font: 500 26px/1.1 var(--display); letter-spacing: -.04em; }
+#uxTurn em { margin-left: auto; font: 500 22px var(--mono); font-style: normal; letter-spacing: -.03em; padding: 6px 14px; border-radius: 10px; background: var(--text); color: #fff; }
+#uxTurn em:empty { display: none; }
+#uxTurn.done > i { background: var(--line-hi); }
+.board .tb.ux-turn { box-shadow: 0 0 0 2px var(--text) inset; border-radius: 14px; }
+.board .next { display: none; }                        /* replaced by the banner above */
+#uxKeys { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: -4px 0 12px; font-size: 12px; color: var(--muted); }
+#uxKeys kbd { font: 500 11px var(--mono); padding: 1px 6px; border-radius: 5px; border: 1px solid var(--line-hi); background: #fff; color: var(--text); }
+/* the hero list scrolls with the page; search + a small turn chip stay under the header */
+body[data-tab="draft"] #grid { max-height: none !important; overflow: visible !important; }
+body[data-tab="draft"] .filters { position: sticky; top: 64px; z-index: 20; margin: 0 -10px 10px; padding: 10px; border-radius: 12px;
+  background: rgba(255,255,255,.82); -webkit-backdrop-filter: var(--glass); backdrop-filter: var(--glass); box-shadow: 0 0 0 1px var(--line); }
+#uxTurnMini { font: 500 13px var(--mono); white-space: nowrap; padding: 6px 10px; border-radius: 8px; background: var(--text); color: #fff; border-left: 4px solid var(--team); }
+/* the long how-to line is now the shortcut row; the GSI note only matters in GSI mode */
+[data-pane="draft"] .board ~ .hint:not(.gsi-note) { display: none; }
+body:not(.gsi) [data-pane="draft"] .gsi-note { display: none; }

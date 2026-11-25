@@ -44,7 +44,7 @@
   }
   async function poll() {
     try { state = await (await fetch('/api/state', { cache: 'no-store' })).json(); failed = false; } catch { failed = true; }
-    renderDock();
+    renderDock(); renderTurn();
   }
 
   // ---------- 2. Draft control ----------
@@ -75,6 +75,41 @@
       div.innerHTML = '<b>Pengaturan</b><span>jarang diubah saat live · klik judul untuk membuka</span>';
       panes[0].parentElement.appendChild(div);
     }
+    draftTab();
+  }
+
+  // Draft tab: whose turn it is, big; the hero grid fits the screen; shortcuts visible
+  function draftTab() {
+    const board = document.querySelector('.board'), next = document.getElementById('next');
+    if (!board || !next || document.getElementById('uxTurn')) return;
+    const turn = document.createElement('div');
+    turn.id = 'uxTurn';
+    turn.innerHTML = '<i></i><div><span class="ux-turn-k">Giliran</span><b id="uxTurnWho">-</b></div><em id="uxTurnWhat">-</em>';
+    board.parentElement.insertBefore(turn, board);
+    new MutationObserver(() => poll()).observe(next, { childList: true, characterData: true, subtree: true });   // the page knows first: refresh the banner right away
+    const search = document.getElementById('search');
+    if (search) {
+      search.placeholder = 'Cari hero… (Enter = pilih yang paling atas)';
+      search.closest('.filters').insertAdjacentHTML('afterend',
+        '<div id="uxKeys"><span><kbd>Enter</kbd> pilih</span><span><kbd>Esc</kbd> kosongkan cari</span><span><kbd>Ctrl</kbd>+<kbd>Z</kbd> urungkan</span>' +
+        '<span>klik slot = targetkan</span><span>klik kanan slot = hapus</span></div>');
+    }
+    // the search row stays under the header while scrolling the heroes, with a small copy of the turn
+    const filters = search && search.closest('.filters');
+    if (filters) filters.insertAdjacentHTML('beforeend', '<span id="uxTurnMini"></span>');
+  }
+  function renderTurn() {
+    const el = document.getElementById('uxTurn'); if (!el || !state) return;
+    const a = state.active, gsi = state.mode === 'gsi';
+    const done = !a || a.side == null;
+    const team = !done && state.teams[a.side];
+    el.style.setProperty('--team', (team && team.color) || '#161618');
+    el.classList.toggle('done', done);
+    document.getElementById('uxTurnWho').textContent = done ? 'Draft selesai' : (team.name || (a.side === 'left' ? 'Tim kiri' : 'Tim kanan'));
+    document.getElementById('uxTurnWhat').textContent = done ? '' : `${a.type === 'ban' ? 'BAN' : 'PICK'} ${a.index + 1}${gsi ? ' · otomatis dari Dota' : ''}`;
+    const mini = document.getElementById('uxTurnMini');
+    if (mini) { mini.textContent = done ? 'Draft selesai' : `${a.type === 'ban' ? 'BAN' : 'PICK'} ${a.index + 1} · ${team.tag || team.name || ''}`; mini.style.setProperty('--team', (team && team.color) || '#161618'); }
+    document.querySelectorAll('.board .tb').forEach((tb) => tb.classList.toggle('ux-turn', !done && tb.classList.contains(a.side)));
   }
 
   // ---------- 3. long help texts ----------
@@ -103,7 +138,8 @@
     'Export Excel': 'Ekspor Excel', 'Link selected': 'Tautkan yang dipilih', 'Save': 'Simpan',
     'On air in OBS': 'Tayang di OBS', 'Nothing on screen': 'Tidak ada di layar', 'Prev': 'Sebelumnya', 'Next': 'Berikutnya',
     'Hide': 'Sembunyikan', 'Reload cards': 'Muat ulang kartu', 'Save bracket': 'Simpan bracket', 'Unsaved changes': 'Belum disimpan',
-    'Show test popup': 'Tes popup', 'Link players — stats accounts → your rosters': 'Tautkan pemain: akun statistik → roster', 'Draw': 'Undian', 'Bracket & rundown': 'Bracket & rundown', 'Copy OBS URL': 'Copy URL OBS', 'Logout': 'Keluar', 'Preview': 'Pratinjau', 'Show': 'Tampilkan',
+    'Show test popup': 'Tes popup', 'Now': 'Sekarang', 'reserve': 'cadangan', 'Pause': 'Jeda', 'All': 'Semua',
+    'auto-restart clock each step': 'jam mulai ulang tiap langkah', 'Swap sides ': 'Tukar sisi', 'Link players — stats accounts → your rosters': 'Tautkan pemain: akun statistik → roster', 'Draw': 'Undian', 'Bracket & rundown': 'Bracket & rundown', 'Copy OBS URL': 'Copy URL OBS', 'Logout': 'Keluar', 'Preview': 'Pratinjau', 'Show': 'Tampilkan',
   };
   const CONFIRM = { 'Clear all picks, bans and player assignments?': 'Hapus semua pick, ban dan pemain di draft ini?' };
   const nativeConfirm = window.confirm.bind(window);
@@ -112,7 +148,7 @@
     const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     for (let n = walk.nextNode(); n; n = walk.nextNode()) {
       const p = n.parentElement;
-      if (!p || !p.closest('h1, h2, h3, legend, button, label, th, .pill, .tabs, .seg') || p.closest('#uxdock, select, option')) continue;
+      if (!p || !p.closest('h1, h2, h3, legend, button, label, th, .pill, .tabs, .seg, .next, .reserves') || p.closest('#uxdock, select, option')) continue;
       const t = n.nodeValue.trim(), id = ID[t] || (t.startsWith('Tournament stats') ? t.replace('Tournament stats', 'Statistik turnamen') : '');
       if (id) n.nodeValue = n.nodeValue.replace(t, id);
     }
