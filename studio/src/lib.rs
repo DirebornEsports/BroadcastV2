@@ -316,6 +316,8 @@ pub struct Config {
     pub out: String,
     /// File holding the delay in seconds, shared by every cam's receiver; checked twice a second.
     pub delay_file: Option<String>,
+    /// File that always holds the newest keyframe as it arrives (not delayed), for a live check picture.
+    pub snapshot: Option<String>,
 }
 
 /// ffmpeg reads the delayed picture (and mic) as RTP on local UDP ports described by one SDP file, and
@@ -529,7 +531,7 @@ async fn session(cfg: &Config, shared: &Arc<Mutex<Shared>>, t0: Instant) -> Res<
             let t = tokio::time::timeout(Duration::from_secs(5), trx.recv()).await?.ok_or("no video track")?;
             if t.kind().await == RtpCodecKind::Audio { start_mic(t, &mut mic) } else { break t }
         };
-        let v = receive(video, shared, t0);
+        let v = receive(video, shared, t0, cfg.snapshot.as_deref());
         tokio::pin!(v);
         let r = loop {
             tokio::select! {
@@ -552,7 +554,7 @@ async fn session(cfg: &Config, shared: &Arc<Mutex<Shared>>, t0: Instant) -> Res<
     r
 }
 
-async fn receive(track: Arc<dyn TrackRemote>, shared: &Arc<Mutex<Shared>>, t0: Instant) -> Res<()> {
+async fn receive(track: Arc<dyn TrackRemote>, shared: &Arc<Mutex<Shared>>, t0: Instant, snapshot: Option<&str>) -> Res<()> {
     let ssrc = *track.ssrcs().await.first().ok_or("track without ssrc")?;
     let mut ing = Ingest::default();
     shared.lock().unwrap().buf.loss(); // a new stream starts at its first keyframe
@@ -585,6 +587,15 @@ async fn receive(track: Arc<dyn TrackRemote>, shared: &Arc<Mutex<Shared>>, t0: I
                     need_key = false;
                 }
                 s.stats.keyframes += f.key as u64;
+                if f.key {
+                    if let Some(p) = snapshot {
+                        // live (undelayed) check picture for the studio's "Cek cam": the newest keyframe, SPS/PPS included
+                        let tmp = format!("{p}.tmp");
+                        if std::fs::write(&tmp, &f.data).is_ok() {
+                            let _ = std::fs::rename(&tmp, p);
+                        }
+                    }
+                }
                 s.buf.push(f);
             }
         }

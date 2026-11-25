@@ -10,6 +10,7 @@ fn main() {
         delay: 10.0,
         out: "udp://127.0.0.1:5000?pkt_size=1316".into(),
         delay_file: None,
+        snapshot: None,
     };
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
@@ -20,6 +21,7 @@ fn main() {
             "--out" => cfg.out = v,
             "--delay" => cfg.delay = v.parse().unwrap_or_else(|_| usage("bad --delay")),
             "--delay-file" => cfg.delay_file = Some(v),
+            "--snapshot" => cfg.snapshot = Some(v),
             _ => usage(&format!("unknown option {a}")),
         }
     }

@@ -58,15 +58,28 @@ const PUBLIC_PORT = (i) => 5001 + i, INTERNAL_PORT = (i) => 6001 + i, AUTO_PORT 
 const slots = SLOT_NAMES.map((slot, i) => ({ slot, i, name: '', proc: null, status: null, log: [] }));
 let hubState = null;
 
+// operator choices, kept across restarts:
+//   overrides: slot -> player name typed/picked by hand ('' or missing = follow the teams in draft control)
+//   auto: what port 5000 shows: 'gsi' (observer's selected hero), 'manual' (one slot) or 'off'
+const SETTINGS_FILE = path.join(DATA, 'studio.json');
+const settings = { overrides: {}, auto: { mode: 'gsi', slot: 'L1' }, ...(() => { try { return JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8')); } catch { return {}; } })() };
+const saveSettings = () => fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 1));
+
 function wantedNames(st) {
   const L = st.teams.left, R = st.teams.right;
   const players = (t) => [0, 1, 2, 3, 4].map((k) => (t.players && t.players[k]) || '');
-  return [...players(L), ...players(R), L.name ? teamCamName(L) : '', R.name ? teamCamName(R) : ''];
+  const fromTeams = [...players(L), ...players(R), L.name ? teamCamName(L) : '', R.name ? teamCamName(R) : ''];
+  return fromTeams.map((n, i) => settings.overrides[SLOT_NAMES[i]] || n);
 }
+
+const SNAP_DIR = path.join(DATA, 'snap');
+fs.mkdirSync(SNAP_DIR, { recursive: true });
+const snapFile = (s) => path.join(SNAP_DIR, `${s.slot}.h264`);
 
 function startReceiver(s) {
   const args = ['--bridge', `http://127.0.0.1:${process.env.PORT || 8787}`, '--name', s.name, '--delay', fs.readFileSync(DELAY_FILE, 'utf8').trim(),
-    '--delay-file', DELAY_FILE, '--out', `udp://127.0.0.1:${INTERNAL_PORT(s.i)}?pkt_size=1316`];
+    '--delay-file', DELAY_FILE, '--snapshot', snapFile(s), '--out', `udp://127.0.0.1:${INTERNAL_PORT(s.i)}?pkt_size=1316`];
+  try { fs.unlinkSync(snapFile(s)); } catch {}   // never show the previous player's picture
   const p = spawn(RECV, args, { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
   s.proc = p; s.status = null; s.log = [];
   let buf = '';
@@ -122,11 +135,38 @@ for (const s of slots) {
 }
 
 function follow(st) {
-  const sel = st.camSel && st.camSel.name ? String(st.camSel.name).toLowerCase() : '';
-  const i = sel ? slots.findIndex((s) => s.name && s.name.toLowerCase() === sel) : -1;
+  const a = settings.auto;
+  if (a.mode === 'off') { autoSlot = -1; pendingSlot = -1; return; }
+  let i;
+  if (a.mode === 'manual') i = SLOT_NAMES.indexOf(a.slot);
+  else {
+    const sel = st.camSel && st.camSel.name ? String(st.camSel.name).toLowerCase() : '';
+    i = sel ? slots.findIndex((s) => s.name && s.name.toLowerCase() === sel) : -1;
+  }
   if (i < 0) return;                                          // nobody selected: keep the last cam
   if (i !== autoSlot && i !== pendingSlot) pendingSlot = i;
 }
+
+// ---------- live check pictures ("Cek cam"): the newest keyframe each receiver saw, decoded on demand ----------
+const snapCache = new Map();   // slot -> { at, jpg }
+function snapshot(s) {
+  const f = snapFile(s);
+  let st; try { st = fs.statSync(f); } catch { return Promise.resolve(null); }
+  if (Date.now() - st.mtimeMs > 10000) return Promise.resolve(null);   // no keyframe for 10 s: the cam is gone
+  const c = snapCache.get(s.slot);
+  if (c && Date.now() - c.at < 1500) return Promise.resolve(c.jpg);
+  return new Promise((ok) => {
+    const p = spawn('ffmpeg', ['-v', 'error', '-f', 'h264', '-i', f, '-frames:v', '1', '-vf', 'scale=480:-2', '-q:v', '5', '-f', 'image2', '-c:v', 'mjpeg', 'pipe:1'], { windowsHide: true });
+    const chunks = [];
+    p.stdout.on('data', (d) => chunks.push(d));
+    p.on('error', () => ok(null));
+    p.on('close', () => { const jpg = chunks.length ? Buffer.concat(chunks) : null; if (jpg) snapCache.set(s.slot, { at: Date.now(), jpg }); ok(jpg); });
+  });
+}
+
+// cams the players are sending right now, from server.mjs
+let onlineCams = () => [];
+export function setOnline(fn) { onlineCams = fn; }
 
 // ---------- Hub polling ----------
 let hubError = '';
@@ -161,9 +201,33 @@ export async function studioRoute(req, url, body) {
       hubError, delay: Number(fs.readFileSync(DELAY_FILE, 'utf8')) || 0, autoSlot: autoSlot >= 0 ? SLOT_NAMES[autoSlot] : '', autoPort: AUTO_PORT,
       selected: hubState && hubState.camSel ? hubState.camSel.name : '',
       slots: slots.map((s) => ({ slot: s.slot, name: s.name, port: PUBLIC_PORT(s.i), running: !!s.proc, status: s.status, log: s.log.slice(-3),
+        manual: !!settings.overrides[s.slot],
         pin: (pins.find((x) => s.name && x.name.toLowerCase() === s.name.toLowerCase()) || {}).pin || '' })),
+      auto: settings.auto,
+      online: onlineCams(),
       pins,
     })];
+  }
+  if (p === '/studio/slot' && req.method === 'POST') {
+    const b = JSON.parse(body || '{}');
+    if (!SLOT_NAMES.includes(b.slot)) return [400, 'text/plain', 'slot tidak ada'];
+    const n = String(b.name || '').trim().slice(0, 40);
+    if (n) settings.overrides[b.slot] = n; else delete settings.overrides[b.slot];
+    saveSettings();
+    return [204, 'text/plain', ''];                              // reconcile() swaps the receiver within 0.5 s
+  }
+  if (p === '/studio/auto' && req.method === 'POST') {
+    const b = JSON.parse(body || '{}');
+    if (!['gsi', 'manual', 'off'].includes(b.mode) || (b.slot && !SLOT_NAMES.includes(b.slot))) return [400, 'text/plain', 'mode / slot salah'];
+    settings.auto = { mode: b.mode, slot: b.slot || settings.auto.slot };
+    saveSettings();
+    if (hubState) follow(hubState);
+    return [204, 'text/plain', ''];
+  }
+  if (p.startsWith('/studio/snap/')) {
+    const s = slots.find((x) => x.slot === p.slice('/studio/snap/'.length));
+    const jpg = s && s.name ? await snapshot(s) : null;
+    return jpg ? [200, 'image/jpeg', jpg, { 'cache-control': 'no-store' }] : [404, 'text/plain', 'belum ada gambar'];
   }
   if (p === '/studio/delay' && req.method === 'POST') {
     const d = Number(JSON.parse(body || '{}').delay);

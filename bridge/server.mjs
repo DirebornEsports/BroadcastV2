@@ -35,6 +35,7 @@ async function sfu(method, path, body) {
 }
 
 const cams = new Map();   // lower-case name -> { name, sessionId, since }
+if (studio) studio.setOnline(() => [...cams.values()].map(({ name, since, mic, sessionId }) => ({ name, since, mic: !!mic, lostFromPlayer: localSfuLost ? localSfuLost(sessionId) : 0 })));
 // LAN: forget a cam whose sender stopped (no media for 5 s; 10 s grace after it connects), so a receiver
 // retries until the player's next publish instead of pulling a dead session.
 // shortcut: Cloudflare mode keeps dead cams until the same name publishes again; check session state there when the bridge moves to a Worker.

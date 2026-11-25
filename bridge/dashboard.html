@@ -6,18 +6,25 @@
 <style>
   /* barebone until phase 4: white, grey, lines, boxes, no animation */
   body { font: 14px system-ui, sans-serif; margin: 16px; color: #111; background: #fff; }
-  h1 { font-size: 18px; margin: 0 0 12px; }
+  h1 { font-size: 18px; margin: 0 0 8px; }
   h2 { font-size: 15px; margin: 20px 0 8px; }
   table { border-collapse: collapse; width: 100%; }
   th, td { border: 1px solid #ccc; padding: 4px 8px; text-align: left; vertical-align: top; }
   th { background: #f2f2f2; }
-  button, input { font: inherit; padding: 3px 8px; border: 1px solid #999; background: #fff; }
+  button, input, select { font: inherit; padding: 3px 8px; border: 1px solid #999; background: #fff; }
   button:hover { background: #eee; }
   .box { border: 1px solid #ccc; padding: 8px 12px; margin-bottom: 12px; }
   .muted { color: #666; }
   .live { font-weight: 600; }
   .err { color: #a00; }
   code { background: #f2f2f2; padding: 0 4px; }
+  .tabs button { border-bottom: none; margin-right: 4px; }
+  .tabs button.on { background: #e6e6e6; font-weight: 600; }
+  .tabs { border-bottom: 1px solid #999; margin: 12px 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px; }
+  .cell { border: 1px solid #ccc; padding: 6px; }
+  .pic { width: 100%; aspect-ratio: 16 / 9; background: #eee; display: flex; align-items: center; justify-content: center; color: #666; }
+  .pic img { width: 100%; height: 100%; object-fit: contain; }
 </style>
 </head>
 <body>
@@ -25,38 +32,56 @@
 <p><a href="http://localhost:8080/control">&larr; Kembali ke control panel</a></p>
 <div id="hub" class="box err" hidden></div>
 
-<div class="box">
-  <b>Delay</b>: <span id="delay">-</span> detik
-  <input id="delayIn" type="number" min="0" max="1020" step="0.1" style="width:90px">
-  <button data-set>Set</button>
-  <button data-nudge="-0.5">-0.5</button> <button data-nudge="0.5">+0.5</button>
-  <button data-preset="0">0</button> <button data-preset="900">15 menit</button>
-  <span class="muted">Sama untuk semua kamera.</span>
-</div>
+<div class="tabs"><button data-tab="kamera" class="on">Kamera</button><button data-tab="cek">Cek cam</button></div>
 
-<div class="box">
-  <b>Cam otomatis</b> (ikut hero yang dipilih observer): <code>udp://127.0.0.1:<span id="autoPort">5000</span></code>
-  - sekarang: <span id="auto">-</span> <span class="muted">(GSI memilih: <span id="sel">-</span>)</span>
-</div>
+<section id="tab-kamera">
+  <div class="box">
+    <b>Delay</b>: <span id="delay">-</span> detik
+    <input id="delayIn" type="number" min="0" max="1020" step="0.1" style="width:90px">
+    <button data-set>Set</button>
+    <button data-nudge="-0.5">-0.5</button> <button data-nudge="0.5">+0.5</button>
+    <button data-preset="0">0</button> <button data-preset="900">15 menit</button>
+    <span class="muted">Sama untuk semua kamera.</span>
+  </div>
 
-<h2>Kamera di layar (tim kiri / kanan dari control panel)</h2>
-<table>
-  <thead><tr><th>Slot</th><th>Nama</th><th>PIN</th><th>Status</th><th>OBS Media Source</th><th></th></tr></thead>
-  <tbody id="slots"></tbody>
-</table>
+  <div class="box">
+    <b>Cam otomatis</b> <code>udp://127.0.0.1:<span id="autoPort">5000</span></code> - sekarang tampil: <b id="auto">-</b><br>
+    <label><input type="radio" name="automode" value="gsi"> Ikut GSI (hero yang dipilih observer: <span id="sel">-</span>)</label><br>
+    <label><input type="radio" name="automode" value="manual"> Manual: tampilkan slot</label>
+    <select id="autoSlot"></select><br>
+    <label><input type="radio" name="automode" value="off"> Mati</label>
+  </div>
 
-<h2>Semua PIN</h2>
-<p><button id="sync">Buat PIN dari database tim</button> <span class="muted">PIN lama tetap sama; pemain baru dapat PIN baru.</span></p>
-<table>
-  <thead><tr><th>PIN</th><th>Nama</th><th>Tim</th><th>Jenis</th></tr></thead>
-  <tbody id="pins"></tbody>
-</table>
+  <h2>Slot kamera</h2>
+  <p class="muted">Nama slot ikut tim kiri / kanan di control panel. Pilih nama lain untuk mengisi slot secara manual (tanpa GSI / tanpa tim di-load).</p>
+  <table>
+    <thead><tr><th>Slot</th><th>Nama</th><th>PIN</th><th>Status</th><th>OBS Media Source</th><th></th></tr></thead>
+    <tbody id="slots"></tbody>
+  </table>
+
+  <h2>Semua PIN</h2>
+  <p><button id="sync">Buat PIN dari database tim</button> <span class="muted">PIN lama tetap sama; pemain baru dapat PIN baru.</span></p>
+  <table>
+    <thead><tr><th>PIN</th><th>Nama</th><th>Tim</th><th>Jenis</th></tr></thead>
+    <tbody id="pins"></tbody>
+  </table>
+</section>
+
+<section id="tab-cek" hidden>
+  <p class="muted">Gambar langsung (tanpa delay) dari tiap slot, diperbarui tiap keyframe (~2 detik).</p>
+  <div class="grid" id="cek"></div>
+  <h2>Cam online yang belum ada di slot</h2>
+  <table>
+    <thead><tr><th>Nama</th><th>Mic</th><th>Paket hilang dari pemain</th><th>Taruh di slot</th></tr></thead>
+    <tbody id="loose"></tbody>
+  </table>
+</section>
 
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const post = (p, b) => fetch(p, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(b || {}) });
-let delay = 0;
+let d = null, tab = 'kamera', shape = '';
 
 function statusText(s) {
   if (!s.name) return '<span class="muted">kosong</span>';
@@ -66,35 +91,96 @@ function statusText(s) {
   return `<span class="live">LIVE</span> ${st.fps} fps, ${st.kbps} kbps, buffer ${st.buffered}s, hilang ${st.lost}${st.audio ? ', mic' : ''}`;
 }
 
-async function refresh() {
-  let d;
-  try { d = await (await fetch('/studio/state')).json(); } catch { return; }
+// a <select> of names: follow the teams, or one of the online cams / PIN names
+function nameSelect(s) {
+  const online = d.online.map((c) => c.name), all = d.pins.map((p) => p.name);
+  const names = [...new Set([...online, ...all, ...(s.manual ? [s.name] : [])])];
+  const opt = (v, label, sel) => `<option value="${esc(v)}"${sel ? ' selected' : ''}>${esc(label)}</option>`;
+  return `<select data-slot="${s.slot}">${opt('', s.manual ? '(ikut tim)' : (s.name ? `${s.name} (ikut tim)` : '(ikut tim: kosong)'), !s.manual)}` +
+    names.map((n) => opt(n, (online.includes(n) ? '● ' : '') + n, s.manual && n === s.name)).join('') + '</select>';
+}
+
+function render() {
   $('hub').hidden = !d.hubError;
   $('hub').textContent = d.hubError ? 'Hub tidak tersambung: ' + d.hubError : '';
-  delay = d.delay;
   $('delay').textContent = d.delay;
   if (document.activeElement !== $('delayIn')) $('delayIn').value = d.delay;
   $('autoPort').textContent = d.autoPort;
-  $('auto').textContent = d.autoSlot || '-';
+  $('auto').textContent = d.autoSlot ? `${d.autoSlot} ${(d.slots.find((s) => s.slot === d.autoSlot) || {}).name || ''}` : '-';
   $('sel').textContent = d.selected || '-';
-  $('slots').innerHTML = d.slots.map((s) => `<tr><td>${s.slot}</td><td>${esc(s.name) || '<span class="muted">-</span>'}</td><td>${esc(s.pin)}</td>
-    <td>${statusText(s)}</td><td><code>udp://127.0.0.1:${s.port}</code></td>
-    <td>${s.name ? `<button data-restart="${s.slot}">Restart</button>` : ''}</td></tr>`).join('');
-  $('pins').innerHTML = d.pins.map((p) => `<tr><td><b>${esc(p.pin)}</b></td><td>${esc(p.name)}</td><td>${esc(p.team)}</td><td>${p.kind === 'team' ? 'team cam' : 'pemain'}</td></tr>`).join('')
-    || '<tr><td colspan="4" class="muted">Belum ada PIN.</td></tr>';
+  for (const r of document.querySelectorAll('input[name=automode]')) r.checked = r.value === d.auto.mode;
+  if (document.activeElement !== $('autoSlot')) $('autoSlot').innerHTML = d.slots.map((s) => `<option value="${s.slot}"${s.slot === d.auto.slot ? ' selected' : ''}>${s.slot} ${esc(s.name)}</option>`).join('');
+
+  // rebuild rows only when names change, so an open dropdown is not reset every second
+  const sig = JSON.stringify([d.slots.map((s) => [s.name, s.manual]), d.online.map((c) => c.name), d.pins.length]);
+  if (sig !== shape && !document.activeElement.matches('select[data-slot], select[data-loose]')) {
+    shape = sig;
+    $('slots').innerHTML = d.slots.map((s) => `<tr><td>${s.slot}</td><td>${nameSelect(s)}</td><td>${esc(s.pin)}</td>
+      <td id="st-${s.slot}"></td><td><code>udp://127.0.0.1:${s.port}</code></td>
+      <td>${s.name ? `<button data-restart="${s.slot}">Restart</button>` : ''}</td></tr>`).join('');
+    $('cek').innerHTML = d.slots.filter((s) => s.name).map((s) => `<div class="cell"><div class="pic" id="pic-${s.slot}">tidak ada gambar</div>
+      <b>${s.slot}</b> ${esc(s.name)}<br><span id="cs-${s.slot}" class="muted"></span></div>`).join('') || '<p class="muted">Belum ada slot terisi.</p>';
+    const inSlot = new Set(d.slots.map((s) => s.name.toLowerCase()));
+    const loose = d.online.filter((c) => !inSlot.has(c.name.toLowerCase()));
+    $('loose').innerHTML = loose.map((c) => `<tr><td>${esc(c.name)}</td><td>${c.mic ? 'ya' : '-'}</td><td>${c.lostFromPlayer}</td>
+      <td><select data-loose="${esc(c.name)}"><option value="">pilih slot...</option>${d.slots.map((s) => `<option value="${s.slot}">${s.slot}${s.name ? ' (ganti ' + esc(s.name) + ')' : ''}</option>`).join('')}</select></td></tr>`).join('')
+      || '<tr><td colspan="4" class="muted">Tidak ada.</td></tr>';
+    $('pins').innerHTML = d.pins.map((p) => `<tr><td><b>${esc(p.pin)}</b></td><td>${esc(p.name)}</td><td>${esc(p.team)}</td><td>${p.kind === 'team' ? 'team cam' : 'pemain'}</td></tr>`).join('')
+      || '<tr><td colspan="4" class="muted">Belum ada PIN.</td></tr>';
+  }
+  for (const s of d.slots) {
+    const st = $('st-' + s.slot); if (st) st.innerHTML = statusText(s) + (s.manual ? ' <span class="muted">(manual)</span>' : '');
+    const cs = $('cs-' + s.slot); if (cs) cs.innerHTML = statusText(s);
+  }
+}
+
+async function refresh() {
+  try { d = await (await fetch('/studio/state')).json(); } catch { return; }
+  render();
+}
+
+// check pictures: one request per filled slot, only while the tab is open
+async function pictures() {
+  if (tab !== 'cek' || !d) return;
+  for (const s of d.slots.filter((x) => x.name)) {
+    const box = $('pic-' + s.slot); if (!box) continue;
+    const r = await fetch(`/studio/snap/${s.slot}?t=${Date.now()}`).catch(() => null);
+    if (!r || !r.ok) { box.textContent = 'tidak ada gambar'; continue; }
+    const url = URL.createObjectURL(await r.blob());
+    const old = box.querySelector('img');
+    box.innerHTML = `<img src="${url}" alt="">`;
+    if (old) URL.revokeObjectURL(old.src);
+  }
 }
 
 document.addEventListener('click', async (e) => {
   const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.tab) {
+    tab = b.dataset.tab;
+    for (const t of document.querySelectorAll('[data-tab]')) t.classList.toggle('on', t.dataset.tab === tab);
+    $('tab-kamera').hidden = tab !== 'kamera'; $('tab-cek').hidden = tab !== 'cek';
+    pictures(); return;
+  }
   if (b.hasAttribute('data-set')) await post('/studio/delay', { delay: Number($('delayIn').value) });
-  if (b.dataset.nudge) await post('/studio/delay', { delay: Math.max(0, delay + Number(b.dataset.nudge)) });
+  if (b.dataset.nudge) await post('/studio/delay', { delay: Math.max(0, d.delay + Number(b.dataset.nudge)) });
   if (b.dataset.preset) await post('/studio/delay', { delay: Number(b.dataset.preset) });
   if (b.dataset.restart) await post('/studio/restart', { slot: b.dataset.restart });
   if (b.id === 'sync') { b.disabled = true; const r = await post('/studio/pins/sync'); b.disabled = false; if (!r.ok) alert('Gagal: ' + await r.text()); }
   refresh();
 });
+document.addEventListener('change', async (e) => {
+  const t = e.target;
+  if (t.name === 'automode' || t.id === 'autoSlot') {
+    const mode = document.querySelector('input[name=automode]:checked').value;
+    await post('/studio/auto', { mode, slot: $('autoSlot').value });
+  }
+  if (t.dataset.slot) { await post('/studio/slot', { slot: t.dataset.slot, name: t.value }); t.blur(); }
+  if (t.dataset.loose && t.value) { await post('/studio/slot', { slot: t.value, name: t.dataset.loose }); t.blur(); }
+  shape = ''; refresh();
+});
 refresh();
 setInterval(refresh, 1000);
+setInterval(pictures, 2000);
 </script>
 </body>
 </html>
