@@ -75,6 +75,8 @@
     '@media (max-width:900px){body.db-panel{padding-left:0}body.db-panel>header{padding-left:64px!important}#dbside{padding-top:64px;transform:translateX(-100%);transition:transform .2s;box-shadow:0 0 40px rgba(0,0,0,.15)}#dbside.open{transform:none}#dbside-toggle{display:flex}}',
   ].join('\n');
   document.head.appendChild(css);
+  // phase 4 operator UX: on-air dock, Draft control layout, folded help, Indonesian labels (?barebone=0 keeps v1 as it was)
+  if (!/[?&]barebone=0\b/.test(location.search)) { var ux = document.createElement('script'); ux.src = '/ui/ux.js'; document.head.appendChild(ux); }
 
   function toast(m) { var t = document.getElementById('dbside-toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(function () { t.classList.remove('show'); }, 2000); }
   function post(url, body) { return fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(function (r) { return r.json(); }); }
