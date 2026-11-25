@@ -4,6 +4,8 @@
 //                  DIREBORN_FAKE_MISSING=node,ffmpeg (pretend they are not installed)
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod job;
+
 use serde::Serialize;
 use std::ffi::OsString;
 use std::fs::{self, File};
@@ -157,6 +159,7 @@ fn launch(app: &AppHandle, st: &Studio) -> Result<(), Fail> {
     let path = std::env::join_paths([ff.parent(), node.parent()].into_iter().flatten().map(Path::to_path_buf).chain(std::env::split_paths(&old)))
         .unwrap_or(old);
     let d = |sub: &str| st.data.join(sub).to_string_lossy().into_owned();
+    firewall(&[("Direborn Studio (Node)", &node), ("Direborn Studio (receiver)", &recv)]);
     run_node(st, "hub", &node, &res.join("hub"), "dev/local.mjs", &path, &[
         ("PORT", st.hub_port.to_string()),
         ("LOCAL_ADMIN", "1".into()),
@@ -201,6 +204,32 @@ fn launch(app: &AppHandle, st: &Studio) -> Result<(), Fail> {
     });
     let w = app.get_webview_window("main").ok_or_else(|| fail("window hilang"))?;
     w.navigate(Url::parse(&format!("http://localhost:{}/control", st.hub_port)).unwrap()).map_err(|e| fail(e.to_string()))
+}
+
+/// Windows Firewall: let players, the observer PC (GSI) and LAN cams reach Node (hub, cam bridge, LAN SFU) and the
+/// receiver. Missing or pointing at another path (Node updated): one Windows admin prompt adds them; "No" only
+/// blocks other PCs, this PC keeps working, and the prompt comes back on the next start.
+fn firewall(progs: &[(&str, &Path)]) {
+    let mut cmds = Vec::new();
+    for (name, p) in progs {
+        let have = Command::new("netsh")
+            .args(["advfirewall", "firewall", "show", "rule", &format!("name={name}"), "verbose"])
+            .creation_flags(NO_WINDOW)
+            .output()
+            .map(|o| String::from_utf8_lossy(&o.stdout).to_lowercase().contains(&p.to_string_lossy().to_lowercase()))
+            .unwrap_or(false);
+        if !have {
+            cmds.push(format!(
+                "netsh advfirewall firewall delete rule name=\"{name}\" & netsh advfirewall firewall add rule name=\"{name}\" dir=in action=allow enable=yes profile=any program=\"{}\"",
+                p.display()
+            ));
+        }
+    }
+    if cmds.is_empty() {
+        return;
+    }
+    let ps = format!("Start-Process cmd -Verb RunAs -WindowStyle Hidden -Wait -ArgumentList '/c {}'", cmds.join(" & ").replace('\'', "''"));
+    let _ = Command::new("powershell").args(["-NoProfile", "-Command", &ps]).creation_flags(NO_WINDOW).status();
 }
 
 /// installed: <resource dir>\res (hub\, bridge\, studio-recv.exe); dev run: straight from the repo
@@ -272,6 +301,7 @@ fn stop(st: &Studio) {
 }
 
 fn main() {
+    job::kill_children_with_me();
     let data = std::env::var_os("DIREBORN_DATA")
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from(std::env::var_os("APPDATA").unwrap_or_default()).join(r"Direborn Studio\data"));
@@ -288,7 +318,6 @@ fn main() {
         .invoke_handler(tauri::generate_handler![check, install, start, last_error])
         .build(tauri::generate_context!())
         .expect("Direborn Studio gagal start");
-    // shortcut: if this process is force-killed, the children survive (next start reports the port in use); a Job Object would fix that.
     app.run(|app, ev| {
         if let RunEvent::Exit = ev {
             stop(&app.state::<Studio>());

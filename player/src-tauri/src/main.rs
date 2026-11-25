@@ -1,5 +1,6 @@
 // Direborn Cam: the player app. Finds the studio, checks the PIN, runs the ffmpeg sender (sender.rs).
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+mod job;
 mod sender;
 
 use serde_json::Value;
@@ -179,6 +180,7 @@ fn allow_media(w: &tauri::WebviewWindow) {
 }
 
 fn main() {
+    job::kill_children_with_me(); // ffmpeg must not keep the camera after a force-close
     tauri::Builder::default()
         .manage(App::default())
         .setup(|app| {
