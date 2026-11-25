@@ -23,3 +23,14 @@ Yang sudah baik dan dipertahankan: urutan langkah draft (strip B1…P5), shortcu
 3. **Petunjuk panjang dilipat** jadi satu baris; klik untuk membaca semuanya. Masalah 3.
 4. **Header Draft control dirampingkan**: tombol overlay, Copy OBS URL dan link lama pindah ke dock/sidebar; mode draft jadi segmented "Manual / Otomatis (GSI)" yang jelas. Masalah 4.
 5. **Bahasa Indonesia** untuk judul panel, label dan tombol utama di semua halaman. Masalah 5 dan 7.
+
+## Tahap 2 (tab Draft dan halaman persiapan)
+| Halaman | Masalah | Redesign |
+|---|---|---|
+| Draft | "Giliran siapa, pick/ban" hanya teks kecil di atas jam; grid hero terpotong; shortcut tidak terlihat | Banner **Giliran** besar berwarna tim + chip BAN/PICK; baris cari menempel dengan chip giliran; baris shortcut |
+| Persiapan | Form tim kiri dan kanan ditumpuk; cache gambar & framing portrait selalu terbuka | Form tim kiri/kanan berdampingan; cache & framing dilipat |
+| Cek | Label Inggris | Bahasa Indonesia |
+| Teams | Daftar tim tersimpan (paling sering dilihat) di bawah; laporan impor roster sangat panjang | Tim tersimpan di atas; laporan impor dibatasi tinggi; impor dari tiket liga dilipat |
+| Statistik | Halaman panjang tanpa navigasi | Bar lompat ke bagian (Turnamen, Ringkasan, Tautkan pemain, Hero, Match) |
+| Bracket | Pengaturan format selalu terbuka di atas daftar match | Pengaturan dilipat; bar lompat ke bagian |
+| Stats cards, Mix draw | Sudah cukup jelas | Hanya dock On air dan label |

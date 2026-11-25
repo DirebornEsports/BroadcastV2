@@ -109,7 +109,7 @@ body[data-tab="air"] #uxAirDiv { display: flex; }
 .ux-acc.open > h2 { margin-bottom: 16px !important; }
 .ux-acc.open > h2::after { content: "Tutup" !important; }
 .ux-acc:not(.open) > :not(h2) { display: none !important; }
-.ux-acc.open { grid-column: 1 / -1; }   /* opened settings get the full width their own layout expects */
+body[data-tab="air"] .ux-acc.open { grid-column: 1 / -1; }   /* opened settings get the full width their own layout expects */
 
 /* Draft tab (ui/ux.js): whose turn it is, big and in the team's colour */
 #uxTurn { display: flex; align-items: center; gap: 14px; margin: -4px 0 16px; padding: 12px 16px; border-radius: 14px;
@@ -132,3 +132,22 @@ body[data-tab="draft"] .filters { position: sticky; top: 64px; z-index: 20; marg
 /* the long how-to line is now the shortcut row; the GSI note only matters in GSI mode */
 [data-pane="draft"] .board ~ .hint:not(.gsi-note) { display: none; }
 body:not(.gsi) [data-pane="draft"] .gsi-note { display: none; }
+
+/* preparation pages (ui/ux.js) */
+#uxJump { position: sticky; top: 64px; z-index: 30; display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 24px 0; padding: 6px; border-radius: 12px; width: fit-content;
+  background: rgba(255,255,255,.78); -webkit-backdrop-filter: var(--glass); backdrop-filter: var(--glass); box-shadow: 0 0 0 1px var(--line); }
+#uxJump button { padding: 5px 11px; font-size: 12.5px; border-radius: 8px; border: 1px solid transparent; background: transparent; }
+#uxJump button:hover { background: #fff; border-color: var(--line); }
+/* Teams: the saved teams are what people look up most, so they come first */
+html[data-page="teams"] main > section.card:nth-of-type(3) { order: -1; }
+/* Persiapan: the two team forms side by side */
+.ux-setup { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
+.ux-setup > h2, .ux-setup > :not(fieldset) { grid-column: 1 / -1; }
+.ux-setup > fieldset:first-of-type, .ux-setup > fieldset:nth-of-type(2) { grid-column: 1 / -1; }
+.ux-subh { cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+.ux-subh::after { content: "Buka" !important; display: inline-block !important; width: auto !important; height: auto !important; flex: none !important; background: none !important; margin: 0 !important; position: static !important;
+  font: 500 12px var(--font); color: var(--muted); padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); }
+.ux-subh.open::after { content: "Tutup" !important; }
+.ux-subh:not(.open) + .ux-sub { display: none; }
+/* Teams: the one-off roster import report would push the team list down; keep it short and scrollable */
+#syncBox { max-height: 110px; overflow: auto; border-radius: 10px; }

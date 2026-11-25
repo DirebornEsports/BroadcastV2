@@ -138,7 +138,7 @@
     'Export Excel': 'Ekspor Excel', 'Link selected': 'Tautkan yang dipilih', 'Save': 'Simpan',
     'On air in OBS': 'Tayang di OBS', 'Nothing on screen': 'Tidak ada di layar', 'Prev': 'Sebelumnya', 'Next': 'Berikutnya',
     'Hide': 'Sembunyikan', 'Reload cards': 'Muat ulang kartu', 'Save bracket': 'Simpan bracket', 'Unsaved changes': 'Belum disimpan',
-    'Show test popup': 'Tes popup', 'Now': 'Sekarang', 'reserve': 'cadangan', 'Pause': 'Jeda', 'All': 'Semua',
+    'Show test popup': 'Tes popup', 'Switch to Auto (GSI)': 'Pindah ke Otomatis (GSI)', 'Download last GSI data': 'Unduh data GSI terakhir', 'Anti-snipe delay': 'Delay anti-snipe', 'Receiving from Dota': 'Data dari Dota', 'Upload…': 'Upload…', 'Title': 'Judul', 'Format': 'Format', 'First pick': 'First pick', 'Name': 'Nama', 'Score': 'Skor', 'Color': 'Warna', 'Now': 'Sekarang', 'reserve': 'cadangan', 'Pause': 'Jeda', 'All': 'Semua',
     'auto-restart clock each step': 'jam mulai ulang tiap langkah', 'Swap sides ': 'Tukar sisi', 'Link players — stats accounts → your rosters': 'Tautkan pemain: akun statistik → roster', 'Draw': 'Undian', 'Bracket & rundown': 'Bracket & rundown', 'Copy OBS URL': 'Copy URL OBS', 'Logout': 'Keluar', 'Preview': 'Pratinjau', 'Show': 'Tampilkan',
   };
   const CONFIRM = { 'Clear all picks, bans and player assignments?': 'Hapus semua pick, ban dan pemain di draft ini?' };
@@ -154,11 +154,55 @@
     }
   }
 
+  // ---------- 5. preparation pages ----------
+  // a card that is rarely needed: only its title shows until clicked (same look as the On air settings)
+  function fold(card, open) {
+    const h = card && card.querySelector(':scope > h2'); if (!h || card.classList.contains('ux-acc')) return;
+    card.classList.add('ux-acc'); if (open) card.classList.add('open');
+    h.addEventListener('click', () => card.classList.toggle('open'));
+  }
+  // long pages: a sticky row of chips that jumps to each section
+  function jumpBar(cards) {
+    cards = cards.filter((c) => c.querySelector(':scope > h2'));
+    if (cards.length < 3 || document.getElementById('uxJump')) return;
+    const bar = document.createElement('nav');
+    bar.id = 'uxJump';
+    cards.forEach((c, i) => {
+      const b = document.createElement('button'); b.type = 'button';
+      b.textContent = c.querySelector(':scope > h2').textContent.replace(/—.*$/, '').trim();
+      b.onclick = () => { c.classList.add('open'); window.scrollTo({ top: c.getBoundingClientRect().top + window.scrollY - 130 }); };
+      bar.appendChild(b);
+    });
+    const main = document.querySelector('main');
+    main.parentElement.insertBefore(bar, main);
+  }
+  function prepPages() {
+    const cards = [...document.querySelectorAll('main section.card')];
+    const byTitle = (t) => cards.find((c) => ((c.querySelector(':scope > h2') || {}).textContent || '').trim().startsWith(t));
+    if (page === '/control') {
+      // Persiapan tab: team forms side by side; image cache and portrait framing are rarely touched
+      const form = document.getElementById('setup'); if (form) form.classList.add('ux-setup');
+      // image cache and portrait framing live in the same card after the form: fold each under its title
+      document.querySelectorAll('[data-pane~="setup"] > h2').forEach((h) => {
+        if (!/^(Hero image cache|Portrait framing)/.test(h.textContent.trim()) || h.dataset.ux) return;
+        h.dataset.ux = '1';
+        const box = document.createElement('div'); box.className = 'ux-sub';
+        while (h.nextElementSibling && !/^(H2|HR)$/.test(h.nextElementSibling.tagName)) box.appendChild(h.nextElementSibling);
+        h.after(box); h.classList.add('ux-subh');
+        h.addEventListener('click', () => h.classList.toggle('open'));
+      });
+    }
+    if (page === '/teams') { fold(byTitle('Impor tim dari tiket liga')); }
+    if (page === '/bracket') { fold(document.getElementById('setCard')); jumpBar(cards.filter((c) => c.id !== 'emptyCard')); }
+    if (page === '/stats') jumpBar(cards);
+  }
+
   // ---------- start ----------
   function start() {
     document.body.appendChild(dock);
     document.body.classList.add('ux-has-dock');
     if (page === '/control') draftControl();
+    prepPages();
     foldHelp(document.body); translate(document.body);
     // pages re-render parts of themselves (lists, buttons): keep folding / translating what they add
     let t = null;
