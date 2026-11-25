@@ -57,8 +57,8 @@
   .bans { position: absolute; top: 48px; display: flex; gap: 6px; }
   .left .bans { left: 0; } .right .bans { right: 0; flex-direction: row-reverse; }
   .ban { position: relative; width: 74px; height: 42px; background: var(--ink2); overflow: hidden; }
-  .ban video { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.2) brightness(.55); opacity: 0; }
-  .ban.on video { opacity: 1; transition: opacity .25s steps(3); }
+  .ban img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.2) brightness(.55); opacity: 0; }
+  .ban.on img { opacity: 1; transition: opacity .25s steps(3); }
   .ban svg { position: absolute; inset: -4px; width: calc(100% + 8px); height: calc(100% + 8px); overflow: visible; }
   .ban .frame path { stroke: rgba(243,236,228,.35); }
   .ban .x path { stroke: var(--red); stroke-width: 5; stroke-dasharray: 1; stroke-dashoffset: 1; }
@@ -277,7 +277,7 @@
   for (const s of ['L', 'R']) {
     const side = document.getElementById(s);
     side.querySelector('.bans').innerHTML = Array.from({ length: 7 }, (_, i) =>
-      `<div class="ban"><video muted playsinline preload="none"></video><span class="n">B${i + 1}</span>` +
+      `<div class="ban"><img alt=""><span class="n">B${i + 1}</span>` +
       `<svg class="frame rough" viewBox="-4 -4 82 50"><path d="${sketchRect(74, 42)}"/></svg>` +
       `<svg class="x crayon" viewBox="-4 -4 82 50"><path pathLength="1" d="${scribbleX(74, 42).split(' M')[0]}"/><path pathLength="1" d="M${scribbleX(74, 42).split(' M')[1]}"/></svg>` +
       `<svg class="circle rough" viewBox="0 0 106 78"><path pathLength="1" d="${circle(106, 78)}"/></svg><span class="note">ban!</span></div>`).join('');
@@ -376,12 +376,21 @@
     const key = h ? h.slug : '';
     if (e._k === key) return false;
     e._k = key;
+    if (!isPick) {                                              // bans: Dota's still hero portrait, greyed
+      const im = e.querySelector('img');
+      e.classList.remove('on');
+      if (!h) { im.removeAttribute('src'); return false; }
+      im.onerror = () => { im.onerror = null; im.src = `/img/render/${h.slug}`; };
+      im.src = `/img/icon/${h.slug}`;
+      void e.offsetWidth; e.classList.add('on');
+      return true;
+    }
     const v = e.querySelector('video');
-    if (isPick) e.querySelector('.hname').textContent = h ? h.name : '';
+    e.querySelector('.hname').textContent = h ? h.name : '';
     if (!h) { e.classList.remove('on'); v.removeAttribute('src'); v.load(); return false; }
     v.onerror = () => { v.onerror = null; v.src = `/heroes-anim/${h.slug}.webm`; };   // shortcut: a hero newer than heroes-card shows unfiltered; rerun hub/tools/hero-cards.mjs
     v.src = `/heroes-card/${h.slug}.webm`;
-    if (isPick) v.play().catch(() => {}); else v.currentTime = 1;   // bans: a still
+    v.play().catch(() => {});
     e.classList.remove('on'); void e.offsetWidth; e.classList.add('on');
     return true;
   }
