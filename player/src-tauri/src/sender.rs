@@ -126,6 +126,12 @@ pub fn send_args(enc: &str, camera: &str, mic: &str, url: &str, kbps: u32, size:
 }
 
 /// For the PIN in the URL (the operator types digits, but never trust a URL part). Like [uri]::EscapeDataString: everything but A-Z a-z 0-9 - _ . ~ becomes %XX (UTF-8).
+/// LAN studio "host:port" -> http://host:port/whip/..., online relay "https://..." -> used as typed
+pub fn whip_url(addr: &str, pin: &str) -> String {
+    let base = if addr.starts_with("https://") { addr.trim_end_matches('/').to_string() } else { format!("http://{addr}") };
+    format!("{base}/whip/cam?pin={}", escape(pin))
+}
+
 pub fn escape(s: &str) -> String {
     s.bytes()
         .map(|b| match b {
@@ -315,6 +321,12 @@ impl Live {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn whip_url_lan_and_online() {
+        assert_eq!(super::whip_url("192.168.1.10:8787", "1234"), "http://192.168.1.10:8787/whip/cam?pin=1234");
+        assert_eq!(super::whip_url("https://cam.example.workers.dev/", "0042"), "https://cam.example.workers.dev/whip/cam?pin=0042");
+    }
+
     use super::*;
 
     const MON: Monitor = Monitor { video: 5555, audio: 5556, stats: 5557 };

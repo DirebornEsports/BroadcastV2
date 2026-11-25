@@ -157,16 +157,17 @@ let checking = false;
 $('go').onclick = async () => {
   if (checking) return;
   const pin = $('pin-in').value.trim();
-  let addr = $('addr').value.trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  let addr = $('addr').value.trim().replace(/\/+$/, '');
+  const online = /^https:\/\//i.test(addr);   // the online relay (https://…workers.dev): used as typed
   const msg = $('pin-msg');
   msg.className = 'err';
   if (!/^\d{4}$/.test(pin)) { msg.textContent = 'PIN harus 4 angka'; return; }
   if (!addr) { msg.textContent = 'Isi IP studio'; return; }
-  if (!/:\d+$/.test(addr)) addr += ':8787';
+  if (!online) { addr = addr.replace(/^http:\/\//i, '').replace(/\/.*$/, ''); if (!/:\d+$/.test(addr)) addr += ':8787'; }
   msg.className = ''; msg.textContent = 'Mengecek PIN…';
   checking = $('go').disabled = true;
   try {
-    const r = await fetch(`http://${addr}/pin/${pin}`, { signal: AbortSignal.timeout(4000) });
+    const r = await fetch(`${online ? addr : 'http://' + addr}/pin/${pin}`, { signal: AbortSignal.timeout(6000) });
     if (r.status === 404) { msg.className = 'err'; msg.textContent = 'PIN salah. Cek lagi ke operator.'; $('pin-in').select(); return; }
     if (!r.ok) throw new Error('HTTP ' + r.status);
     me = await r.json();

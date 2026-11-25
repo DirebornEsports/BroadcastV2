@@ -164,6 +164,30 @@ function snapshot(s) {
   });
 }
 
+// ---------- online: players at home send to the Cloudflare relay (online/), Studio pulls from there ----------
+const ONLINE_FILE = path.join(DATA, 'online.json');
+let online = (() => { try { return JSON.parse(fs.readFileSync(ONLINE_FILE, 'utf8')); } catch { return { on: false, url: '', key: '' }; } })();
+let remote = [], onlineError = '', pinsSent = '';
+export const onlineOn = () => !!(online.on && online.url && online.key);
+export const remoteCam = (name) => (onlineOn() ? remote.find((c) => c.name.toLowerCase() === String(name).toLowerCase()) : null);
+export const remoteCams = () => (onlineOn() ? remote : []);
+export function relay(method, p, body, type) {
+  return fetch(online.url.replace(/\/+$/, '') + p, { method, body, signal: AbortSignal.timeout(8000),
+    headers: { 'x-studio-key': online.key, ...(type ? { 'content-type': type } : {}) } });
+}
+async function onlineTick() {
+  if (!onlineOn()) { remote = []; onlineError = ''; return; }
+  try {
+    const sig = JSON.stringify(pins);   // the relay checks PINs itself: send it the list whenever it changes
+    if (sig !== pinsSent) { const r = await relay('PUT', '/pins', sig, 'application/json'); if (!r.ok) throw new Error(`PIN ke relay: HTTP ${r.status} ${await r.text()}`); pinsSent = sig; }
+    const r = await relay('GET', '/cams');
+    if (!r.ok) throw new Error(`relay: HTTP ${r.status} ${await r.text()}`);
+    remote = await r.json(); onlineError = '';
+  } catch (e) { onlineError = e.message; }
+}
+setInterval(onlineTick, 2000);
+onlineTick();
+
 // cams the players are sending right now, from server.mjs
 let onlineCams = () => [];
 export function setOnline(fn) { onlineCams = fn; }
@@ -235,6 +259,16 @@ export async function studioRoute(req, url, body) {
     if (!Number.isFinite(d) || d < 0 || d > 1020) return [400, 'text/plain', 'delay 0-1020'];
     fs.writeFileSync(DELAY_FILE, String(Math.round(d * 10) / 10));
     return [204, 'text/plain', ''];
+  }
+  if (p === '/studio/online' && req.method === 'GET') return [200, 'application/json', JSON.stringify({ on: onlineOn(), url: online.url, hasKey: !!online.key, error: onlineError, cams: remote.length })];
+  if (p === '/studio/online' && req.method === 'POST') {
+    const b = JSON.parse(body || '{}');
+    if (b.url !== undefined) { const u = String(b.url).trim(); if (u && !/^https:\/\/[^\s/]+/.test(u)) return [400, 'text/plain', 'alamat relay harus https://…']; online.url = u; }
+    if (b.key) online.key = String(b.key).trim();
+    if (b.on !== undefined) online.on = !!b.on;
+    fs.writeFileSync(ONLINE_FILE, JSON.stringify(online));
+    pinsSent = ''; await onlineTick();
+    return [200, 'application/json', JSON.stringify({ on: onlineOn(), url: online.url, hasKey: !!online.key, error: onlineError, cams: remote.length })];
   }
   if (p === '/studio/pins/sync' && req.method === 'POST') return [200, 'application/json', JSON.stringify(await syncPins())];
   if (p === '/studio/restart' && req.method === 'POST') {

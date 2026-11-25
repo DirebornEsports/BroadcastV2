@@ -127,7 +127,7 @@ fn start(app: State<App>, camera: String, mic: String, addr: String, pin: String
     app.stop();
     let enc = encoder(app.clone())?;
     // with a PIN the studio knows who this is, so the name never travels (kanji / emoji names broke the ffmpeg call)
-    let url = format!("http://{addr}/whip/cam?pin={}", sender::escape(&pin));
+    let url = sender::whip_url(&addr, &pin);
     let live = Arc::new(sender::Live::default());
     let args = |mon| sender::send_args(&enc, &camera, &mic, &url, sender::KBPS, sender::SIZE, sender::FPS, mon);
     live.run(app.ffmpeg()?, args, events, preview).map_err(|e| e.to_string())?;

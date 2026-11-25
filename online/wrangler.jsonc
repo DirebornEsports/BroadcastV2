@@ -1,0 +1,10 @@
+{
+  // Direborn Cam online relay: players at home -> this Worker -> Cloudflare Realtime -> Direborn Studio.
+  // Deploy: npx wrangler deploy (from this folder). Secrets: CF_APP_ID, CF_APP_SECRET, STUDIO_KEY (npx wrangler secret put <NAME>).
+  "name": "direborn-cam-online",
+  "main": "src/index.js",
+  "compatibility_date": "2025-09-01",
+  "durable_objects": { "bindings": [{ "name": "REG", "class_name": "Registry" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Registry"] }],
+  "observability": { "enabled": true }
+}

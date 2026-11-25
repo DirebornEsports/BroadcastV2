@@ -128,15 +128,24 @@
     }
   }
 
-  // shortcut: placeholder only, LAN / Online does not change anything yet; wire it when the online bridge exists
+  // LAN / Online for the player cams: the camera bridge (port 8787 on this PC) owns the setting; the relay address
+  // and key are set on the Kamera page, so "Online" without them opens it
   function netMode() {
     const head = document.querySelector('body > header'); if (!head || document.getElementById('uxNet')) return;
-    head.insertAdjacentHTML('beforeend', '<span class="ux-net"><span class="ux-label">Mode</span><span class="seg" id="uxNet" title="Belum aktif: pilihan ini belum mengubah apa pun">' +
+    const BR = 'http://localhost:8787';
+    head.insertAdjacentHTML('beforeend', '<span class="ux-net"><span class="ux-label">Kamera</span><span class="seg" id="uxNet" title="LAN = pemain satu jaringan · Online = pemain dari rumah lewat Cloudflare">' +
       '<button type="button" data-net="lan">LAN</button><button type="button" data-net="online">Online</button></span></span>');
     const seg = document.getElementById('uxNet');
-    const paint = () => { const v = localStorage.getItem('dbo.net') || 'lan'; seg.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.net === v)); };
-    seg.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { localStorage.setItem('dbo.net', b.dataset.net); paint(); } });
-    paint();
+    const paint = (o) => seg.querySelectorAll('button').forEach((b) => b.classList.toggle('on', !!o && (b.dataset.net === 'online') === o.on));
+    const load = () => fetch(BR + '/studio/online').then((r) => r.json()).then(paint).catch(() => paint(null));
+    seg.addEventListener('click', async (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      const o = await fetch(BR + '/studio/online', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ on: b.dataset.net === 'online' }) })
+        .then((r) => r.json()).catch(() => null);
+      paint(o);
+      if (b.dataset.net === 'online' && o && !o.on) location.href = BR + '/';   // no relay address / key yet: set them on the Kamera page
+    });
+    load(); setInterval(load, 5000);
   }
 
   // Draft tab: whose turn it is, big; the hero grid fits the screen; shortcuts visible

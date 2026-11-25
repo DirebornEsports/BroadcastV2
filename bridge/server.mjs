@@ -35,7 +35,9 @@ async function sfu(method, path, body) {
 }
 
 const cams = new Map();   // lower-case name -> { name, sessionId, since }
-if (studio) studio.setOnline(() => [...cams.values()].map(({ name, since, mic, sessionId }) => ({ name, since, mic: !!mic, lostFromPlayer: localSfuLost ? localSfuLost(sessionId) : 0 })));
+if (studio) studio.setOnline(() => [...cams.values()].map(({ name, since, mic, sessionId }) => ({ name, since, mic: !!mic, lostFromPlayer: localSfuLost ? localSfuLost(sessionId) : 0 }))
+  .concat(studio.remoteCams().filter((c) => !cams.has(c.name.toLowerCase())).map((c) => ({ ...c, online: true }))));
+const remoteSids = new Set();   // pull sessions made through the online relay: their answers go back there
 // LAN: forget a cam whose sender stopped (no media for 5 s; 10 s grace after it connects), so a receiver
 // retries until the player's next publish instead of pulling a dead session.
 // shortcut: Cloudflare mode keeps dead cams until the same name publishes again; check session state there when the bridge moves to a Worker.
@@ -54,7 +56,8 @@ async function route(req, url, body) {
   prune();
   const own = studio && (await studio.studioRoute(req, url, body));
   if (own) return own;
-  if (req.method === 'GET' && p[0] === 'cams') return [200, 'application/json', JSON.stringify([...cams.values()].map(({ name, since, sessionId }) => ({ name, since, ...(localSfuLost ? { lostFromPlayer: localSfuLost(sessionId) } : {}) })))];
+  if (req.method === 'GET' && p[0] === 'cams') return [200, 'application/json', JSON.stringify([...cams.values()].map(({ name, since, sessionId }) => ({ name, since, ...(localSfuLost ? { lostFromPlayer: localSfuLost(sessionId) } : {}) }))
+    .concat(studio ? studio.remoteCams().filter((c) => !cams.has(c.name.toLowerCase())).map(({ name, since }) => ({ name, since, online: true })) : []))];
   if (p[0] === 'whip' && req.method === 'POST' && p.length === 2) {
     let name = p[1];
     if (studio && studio.pinsActive()) {
@@ -78,12 +81,23 @@ async function route(req, url, body) {
     return [200, 'text/plain', ''];
   }
   if (p[0] === 'pull' && req.method === 'POST' && p.length === 2) {
-    const cam = cams.get(p[1].toLowerCase()); if (!cam) return [404, 'text/plain', 'cam offline'];
+    const cam = cams.get(p[1].toLowerCase());
+    if (!cam && studio && studio.remoteCam(p[1])) {   // a player at home: pull through the online relay
+      const r = await studio.relay('POST', `/pull/${encodeURIComponent(p[1])}`);
+      if (!r.ok) return [r.status, 'text/plain', await r.text()];
+      const j = await r.json(); remoteSids.add(j.sessionId);
+      return [200, 'application/json', JSON.stringify(j)];
+    }
+    if (!cam) return [404, 'text/plain', 'cam offline'];
     const s = await sfu('POST', '/sessions/new');
     const t = await sfu('POST', `/sessions/${s.sessionId}/tracks/new`, { tracks: ['cam', ...(cam.mic ? ['mic'] : [])].map((trackName) => ({ location: 'remote', sessionId: cam.sessionId, trackName })) });
     return [200, 'application/json', JSON.stringify({ sessionId: s.sessionId, sdp: t.sessionDescription.sdp })];
   }
   if (p[0] === 'pull' && req.method === 'POST' && p.length === 3 && p[2] === 'answer') {
+    if (remoteSids.has(p[1])) {
+      const r = await studio.relay('POST', `/pull/${p[1]}/answer`, body, 'application/sdp');
+      return [r.ok ? 204 : r.status, 'text/plain', r.ok ? '' : await r.text()];
+    }
     await sfu('PUT', `/sessions/${p[1]}/renegotiate`, { sessionDescription: { type: 'answer', sdp: body } });
     return [204, 'text/plain', ''];
   }

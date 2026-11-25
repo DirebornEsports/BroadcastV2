@@ -169,6 +169,17 @@
     </div>
   </div>
 
+  <div class="panel glass" id="onlinePanel" style="margin-bottom:24px">
+    <h3>Mode <small>LAN = pemain satu jaringan · Online = pemain dari rumah lewat Cloudflare (bisa bersamaan)</small></h3>
+    <div class="seg" id="netSeg"><button data-net="lan">LAN saja</button><button data-net="online">LAN + Online</button></div>
+    <div id="netForm" style="display:grid;grid-template-columns:2fr 1.4fr auto;gap:8px;margin-top:12px">
+      <input class="num" id="relayUrl" style="width:auto" placeholder="https://direborn-cam-online.xxx.workers.dev">
+      <input class="num" id="relayKey" style="width:auto" type="password" placeholder="kunci studio (STUDIO_KEY)" autocomplete="off">
+      <button class="btn light" id="saveRelay">Simpan</button>
+    </div>
+    <div class="hint" id="netStatus" style="margin-top:8px">-</div>
+  </div>
+
   <div class="section"><h2><i class="blob" style="background:var(--green)"></i><span id="leftName" style="font:inherit;color:inherit">Tim kiri</span></h2><span>kiri · :5001–5005</span></div>
   <div class="grid" id="gL"></div>
   <div class="section"><h2><i class="blob" style="background:var(--pink)"></i><span id="rightName" style="font:inherit;color:inherit">Tim kanan</span></h2><span>kanan · :5006–5010</span></div>
@@ -260,6 +271,18 @@ function render() {
   }
 }
 
+// LAN / Online: the relay address goes to the players (Direborn Cam: "Alamat studio"), the key stays here
+async function onlineState(st) {
+  const o = st || await fetch('/studio/online').then((x) => x.json()).catch(() => null); if (!o) return;
+  for (const b of $('netSeg').children) b.classList.toggle('on', (b.dataset.net === 'online') === o.on);
+  if (document.activeElement !== $('relayUrl')) $('relayUrl').value = o.url || '';
+  $('relayKey').placeholder = o.hasKey ? 'kunci tersimpan (isi untuk ganti)' : 'kunci studio (STUDIO_KEY)';
+  $('netStatus').innerHTML = !o.on ? 'Hanya LAN. Pemain di rumah belum bisa masuk.'
+    : o.error ? `<span class="warn">Relay bermasalah: ${esc(o.error)}</span>`
+    : `Online aktif · ${o.cams} cam dari rumah · pemain isi alamat studio: <b>${esc(o.url)}</b>`;
+}
+setInterval(onlineState, 3000); onlineState();
+
 async function refresh() {
   try { d = await (await fetch('/studio/state')).json(); } catch { return; }
   render();
@@ -292,6 +315,11 @@ document.addEventListener('click', async (e) => {
   if (b.id === 'setDelay') await post('/studio/delay', { delay: Number($('delayIn').value) });
   if (b.dataset.mode) await post('/studio/auto', { mode: b.dataset.mode, slot: $('autoSlot').value || d.auto.slot });
   if (b.dataset.restart) await post('/studio/restart', { slot: b.dataset.restart });
+  if (b.dataset.net || b.id === 'saveRelay') {
+    const body = { url: $('relayUrl').value, ...($('relayKey').value ? { key: $('relayKey').value } : {}), ...(b.dataset.net ? { on: b.dataset.net === 'online' } : {}) };
+    const r = await post('/studio/online', body);
+    if (!r.ok) alert(await r.text()); else { $('relayKey').value = ''; onlineState(await r.json()); }
+  }
   if (b.id === 'showPins') { $('pinBox').hidden = !$('pinBox').hidden; b.textContent = $('pinBox').hidden ? 'Daftar PIN' : 'Tutup PIN'; }
   if (b.id === 'sync') { b.disabled = true; const r = await post('/studio/pins/sync'); b.disabled = false; if (!r.ok) alert('Gagal: ' + await r.text()); else { $('pinBox').hidden = false; $('showPins').textContent = 'Tutup PIN'; } shape = ''; }
   refresh();

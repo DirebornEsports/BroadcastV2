@@ -5,3 +5,5 @@ target/
 dist/
 studio/logs/
 studio-data/
+.dev.vars
+.wrangler/
