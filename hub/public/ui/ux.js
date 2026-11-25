@@ -75,7 +75,68 @@
       div.innerHTML = '<b>Pengaturan</b><span>jarang diubah saat live · klik judul untuk membuka</span>';
       panes[0].parentElement.appendChild(div);
     }
-    draftTab();
+    draftTab(); mergeTabs(); teamPickers(); netMode();
+  }
+
+  // Draft + Persiapan are one page (draft first, setup below); On air opens from the sidebar (/control#air)
+  function mergeTabs() {
+    const tabs = document.getElementById('tabs'); if (!tabs) return;
+    const btn = (t) => tabs.querySelector(`[data-tab="${t}"]`);
+    btn('setup').hidden = btn('air').hidden = true;
+    const go = () => {
+      const now = document.body.dataset.tab;
+      const want = location.hash === '#air' ? 'air' : now === 'check' ? 'check' : 'draft';
+      if (now !== want) btn(want).click();
+      syncNav();
+    };
+    tabs.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-tab]');
+      if (b && !b.hidden && location.hash) history.replaceState(null, '', location.pathname + location.search);
+      syncNav();
+    });
+    window.addEventListener('hashchange', go);
+    go();
+    // the Hero list folds away (remembered per device)
+    const grid = document.getElementById('grid'), card = grid && grid.closest('section.card');
+    if (card) {
+      fold(card, localStorage.getItem('dbo.heroOpen') !== '0');
+      card.querySelector(':scope > h2').addEventListener('click', () => localStorage.setItem('dbo.heroOpen', card.classList.contains('open') ? '1' : '0'));
+    }
+  }
+  function syncNav() {
+    const air = document.body.dataset.tab === 'air';
+    document.querySelectorAll('#dbside a.sb-i').forEach((a) => {
+      const h = a.getAttribute('href');
+      if (h === '/control') a.classList.toggle('on', !air);
+      if (h === '/control#air') a.classList.toggle('on', air);
+    });
+  }
+
+  // the team names on the board: filled from Persiapan, click to swap in another saved team
+  function teamPickers() {
+    for (const side of ['left', 'right']) {
+      const nm = document.getElementById('nm-' + side), src = document.getElementById(side === 'left' ? 'dbLeft' : 'dbRight');
+      if (!nm || !src || nm.parentElement.classList.contains('ux-teampick')) continue;
+      const wrap = document.createElement('span'); wrap.className = 'ux-teampick'; wrap.title = 'Klik untuk ganti tim';
+      nm.before(wrap); wrap.appendChild(nm);
+      const sel = document.createElement('select'); sel.setAttribute('aria-label', 'Ganti tim ' + (side === 'left' ? 'kiri' : 'kanan'));
+      wrap.appendChild(sel);
+      const sync = () => { sel.innerHTML = src.innerHTML; sel.value = src.value; };
+      sel.addEventListener('mousedown', sync);
+      sel.addEventListener('focus', () => { src.dispatchEvent(new Event('focus')); sync(); });   // the page reloads the team list on focus
+      sel.addEventListener('change', () => { if (!sel.value) return; src.value = sel.value; src.dispatchEvent(new Event('change')); sel.blur(); });
+    }
+  }
+
+  // shortcut: placeholder only, LAN / Online does not change anything yet; wire it when the online bridge exists
+  function netMode() {
+    const head = document.querySelector('body > header'); if (!head || document.getElementById('uxNet')) return;
+    head.insertAdjacentHTML('beforeend', '<span class="ux-net"><span class="ux-label">Mode</span><span class="seg" id="uxNet" title="Belum aktif: pilihan ini belum mengubah apa pun">' +
+      '<button type="button" data-net="lan">LAN</button><button type="button" data-net="online">Online</button></span></span>');
+    const seg = document.getElementById('uxNet');
+    const paint = () => { const v = localStorage.getItem('dbo.net') || 'lan'; seg.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.net === v)); };
+    seg.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { localStorage.setItem('dbo.net', b.dataset.net); paint(); } });
+    paint();
   }
 
   // Draft tab: whose turn it is, big; the hero grid fits the screen; shortcuts visible

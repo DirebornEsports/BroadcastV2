@@ -23,6 +23,7 @@
       { href: 'http://localhost:8787/', label: 'Kamera', icon: 'video' },
     ] },
     { group: 'Turnamen', items: [
+      { href: '/control#air', label: 'On air', icon: 'eye' },
       { href: '/teams', label: 'Teams', icon: 'users' },
       { href: '/stats', label: 'Statistik', icon: 'chart' },
       { href: '/bracket', label: 'Bracket', icon: 'trophy' },
