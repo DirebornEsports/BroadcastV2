@@ -34,7 +34,7 @@
     ] },
   ];
   var OBS = [
-    ['Draft overlay', '/overlay'], ['In-game foto', '/ingame'], ['Stats cards', '/statcards'],
+    ['Draft overlay', '/overlay'], ['Draft Direborn (sketsa)', '/draft'], ['Scene stream pack', '/scenes.html?s=start'], ['In-game foto', '/ingame'], ['Stats cards', '/statcards'],
     ['Next match', '/nextmatch'], ['Next match 16:9', '/nextmatch-wide'], ['Running text', '/ticker'], ['Mix draw', '/mixdraw'], ['Countdown live', '/countdown'], ['Banner berputar', '/banner'], ['Caster', '/caster'], ['Karakter chat', '/chatwalk'],
   ];
   var THEME_LABEL = { battlecup: 'Direbattle Cup', uprising: 'Direbattle Uprising', direborn: 'Direborn' };
