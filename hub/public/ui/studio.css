@@ -1,0 +1,71 @@
+/* Direborn Studio operator panels, phase 4 design: Gumloop's product UI (off-white, 1px hairlines, medium-weight
+   geometric type, mono numbers, colour-blob icons, black buttons) in frosted Apple glass over soft colour blobs.
+   Loaded by ui/motion.js on operator pages, after ui/panel.css (whose structure it keeps); overlays stay barebone. */
+html body {
+  --bg: #f6f6f7; --panel: rgba(255,255,255,.66); --panel2: rgba(255,255,255,.66); --panel3: rgba(22,22,24,.04);
+  --line: rgba(22,22,24,.08); --line-hi: rgba(22,22,24,.14);
+  --text: #161618; --muted: rgba(22,22,24,.58); --gold: #161618; --gold-hi: #161618; --gold-lo: rgba(22,22,24,.42);
+  --accent: #161618; --accent-hover: #2c2c30;
+  --ok: #16a34a; --warn: #d97706; --danger: #e11d48; --danger-txt: #e11d48; --live: #e11d48; --bad: #e11d48;
+  --left: #22c55e; --right: #ff4d8d; --tour: #8b5cf6;
+  --pink: #ff4d8d; --purple: #8b5cf6; --green: #22c55e; --blue: #38bdf8; --amber: #f59e0b;
+  --font: "Geist", "Segoe UI Variable Text", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --display: "Gellix", "Geist", "Segoe UI Variable Display", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --mono: "Geist Mono", "JetBrains Mono", ui-monospace, "SF Mono", Consolas, monospace;
+  --glass: saturate(180%) blur(32px);
+  --shadow: 0 1px 0 rgba(255,255,255,.75) inset, 0 0 0 1px var(--line), 0 10px 30px rgba(22,22,24,.05);
+}
+html[data-theme] body { --tour: #8b5cf6; }
+/* soft colour blobs behind the glass */
+html body { background:
+  radial-gradient(520px 520px at -4% -6%, rgba(255,143,184,.42), transparent 70%),
+  radial-gradient(560px 560px at 104% 18%, rgba(182,156,255,.42), transparent 70%),
+  radial-gradient(520px 480px at 40% 110%, rgba(134,239,172,.36), transparent 70%),
+  radial-gradient(420px 380px at 82% 104%, rgba(125,211,252,.36), transparent 70%), var(--bg) fixed; }
+
+html body > header { background: rgba(255,255,255,.55); -webkit-backdrop-filter: var(--glass); backdrop-filter: var(--glass); border-bottom: 1px solid var(--line); }
+html body > header h1, html body h1 { font: 500 26px/1.15 var(--display); letter-spacing: -.04em; }
+html body h2, html body .card h2 { font: 500 17px/1.3 var(--display); letter-spacing: -.03em; }
+html body .card { background: var(--panel); -webkit-backdrop-filter: var(--glass); backdrop-filter: var(--glass); border-radius: 16px; box-shadow: var(--shadow); }
+html body fieldset { background: rgba(255,255,255,.5); border: 1px solid var(--line); border-radius: 12px; }
+
+/* buttons: quiet light by default, black for the main action */
+html body button { background: rgba(255,255,255,.8); border: 1px solid var(--line-hi); border-radius: 8px; font: 500 13.5px var(--font); }
+html body button:hover { background: #fff; border-color: rgba(22,22,24,.22); }
+html body button.primary { background: var(--text); border-color: var(--text); color: #fff; }
+html body button.primary:hover { background: var(--accent-hover); color: #fff; }
+html body button.on { background: var(--text); color: #fff; border-color: var(--text); }
+html body button.on:hover { background: var(--accent-hover); color: #fff; }
+html body button.danger, html body button.hide { background: rgba(225,29,72,.07); border-color: rgba(225,29,72,.18); color: var(--danger); }
+html body .seg, html body .tabs { background: rgba(22,22,24,.05); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+html body .seg button, html body .tabs button { border: 0; background: transparent; }
+html body .seg button.on, html body .tabs button.on { background: #fff; color: var(--text); box-shadow: 0 1px 2px rgba(22,22,24,.12); }
+html body :is(input, select, textarea) { background: rgba(255,255,255,.85); border: 1px solid var(--line-hi); }
+html body :is(input, select, textarea):focus { border-color: var(--text); box-shadow: 0 0 0 3px rgba(22,22,24,.1); }
+html body input[type=checkbox], html body input[type=radio], html body input[type=range] { accent-color: var(--text); }
+html body a { color: var(--text); text-underline-offset: 3px; }
+
+/* numbers read like Gumloop's counters */
+html body :is(.timer, .clock, .score, .num, .count, td.num, input[type=number], code, kbd) { font-family: var(--mono); letter-spacing: -.02em; }
+html body :is(.pill, .badge) { background: rgba(255,255,255,.75); border: 1px solid var(--line); color: var(--muted); }
+html body .pill.ok { background: rgba(34,197,94,.1); border-color: rgba(34,197,94,.25); color: #15803d; }
+html body .pill.bad { background: rgba(225,29,72,.08); border-color: rgba(225,29,72,.2); color: var(--danger); }
+html body th { font: 500 12px var(--font); color: var(--muted); }
+
+/* sidebar from ui/shell.js: frosted, with colour-blob icons */
+#dbside { background: rgba(255,255,255,.5) !important; -webkit-backdrop-filter: var(--glass); backdrop-filter: var(--glass); }
+#dbside .sb-brand { font: 500 15px var(--display) !important; letter-spacing: -.03em !important; }
+#dbside .sb-brand i { width: 22px !important; height: 22px !important; border-radius: 7px !important; background: var(--text) !important; position: relative; }
+#dbside .sb-brand i::after { content: ""; position: absolute; inset: 6px; border-radius: 50% 50% 46% 54% / 58% 52% 48% 42%; background: #fff; }
+#dbside .sb-t { background: rgba(255,255,255,.7) !important; border: 1px solid var(--line); box-shadow: none !important; }
+#dbside .sb-i span.ic { width: 20px !important; height: 20px; border-radius: 6px; align-items: center; justify-content: center; background: var(--c, var(--purple)); color: #fff !important; }
+#dbside .sb-i span.ic svg { width: 12px; height: 12px; }
+#dbside .sb-g .sb-i:nth-of-type(5n+1) { --c: var(--purple); }
+#dbside .sb-g .sb-i:nth-of-type(5n+2) { --c: var(--green); }
+#dbside .sb-g .sb-i:nth-of-type(5n+3) { --c: var(--pink); }
+#dbside .sb-g .sb-i:nth-of-type(5n+4) { --c: var(--blue); }
+#dbside .sb-g .sb-i:nth-of-type(5n+5) { --c: var(--amber); }
+#dbside .sb-foot .sb-i span.ic, #dbside #sbObsBtn span.ic { --c: #161618; }
+#dbside .sb-i.on { background: rgba(22,22,24,.06) !important; font-weight: 500 !important; }
+#dbside .sb-i.on::before { display: none; }
+#dbside .sb-obs button em { font-family: var(--mono) !important; }

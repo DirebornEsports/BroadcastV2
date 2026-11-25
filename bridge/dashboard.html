@@ -2,135 +2,261 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<title>Direborn Studio - Kamera</title>
+<title>Kamera · Direborn Studio</title>
 <style>
-  /* barebone until phase 4: white, grey, lines, boxes, no animation */
-  body { font: 14px system-ui, sans-serif; margin: 16px; color: #111; background: #fff; }
-  h1 { font-size: 18px; margin: 0 0 8px; }
-  h2 { font-size: 15px; margin: 20px 0 8px; }
-  table { border-collapse: collapse; width: 100%; }
-  th, td { border: 1px solid #ccc; padding: 4px 8px; text-align: left; vertical-align: top; }
-  th { background: #f2f2f2; }
-  button, input, select { font: inherit; padding: 3px 8px; border: 1px solid #999; background: #fff; }
-  button:hover { background: #eee; }
-  .box { border: 1px solid #ccc; padding: 8px 12px; margin-bottom: 12px; }
-  .muted { color: #666; }
-  .live { font-weight: 600; }
-  .err { color: #a00; }
-  code { background: #f2f2f2; padding: 0 4px; }
-  .tabs button { border-bottom: none; margin-right: 4px; }
-  .tabs button.on { background: #e6e6e6; font-weight: 600; }
-  .tabs { border-bottom: 1px solid #999; margin: 12px 0; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px; }
-  .cell { border: 1px solid #ccc; padding: 6px; }
-  .pic { width: 100%; aspect-ratio: 16 / 9; background: #eee; display: flex; align-items: center; justify-content: center; color: #666; }
-  .pic img { width: 100%; height: 100%; object-fit: contain; }
+  /* Phase 4 design (same language as hub/public/ui/studio.css): Gumloop product UI in frosted Apple glass. */
+  :root {
+    --font: "Geist", "Segoe UI Variable Text", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --display: "Gellix", "Geist", "Segoe UI Variable Display", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --mono: "Geist Mono", "JetBrains Mono", ui-monospace, "SF Mono", Consolas, monospace;
+    --ink: #161618; --soft: rgba(22,22,24,.6); --faint: rgba(22,22,24,.42); --line: rgba(22,22,24,.08); --fill: rgba(22,22,24,.04);
+    --pink: #ff4d8d; --purple: #8b5cf6; --green: #22c55e; --blue: #38bdf8; --amber: #f59e0b; --red: #e11d48;
+    --glass: saturate(180%) blur(32px);
+    --card: 0 1px 0 rgba(255,255,255,.75) inset, 0 0 0 1px var(--line), 0 10px 30px rgba(22,22,24,.05);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { font: 14px/1.45 var(--font); color: var(--ink); -webkit-font-smoothing: antialiased; min-height: 100vh;
+    background:
+      radial-gradient(520px 520px at -4% -6%, rgba(255,143,184,.42), transparent 70%),
+      radial-gradient(560px 560px at 104% 18%, rgba(182,156,255,.42), transparent 70%),
+      radial-gradient(520px 480px at 40% 110%, rgba(134,239,172,.36), transparent 70%),
+      radial-gradient(420px 380px at 82% 104%, rgba(125,211,252,.36), transparent 70%), #f6f6f7 fixed; }
+  .blob { display: inline-block; width: 11px; height: 11px; border-radius: 50% 50% 46% 54% / 58% 52% 48% 42%; flex: none; }
+  button, select, input { font: inherit; color: inherit; }
+
+  /* sidebar (same items as the hub panels' sidebar) */
+  .side { position: fixed; inset: 0 auto 0 0; width: 236px; padding: 16px 10px; display: flex; flex-direction: column; gap: 4px;
+    background: rgba(255,255,255,.5); -webkit-backdrop-filter: var(--glass); backdrop-filter: var(--glass); border-right: 1px solid var(--line); }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 14px; font: 500 15px var(--display); letter-spacing: -.03em; }
+  .mascot { width: 22px; height: 22px; border-radius: 7px; background: var(--ink); display: grid; place-items: center; }
+  .mascot::after { content: ""; width: 10px; height: 10px; border-radius: 50% 50% 46% 54% / 58% 52% 48% 42%; background: #fff; }
+  .group { font-size: 12px; color: var(--faint); padding: 12px 8px 4px; }
+  .side a { display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; color: var(--ink); text-decoration: none; font-size: 13.5px; }
+  .side a:hover { background: rgba(22,22,24,.04); }
+  .side a.on { background: rgba(22,22,24,.06); font-weight: 500; }
+  .ic { width: 20px; height: 20px; border-radius: 6px; display: grid; place-items: center; background: var(--c); }
+  .ic::after { content: ""; width: 8px; height: 8px; border-radius: 50% 50% 46% 54% / 58% 52% 48% 42%; background: rgba(255,255,255,.95); }
+  .side .foot { margin-top: auto; padding: 10px 8px 0; border-top: 1px solid var(--line); font-size: 12px; color: var(--soft); }
+  .side .foot b { display: block; color: var(--ink); font-weight: 500; font-size: 13px; }
+
+  main { margin-left: 236px; padding: 30px 36px 48px; max-width: 1460px; }
+  .hero { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+  .hero .mascot { width: 44px; height: 44px; border-radius: 13px; margin-bottom: 14px; }
+  .hero .mascot::after { width: 18px; height: 18px; }
+  h1 { font: 500 34px/1.1 var(--display); letter-spacing: -.04em; }
+  .sub { color: var(--soft); margin-top: 6px; font-size: 15px; }
+  .chips { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,.7); color: var(--soft); }
+  .chip.err { color: var(--red); border-color: rgba(225,29,72,.25); background: rgba(225,29,72,.06); }
+  .btn { border: 1px solid var(--ink); background: var(--ink); color: #fff; font-weight: 500; font-size: 13px; padding: 7px 13px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+  .btn:hover { background: #2c2c30; }
+  .btn.light { background: rgba(255,255,255,.85); color: var(--ink); border-color: rgba(22,22,24,.14); }
+  .btn.light:hover { background: #fff; }
+  .btn.sm { padding: 3px 8px; font-size: 12px; border-radius: 7px; }
+  .actions { display: flex; gap: 8px; }
+
+  .glass { background: rgba(255,255,255,.62); -webkit-backdrop-filter: var(--glass); backdrop-filter: var(--glass); box-shadow: var(--card); border-radius: 14px; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); margin: 24px 0 14px; }
+  .kpis div { padding: 14px 16px; }
+  .kpis div + div { border-left: 1px solid var(--line); }
+  .kpis span { font-size: 12px; color: var(--soft); }
+  .kpis b { display: block; font: 500 30px/1.15 var(--mono); letter-spacing: -.05em; }
+
+  .two { display: grid; grid-template-columns: 1.1fr 1fr; gap: 14px; margin-bottom: 26px; }
+  .panel { padding: 16px 18px; }
+  .panel h3 { font: 500 15px var(--display); letter-spacing: -.02em; display: flex; justify-content: space-between; align-items: baseline; }
+  .panel h3 small { font: 400 12px var(--mono); color: var(--faint); }
+  .delay { display: flex; align-items: end; justify-content: space-between; margin-top: 10px; }
+  .big { font: 500 56px/1 var(--mono); letter-spacing: -.06em; }
+  .big small { font: 400 15px var(--font); color: var(--soft); letter-spacing: 0; margin-left: 6px; }
+  .step { display: flex; gap: 6px; align-items: center; }
+  .sq { width: 36px; height: 36px; border-radius: 9px; border: 1px solid rgba(22,22,24,.14); background: rgba(255,255,255,.85); font-size: 16px; cursor: pointer; }
+  .sq:hover { background: #fff; }
+  .num { width: 84px; padding: 7px 8px; border-radius: 8px; border: 1px solid rgba(22,22,24,.14); background: rgba(255,255,255,.85); font: 500 14px var(--mono); }
+  .seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: var(--fill); border: 1px solid var(--line); margin-top: 14px; }
+  .seg button { border: 0; background: none; font-size: 12.5px; font-weight: 500; color: var(--soft); padding: 5px 11px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+  .seg button.on { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(22,22,24,.12); }
+  .hint { font-size: 12.5px; color: var(--soft); margin-top: 12px; }
+  .auto { display: grid; grid-template-columns: 1fr 210px; gap: 16px; align-items: center; margin-top: 8px; }
+  .auto .name { font: 500 22px var(--display); letter-spacing: -.03em; display: flex; align-items: center; gap: 8px; min-height: 30px; }
+  .auto select { margin-top: 10px; }
+
+  .section { display: flex; align-items: center; justify-content: space-between; margin: 0 0 10px; }
+  .section h2 { font: 500 18px var(--display); letter-spacing: -.03em; display: flex; align-items: center; gap: 8px; }
+  .section span { color: var(--faint); font: 12px var(--mono); }
+  .grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 24px; }
+  .cam { padding: 6px; border-radius: 14px; }
+  .cam.selected { box-shadow: 0 0 0 2px var(--ink), 0 10px 30px rgba(22,22,24,.08); }
+  .pic { aspect-ratio: 16 / 9; border-radius: 9px; position: relative; display: grid; place-items: center; overflow: hidden; background: #111; color: var(--faint); font-size: 12px; }
+  .pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .pic.wait { background: repeating-linear-gradient(135deg, rgba(22,22,24,.045) 0 8px, transparent 8px 16px); }
+  .tag { position: absolute; left: 7px; top: 7px; font: 500 10.5px var(--mono); padding: 2px 7px; border-radius: 999px; background: rgba(255,255,255,.88); color: var(--ink); display: flex; align-items: center; gap: 5px; z-index: 1; }
+  .tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+  .tag.onair { left: auto; right: 7px; background: var(--ink); color: #fff; }
+  .tag.onair::before { background: var(--red); }
+  .meta { padding: 8px 4px 2px; }
+  .meta .top { display: flex; align-items: center; gap: 6px; }
+  .meta select { flex: 1; min-width: 0; border: 0; background: transparent; font-weight: 500; font-size: 13.5px; letter-spacing: -.01em; padding: 0; cursor: pointer; text-overflow: ellipsis; }
+  .meta small { display: flex; justify-content: space-between; color: var(--faint); font: 11px var(--mono); margin-top: 4px; gap: 6px; }
+  .meta small .warn { color: var(--red); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font: 500 12px var(--font); color: var(--soft); padding: 8px 14px; border-bottom: 1px solid var(--line); }
+  td { padding: 8px 14px; border-bottom: 1px solid var(--line); }
+  tr:last-child td { border-bottom: 0; }
+  td.pin { font: 500 15px var(--mono); letter-spacing: .04em; }
+  select.plain { border: 1px solid rgba(22,22,24,.14); background: rgba(255,255,255,.85); border-radius: 8px; padding: 5px 8px; font-size: 12.5px; }
+  .muted { color: var(--soft); }
+  [hidden] { display: none !important; }
 </style>
 </head>
 <body>
-<h1>Direborn Studio - Kamera</h1>
-<p><a href="http://localhost:8080/control">&larr; Kembali ke control panel</a></p>
-<div id="hub" class="box err" hidden></div>
+<aside class="side">
+  <div class="brand"><i class="mascot"></i>Direborn Studio</div>
+  <div class="group">Siaran</div>
+  <a href="http://localhost:8080/control"><i class="ic" style="--c:var(--purple)"></i>Draft control</a>
+  <a href="/" class="on"><i class="ic" style="--c:var(--green)"></i>Kamera</a>
+  <div class="group">Turnamen</div>
+  <a href="http://localhost:8080/teams"><i class="ic" style="--c:var(--purple)"></i>Teams</a>
+  <a href="http://localhost:8080/stats"><i class="ic" style="--c:var(--green)"></i>Statistik</a>
+  <a href="http://localhost:8080/bracket"><i class="ic" style="--c:var(--pink)"></i>Bracket</a>
+  <a href="http://localhost:8080/cards"><i class="ic" style="--c:var(--blue)"></i>Stats cards</a>
+  <div class="group">Lainnya</div>
+  <a href="http://localhost:8080/mix"><i class="ic" style="--c:var(--purple)"></i>Mix draw</a>
+  <div class="foot"><b>Studio</b><span id="where"></span></div>
+</aside>
 
-<div class="tabs"><button data-tab="kamera" class="on">Kamera</button><button data-tab="cek">Cek cam</button></div>
-
-<section id="tab-kamera">
-  <div class="box">
-    <b>Delay</b>: <span id="delay">-</span> detik
-    <input id="delayIn" type="number" min="0" max="1020" step="0.1" style="width:90px">
-    <button data-set>Set</button>
-    <button data-nudge="-0.5">-0.5</button> <button data-nudge="0.5">+0.5</button>
-    <button data-preset="0">0</button> <button data-preset="900">15 menit</button>
-    <span class="muted">Sama untuk semua kamera.</span>
+<main>
+  <div class="hero">
+    <div>
+      <i class="mascot" style="display:grid"></i>
+      <h1>Kamera</h1>
+      <div class="sub">Semua cam pemain, satu delay, siap untuk OBS.</div>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="actions"><button class="btn light" id="showPins">Daftar PIN</button><button class="btn" id="sync">Buat PIN dari database tim</button></div>
   </div>
 
-  <div class="box">
-    <b>Cam otomatis</b> <code>udp://127.0.0.1:<span id="autoPort">5000</span></code> - sekarang tampil: <b id="auto">-</b><br>
-    <label><input type="radio" name="automode" value="gsi"> Ikut GSI (hero yang dipilih observer: <span id="sel">-</span>)</label><br>
-    <label><input type="radio" name="automode" value="manual"> Manual: tampilkan slot</label>
-    <select id="autoSlot"></select><br>
-    <label><input type="radio" name="automode" value="off"> Mati</label>
+  <div class="kpis glass">
+    <div><span>Kamera live</span><b id="kLive">-</b></div>
+    <div><span>Delay</span><b id="kDelay">-</b></div>
+    <div><span>Paket hilang</span><b id="kLost">-</b></div>
+    <div><span>Bitrate total</span><b id="kRate">-</b></div>
   </div>
 
-  <h2>Slot kamera</h2>
-  <p class="muted">Nama slot ikut tim kiri / kanan di control panel. Pilih nama lain untuk mengisi slot secara manual (tanpa GSI / tanpa tim di-load).</p>
-  <table>
-    <thead><tr><th>Slot</th><th>Nama</th><th>PIN</th><th>Status</th><th>OBS Media Source</th><th></th></tr></thead>
-    <tbody id="slots"></tbody>
-  </table>
+  <div class="two">
+    <div class="panel glass">
+      <h3>Delay <small>sama untuk semua kamera</small></h3>
+      <div class="delay">
+        <div class="big"><span id="delay">-</span><small>detik</small></div>
+        <div class="step"><button class="sq" data-nudge="-0.5">−</button><button class="sq" data-nudge="0.5">+</button>
+          <input class="num" id="delayIn" type="number" min="0" max="1020" step="0.1"><button class="btn light" id="setDelay">Set</button></div>
+      </div>
+      <div class="seg" id="presets"><button data-preset="0">Tanpa delay</button><button data-preset="10">10 dtk</button><button data-preset="120">DotaTV 2 mnt</button><button data-preset="900">15 mnt</button></div>
+      <div class="hint">Menaikkan delay: gambar diam sebentar sampai buffer cukup. Menurunkan: loncat ke keyframe berikutnya.</div>
+    </div>
+    <div class="panel glass">
+      <h3>Cam otomatis <small>udp://127.0.0.1:<span id="autoPort">5000</span></small></h3>
+      <div class="auto">
+        <div>
+          <div class="name" id="autoName">-</div>
+          <div class="hint" id="autoWhy" style="margin-top:2px"></div>
+          <div class="seg" id="autoMode"><button data-mode="gsi">Ikut GSI</button><button data-mode="manual">Manual</button><button data-mode="off">Mati</button></div>
+          <div><select class="plain" id="autoSlot" hidden></select></div>
+        </div>
+        <div class="cam glass" style="padding:5px"><div class="pic wait" id="autoPic">-</div></div>
+      </div>
+    </div>
+  </div>
 
-  <h2>Semua PIN</h2>
-  <p><button id="sync">Buat PIN dari database tim</button> <span class="muted">PIN lama tetap sama; pemain baru dapat PIN baru.</span></p>
-  <table>
-    <thead><tr><th>PIN</th><th>Nama</th><th>Tim</th><th>Jenis</th></tr></thead>
-    <tbody id="pins"></tbody>
-  </table>
-</section>
+  <div class="section"><h2><i class="blob" style="background:var(--green)"></i><span id="leftName" style="font:inherit;color:inherit">Tim kiri</span></h2><span>kiri · :5001–5005</span></div>
+  <div class="grid" id="gL"></div>
+  <div class="section"><h2><i class="blob" style="background:var(--pink)"></i><span id="rightName" style="font:inherit;color:inherit">Tim kanan</span></h2><span>kanan · :5006–5010</span></div>
+  <div class="grid" id="gR"></div>
+  <div class="section"><h2><i class="blob" style="background:var(--ink)"></i>Team cam</h2><span>:5011–5012</span></div>
+  <div class="grid" id="gT"></div>
 
-<section id="tab-cek" hidden>
-  <p class="muted">Gambar langsung (tanpa delay) dari tiap slot, diperbarui tiap keyframe (~2 detik).</p>
-  <div class="grid" id="cek"></div>
-  <h2>Cam online yang belum ada di slot</h2>
-  <table>
-    <thead><tr><th>Nama</th><th>Mic</th><th>Paket hilang dari pemain</th><th>Taruh di slot</th></tr></thead>
-    <tbody id="loose"></tbody>
-  </table>
-</section>
+  <div id="looseBox" hidden>
+    <div class="section"><h2><i class="blob" style="background:var(--amber)"></i>Online, belum di slot</h2><span>taruh di slot mana pun</span></div>
+    <div class="glass" style="margin-bottom:24px"><table><thead><tr><th>Nama</th><th>Mic</th><th>Paket hilang dari pemain</th><th>Taruh di slot</th></tr></thead><tbody id="loose"></tbody></table></div>
+  </div>
+
+  <div id="pinBox" hidden>
+    <div class="section"><h2><i class="blob" style="background:var(--purple)"></i>Semua PIN</h2><span>PIN lama tidak berubah</span></div>
+    <div class="glass"><table><thead><tr><th>PIN</th><th>Nama</th><th>Tim</th><th>Jenis</th></tr></thead><tbody id="pins"></tbody></table></div>
+  </div>
+</main>
 
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const post = (p, b) => fetch(p, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(b || {}) });
-let d = null, tab = 'kamera', shape = '';
+let d = null, shape = '';
+$('where').textContent = location.host;
 
-function statusText(s) {
-  if (!s.name) return '<span class="muted">kosong</span>';
-  if (!s.running) return 'mati';
-  const st = s.status;
-  if (!st || !st.connected) return 'menunggu cam...';
-  return `<span class="live">LIVE</span> ${st.fps} fps, ${st.kbps} kbps, buffer ${st.buffered}s, hilang ${st.lost}${st.audio ? ', mic' : ''}`;
-}
-
-// a <select> of names: follow the teams, or one of the online cams / PIN names
+const live = (s) => s.running && s.status && s.status.connected;
 function nameSelect(s) {
-  const online = d.online.map((c) => c.name), all = d.pins.map((p) => p.name);
-  const names = [...new Set([...online, ...all, ...(s.manual ? [s.name] : [])])];
+  const online = d.online.map((c) => c.name), names = [...new Set([...online, ...d.pins.map((p) => p.name), ...(s.manual ? [s.name] : [])])];
   const opt = (v, label, sel) => `<option value="${esc(v)}"${sel ? ' selected' : ''}>${esc(label)}</option>`;
-  return `<select data-slot="${s.slot}">${opt('', s.manual ? '(ikut tim)' : (s.name ? `${s.name} (ikut tim)` : '(ikut tim: kosong)'), !s.manual)}` +
+  return `<select data-slot="${s.slot}" title="Pilih pemain untuk slot ini">${opt('', s.manual ? '(ikut tim)' : (s.name || 'Kosong') + (s.name ? '' : ''), !s.manual)}` +
     names.map((n) => opt(n, (online.includes(n) ? '● ' : '') + n, s.manual && n === s.name)).join('') + '</select>';
+}
+function tile(s) {
+  return `<div class="cam glass" id="cam-${s.slot}"><div class="pic wait" id="pic-${s.slot}">${s.name ? 'Menunggu cam' : 'Kosong'}</div>
+    <div class="meta"><div class="top"><i class="blob" style="width:9px;height:9px;background:${s.slot[0] === 'L' ? 'var(--green)' : s.slot[0] === 'R' ? 'var(--pink)' : 'var(--ink)'}"></i>${nameSelect(s)}
+      ${s.name ? `<button class="btn light sm" data-restart="${s.slot}" title="Sambung ulang">↻</button>` : ''}</div>
+    <small><span id="st-${s.slot}"></span><span>:${s.port}</span></small></div></div>`;
 }
 
 function render() {
-  $('hub').hidden = !d.hubError;
-  $('hub').textContent = d.hubError ? 'Hub tidak tersambung: ' + d.hubError : '';
-  $('delay').textContent = d.delay;
+  const named = d.slots.filter((s) => s.name), on = d.slots.filter(live);
+  const lost = on.reduce((a, s) => a + (s.status.lost || 0), 0), kbps = on.reduce((a, s) => a + (s.status.kbps || 0), 0);
+  $('kLive').textContent = `${on.length}/${named.length}`;
+  $('kDelay').textContent = `${d.delay}s`;
+  $('kLost').textContent = lost;
+  $('kRate').textContent = kbps >= 1000 ? (kbps / 1000).toFixed(1) + 'M' : kbps + 'k';
+  $('delay').textContent = d.delay.toFixed(1);
   if (document.activeElement !== $('delayIn')) $('delayIn').value = d.delay;
-  $('autoPort').textContent = d.autoPort;
-  $('auto').textContent = d.autoSlot ? `${d.autoSlot} ${(d.slots.find((s) => s.slot === d.autoSlot) || {}).name || ''}` : '-';
-  $('sel').textContent = d.selected || '-';
-  for (const r of document.querySelectorAll('input[name=automode]')) r.checked = r.value === d.auto.mode;
-  if (document.activeElement !== $('autoSlot')) $('autoSlot').innerHTML = d.slots.map((s) => `<option value="${s.slot}"${s.slot === d.auto.slot ? ' selected' : ''}>${s.slot} ${esc(s.name)}</option>`).join('');
+  for (const b of $('presets').children) b.classList.toggle('on', Number(b.dataset.preset) === d.delay);
+  $('chips').innerHTML = [
+    `<span class="chip"><i class="blob" style="width:8px;height:8px;background:var(--green)"></i>LAN</span>`,
+    d.teams.left || d.teams.right ? `<span class="chip">${esc(d.teams.left || '?')} vs ${esc(d.teams.right || '?')}</span>` : '',
+    d.selected ? `<span class="chip">GSI memilih: ${esc(d.selected)}</span>` : '',
+    d.hubError ? `<span class="chip err">Hub tidak tersambung</span>` : '',
+  ].join('');
+  $('leftName').textContent = d.teams.left || 'Tim kiri';
+  $('rightName').textContent = d.teams.right || 'Tim kanan';
 
-  // rebuild rows only when names change, so an open dropdown is not reset every second
+  // auto cam
+  $('autoPort').textContent = d.autoPort;
+  for (const b of $('autoMode').children) b.classList.toggle('on', b.dataset.mode === d.auto.mode);
+  $('autoSlot').hidden = d.auto.mode !== 'manual';
+  if (document.activeElement !== $('autoSlot')) $('autoSlot').innerHTML = d.slots.map((s) => `<option value="${s.slot}"${s.slot === d.auto.slot ? ' selected' : ''}>${s.slot} · ${esc(s.name || 'kosong')}</option>`).join('');
+  const shown = d.slots.find((s) => s.slot === d.autoSlot);
+  $('autoName').innerHTML = shown ? `<i class="blob" style="background:var(--green)"></i>${esc(shown.name)}` : `<span class="muted">${d.auto.mode === 'off' ? 'Mati' : 'Belum ada'}</span>`;
+  $('autoWhy').textContent = d.auto.mode === 'gsi' ? 'Mengikuti hero yang dipilih observer.' : d.auto.mode === 'manual' ? 'Slot dipilih manual.' : 'Port 5000 tidak mengirim gambar.';
+
+  // tiles: rebuilt only when names change, so an open dropdown is not reset every second
   const sig = JSON.stringify([d.slots.map((s) => [s.name, s.manual]), d.online.map((c) => c.name), d.pins.length]);
   if (sig !== shape && !document.activeElement.matches('select[data-slot], select[data-loose]')) {
     shape = sig;
-    $('slots').innerHTML = d.slots.map((s) => `<tr><td>${s.slot}</td><td>${nameSelect(s)}</td><td>${esc(s.pin)}</td>
-      <td id="st-${s.slot}"></td><td><code>udp://127.0.0.1:${s.port}</code></td>
-      <td>${s.name ? `<button data-restart="${s.slot}">Restart</button>` : ''}</td></tr>`).join('');
-    $('cek').innerHTML = d.slots.filter((s) => s.name).map((s) => `<div class="cell"><div class="pic" id="pic-${s.slot}">tidak ada gambar</div>
-      <b>${s.slot}</b> ${esc(s.name)}<br><span id="cs-${s.slot}" class="muted"></span></div>`).join('') || '<p class="muted">Belum ada slot terisi.</p>';
+    $('gL').innerHTML = d.slots.slice(0, 5).map(tile).join('');
+    $('gR').innerHTML = d.slots.slice(5, 10).map(tile).join('');
+    $('gT').innerHTML = d.slots.slice(10).map(tile).join('');
     const inSlot = new Set(d.slots.map((s) => s.name.toLowerCase()));
     const loose = d.online.filter((c) => !inSlot.has(c.name.toLowerCase()));
-    $('loose').innerHTML = loose.map((c) => `<tr><td>${esc(c.name)}</td><td>${c.mic ? 'ya' : '-'}</td><td>${c.lostFromPlayer}</td>
-      <td><select data-loose="${esc(c.name)}"><option value="">pilih slot...</option>${d.slots.map((s) => `<option value="${s.slot}">${s.slot}${s.name ? ' (ganti ' + esc(s.name) + ')' : ''}</option>`).join('')}</select></td></tr>`).join('')
-      || '<tr><td colspan="4" class="muted">Tidak ada.</td></tr>';
-    $('pins').innerHTML = d.pins.map((p) => `<tr><td><b>${esc(p.pin)}</b></td><td>${esc(p.name)}</td><td>${esc(p.team)}</td><td>${p.kind === 'team' ? 'team cam' : 'pemain'}</td></tr>`).join('')
-      || '<tr><td colspan="4" class="muted">Belum ada PIN.</td></tr>';
+    $('looseBox').hidden = !loose.length;
+    $('loose').innerHTML = loose.map((c) => `<tr><td>${esc(c.name)}</td><td>${c.mic ? 'ya' : '-'}</td><td style="font-family:var(--mono)">${c.lostFromPlayer}</td>
+      <td><select class="plain" data-loose="${esc(c.name)}"><option value="">Pilih slot…</option>${d.slots.map((s) => `<option value="${s.slot}">${s.slot}${s.name ? ' (ganti ' + esc(s.name) + ')' : ''}</option>`).join('')}</select></td></tr>`).join('');
+    $('pins').innerHTML = d.pins.map((p) => `<tr><td class="pin">${esc(p.pin)}</td><td>${esc(p.name)}</td><td class="muted">${esc(p.team)}</td><td class="muted">${p.kind === 'team' ? 'team cam' : 'pemain'}</td></tr>`).join('')
+      || '<tr><td colspan="4" class="muted">Belum ada PIN. Tekan "Buat PIN dari database tim".</td></tr>';
   }
   for (const s of d.slots) {
-    const st = $('st-' + s.slot); if (st) st.innerHTML = statusText(s) + (s.manual ? ' <span class="muted">(manual)</span>' : '');
-    const cs = $('cs-' + s.slot); if (cs) cs.innerHTML = statusText(s);
+    const st = $('st-' + s.slot); if (!st) continue;
+    const x = s.status;
+    st.innerHTML = !s.name ? 'slot kosong' : !s.running ? '<span class="warn">receiver mati</span>' : !live(s) ? `PIN ${esc(s.pin) || '-'}` :
+      `${Math.round(x.fps)}fps ${(x.kbps / 1000).toFixed(1)}M${x.audio ? ' mic' : ''}${x.lost ? ` <span class="warn">−${x.lost}</span>` : ''}`;
+    $('cam-' + s.slot).classList.toggle('selected', s.slot === d.autoSlot);
   }
 }
 
@@ -139,44 +265,43 @@ async function refresh() {
   render();
 }
 
-// check pictures: one request per filled slot, only while the tab is open
+// live pictures (no delay): newest keyframe per live slot, every 2 s while the page is visible
+const urls = {};
 async function pictures() {
-  if (tab !== 'cek' || !d) return;
-  for (const s of d.slots.filter((x) => x.name)) {
+  if (!d || document.hidden) return;
+  for (const s of d.slots) {
     const box = $('pic-' + s.slot); if (!box) continue;
+    const auto = s.slot === d.autoSlot;
+    if (!live(s)) { if (box.querySelector('img')) box.innerHTML = s.name ? 'Menunggu cam' : 'Kosong'; box.classList.add('wait'); continue; }
     const r = await fetch(`/studio/snap/${s.slot}?t=${Date.now()}`).catch(() => null);
-    if (!r || !r.ok) { box.textContent = 'tidak ada gambar'; continue; }
+    if (!r || !r.ok) continue;
     const url = URL.createObjectURL(await r.blob());
-    const old = box.querySelector('img');
-    box.innerHTML = `<img src="${url}" alt="">`;
-    if (old) URL.revokeObjectURL(old.src);
+    box.classList.remove('wait');
+    box.innerHTML = `<span class="tag">LIVE</span>${auto ? '<span class="tag onair">ON AIR</span>' : ''}<img src="${url}" alt="">`;
+    if (auto) { $('autoPic').classList.remove('wait'); $('autoPic').innerHTML = `<img src="${url}" alt="">`; }
+    if (urls[s.slot]) URL.revokeObjectURL(urls[s.slot]);
+    urls[s.slot] = url;
   }
+  if (!d.autoSlot) { $('autoPic').classList.add('wait'); $('autoPic').textContent = '-'; }
 }
 
 document.addEventListener('click', async (e) => {
   const b = e.target.closest('button'); if (!b) return;
-  if (b.dataset.tab) {
-    tab = b.dataset.tab;
-    for (const t of document.querySelectorAll('[data-tab]')) t.classList.toggle('on', t.dataset.tab === tab);
-    $('tab-kamera').hidden = tab !== 'kamera'; $('tab-cek').hidden = tab !== 'cek';
-    pictures(); return;
-  }
-  if (b.hasAttribute('data-set')) await post('/studio/delay', { delay: Number($('delayIn').value) });
   if (b.dataset.nudge) await post('/studio/delay', { delay: Math.max(0, d.delay + Number(b.dataset.nudge)) });
   if (b.dataset.preset) await post('/studio/delay', { delay: Number(b.dataset.preset) });
+  if (b.id === 'setDelay') await post('/studio/delay', { delay: Number($('delayIn').value) });
+  if (b.dataset.mode) await post('/studio/auto', { mode: b.dataset.mode, slot: $('autoSlot').value || d.auto.slot });
   if (b.dataset.restart) await post('/studio/restart', { slot: b.dataset.restart });
-  if (b.id === 'sync') { b.disabled = true; const r = await post('/studio/pins/sync'); b.disabled = false; if (!r.ok) alert('Gagal: ' + await r.text()); }
+  if (b.id === 'showPins') { $('pinBox').hidden = !$('pinBox').hidden; b.textContent = $('pinBox').hidden ? 'Daftar PIN' : 'Tutup PIN'; }
+  if (b.id === 'sync') { b.disabled = true; const r = await post('/studio/pins/sync'); b.disabled = false; if (!r.ok) alert('Gagal: ' + await r.text()); else { $('pinBox').hidden = false; $('showPins').textContent = 'Tutup PIN'; } shape = ''; }
   refresh();
 });
 document.addEventListener('change', async (e) => {
   const t = e.target;
-  if (t.name === 'automode' || t.id === 'autoSlot') {
-    const mode = document.querySelector('input[name=automode]:checked').value;
-    await post('/studio/auto', { mode, slot: $('autoSlot').value });
-  }
-  if (t.dataset.slot) { await post('/studio/slot', { slot: t.dataset.slot, name: t.value }); t.blur(); }
-  if (t.dataset.loose && t.value) { await post('/studio/slot', { slot: t.value, name: t.dataset.loose }); t.blur(); }
-  shape = ''; refresh();
+  if (t.id === 'autoSlot') await post('/studio/auto', { mode: 'manual', slot: t.value });
+  if (t.dataset.slot) await post('/studio/slot', { slot: t.dataset.slot, name: t.value });
+  if (t.dataset.loose && t.value) await post('/studio/slot', { slot: t.value, name: t.dataset.loose });
+  t.blur(); shape = ''; refresh();
 });
 refresh();
 setInterval(refresh, 1000);

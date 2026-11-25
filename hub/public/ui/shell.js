@@ -20,7 +20,7 @@
     { group: 'Siaran', items: [
       { href: '/control', label: 'Draft control', icon: 'grid' },
       // 2.0: player/team cams are native now (Direborn Cam app -> bridge dashboard); v1's browser cams are retired
-      { href: 'http://localhost:8787/', label: 'Kamera 2.0', icon: 'video' },
+      { href: 'http://localhost:8787/', label: 'Kamera', icon: 'video' },
     ] },
     { group: 'Turnamen', items: [
       { href: '/teams', label: 'Teams', icon: 'users' },
@@ -84,7 +84,7 @@
     // the old link buttons in each page header are now in the sidebar
     document.querySelectorAll('header a').forEach(function (a) {
       var h = (a.getAttribute('href') || '').replace(/\/+$/, '');
-      if (navHrefs[h] || h === '/logout' || h === '/stats' || h === '/cards') a.remove();
+      if (navHrefs[h] || h === '/logout' || h === '/stats' || h === '/cards' || h === '/camcontrol' || h === '/lihat') a.remove();   // v1 browser cams are retired
     });
     var side = document.createElement('aside'); side.id = 'dbside';
     side.innerHTML =

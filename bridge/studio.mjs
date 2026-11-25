@@ -205,6 +205,7 @@ export async function studioRoute(req, url, body) {
         pin: (pins.find((x) => s.name && x.name.toLowerCase() === s.name.toLowerCase()) || {}).pin || '' })),
       auto: settings.auto,
       online: onlineCams(),
+      teams: hubState ? { left: hubState.teams.left.name || '', right: hubState.teams.right.name || '' } : { left: '', right: '' },
       pins,
     })];
   }

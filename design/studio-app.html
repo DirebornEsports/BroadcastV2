@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Mockup 2 — Direborn Studio (Gumloop x glass)</title>
+<style>
+  /* Phase 4 concept v2: Gumloop's product UI (off-white, 1px borders, medium geometric type, mono numbers,
+     colour-blob icons, black buttons) in a frosted Apple glass window over soft colour blobs. */
+  :root {
+    --sans: "Gellix", "Geist", "Segoe UI Variable Display", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --text: "Geist", "Segoe UI Variable Text", -apple-system, "Segoe UI", system-ui, sans-serif;
+    --mono: "Geist Mono", "JetBrains Mono", ui-monospace, "SF Mono", Consolas, monospace;
+    --ink: #161618; --soft: rgba(22,22,24,.62); --faint: rgba(22,22,24,.42); --line: rgba(22,22,24,.08); --fill: rgba(22,22,24,.04);
+    --pink: #ff4d8d; --purple: #8b5cf6; --green: #22c55e; --blue: #38bdf8; --amber: #f59e0b; --red: #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { font: 14px/1.45 var(--text); color: var(--ink); background: #f6f6f7; -webkit-font-smoothing: antialiased; padding: 36px; min-height: 100vh; position: relative; overflow-x: hidden; }
+  /* soft colour blobs behind the glass */
+  .aura { position: fixed; border-radius: 50%; filter: blur(90px); opacity: .55; z-index: 0; }
+  .blob { display: inline-block; width: 12px; height: 12px; border-radius: 50% 50% 46% 54% / 58% 52% 48% 42%; flex: none; }
+
+  .window { position: relative; z-index: 1; max-width: 1440px; margin: 0 auto; min-height: calc(100vh - 72px); display: grid; grid-template-rows: 44px 1fr;
+    border-radius: 18px; overflow: hidden; background: rgba(255,255,255,.58); backdrop-filter: blur(36px) saturate(180%); -webkit-backdrop-filter: blur(36px) saturate(180%);
+    border: 1px solid rgba(255,255,255,.7); box-shadow: 0 1px 0 rgba(255,255,255,.8) inset, 0 30px 90px rgba(22,22,24,.12), 0 0 0 1px var(--line); }
+  .titlebar { display: flex; align-items: center; gap: 8px; padding: 0 16px; border-bottom: 1px solid var(--line); }
+  .titlebar i { width: 12px; height: 12px; border-radius: 50%; }
+  .titlebar span { margin: 0 auto; font: 500 13px var(--text); color: var(--soft); transform: translateX(-30px); }
+  .body { display: grid; grid-template-columns: 236px 1fr; min-height: 0; }
+
+  /* sidebar */
+  .side { border-right: 1px solid var(--line); padding: 14px 10px; display: flex; flex-direction: column; background: rgba(255,255,255,.35); }
+  .new { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 7px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.8); font: 500 13px var(--text); margin-bottom: 14px; }
+  .group { font-size: 12px; color: var(--faint); padding: 10px 8px 4px; }
+  .nav a { display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; color: var(--ink); text-decoration: none; font-size: 13.5px; }
+  .nav a.on { background: rgba(22,22,24,.06); font-weight: 500; }
+  .ic { width: 18px; height: 18px; border-radius: 5px; display: grid; place-items: center; background: var(--c); }
+  .ic::after { content: ""; width: 7px; height: 7px; border-radius: 50% 50% 46% 54% / 58% 52% 48% 42%; background: rgba(255,255,255,.95); }
+  .side .foot { margin-top: auto; padding: 10px 8px; border-top: 1px solid var(--line); font-size: 12px; color: var(--soft); }
+  .side .foot b { display: block; color: var(--ink); font-weight: 500; font-size: 13px; }
+
+  /* main */
+  main { padding: 30px 36px 44px; overflow: auto; }
+  .hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+  .hero .mascot { width: 44px; height: 44px; border-radius: 13px; background: var(--ink); display: grid; place-items: center; margin-bottom: 14px; }
+  .hero .mascot::after { content: ""; width: 18px; height: 18px; border-radius: 50% 50% 46% 54% / 58% 52% 48% 42%; background: #fff; }
+  h1 { font: 500 34px/1.1 var(--sans); letter-spacing: -.04em; }
+  .sub { color: var(--soft); margin-top: 6px; font-size: 15px; }
+  .chips { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,.7); color: var(--soft); }
+  .btn { white-space: nowrap; border: 0; background: var(--ink); color: #fff; font: 500 13px var(--text); padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+  .btn.light { background: rgba(255,255,255,.85); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+  .actions { display: flex; gap: 8px; }
+
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); margin: 26px 0 18px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.55); }
+  .kpis div { padding: 14px 16px; }
+  .kpis div + div { border-left: 1px solid var(--line); }
+  .kpis span { font-size: 12px; color: var(--soft); }
+  .kpis b { display: block; font: 500 30px/1.15 var(--mono); letter-spacing: -.05em; }
+
+  .two { display: grid; grid-template-columns: 1.15fr 1fr; gap: 14px; margin-bottom: 26px; }
+  .panel { border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.6); padding: 16px 18px; }
+  .panel h3 { font: 500 15px var(--sans); letter-spacing: -.02em; display: flex; align-items: center; justify-content: space-between; }
+  .panel h3 small { font: 400 12px var(--text); color: var(--faint); }
+  .delay { display: flex; align-items: end; justify-content: space-between; margin-top: 10px; }
+  .big { font: 500 56px/1 var(--mono); letter-spacing: -.06em; }
+  .big small { font: 400 15px var(--text); color: var(--soft); letter-spacing: 0; margin-left: 6px; }
+  .step { display: flex; gap: 6px; }
+  .sq { width: 36px; height: 36px; border-radius: 9px; border: 1px solid var(--line); background: rgba(255,255,255,.85); font: 500 16px var(--text); cursor: pointer; }
+  .seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 9px; background: var(--fill); border: 1px solid var(--line); margin-top: 14px; }
+  .seg button { white-space: nowrap; border: 0; background: none; font: 500 12.5px var(--text); color: var(--soft); padding: 5px 11px; border-radius: 7px; cursor: pointer; }
+  .seg button.on { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(22,22,24,.12); }
+  .row { display: flex; align-items: center; gap: 12px; margin-top: 14px; font-size: 12.5px; color: var(--soft); }
+
+  .auto { display: grid; grid-template-columns: 1fr 200px; gap: 16px; align-items: center; margin-top: 10px; }
+  .auto .name { font: 500 22px var(--sans); letter-spacing: -.03em; display: flex; align-items: center; gap: 8px; }
+  .auto p { color: var(--soft); font-size: 13px; }
+
+  .section { display: flex; align-items: center; justify-content: space-between; margin: 0 0 10px; }
+  .section h2 { font: 500 18px var(--sans); letter-spacing: -.03em; display: flex; align-items: center; gap: 8px; }
+  .section span { color: var(--faint); font-size: 12.5px; }
+  .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 24px; }
+  .cam { border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.65); padding: 6px; }
+  .pic { aspect-ratio: 16 / 10; border-radius: 9px; position: relative; display: grid; place-items: center; overflow: hidden; }
+  .pic.wait { background: repeating-linear-gradient(135deg, rgba(22,22,24,.045) 0 8px, transparent 8px 16px); color: var(--faint); font-size: 12px; }
+  .pic .face { width: 46px; height: 46px; border-radius: 50% 50% 46% 54% / 58% 52% 48% 42%; background: rgba(255,255,255,.92); }
+  .pic .tag { position: absolute; left: 7px; top: 7px; font: 500 10.5px var(--mono); padding: 2px 7px; border-radius: 999px; background: rgba(255,255,255,.85); color: var(--ink); display: flex; align-items: center; gap: 5px; }
+  .pic .tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+  .pic .mic { position: absolute; right: 8px; bottom: 8px; width: 40px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.45); overflow: hidden; }
+  .pic .mic span { display: block; height: 100%; background: #fff; }
+  .meta { padding: 8px 4px 2px; }
+  .meta b { display: flex; align-items: center; gap: 6px; font-weight: 500; font-size: 13.5px; letter-spacing: -.01em; }
+  .meta small { display: flex; justify-content: space-between; color: var(--faint); font: 11px var(--mono); margin-top: 3px; }
+  .note { position: fixed; right: 14px; bottom: 8px; font: 12px var(--text); color: #8e8e93; z-index: 2; }
+</style>
+</head>
+<body>
+<div class="aura" style="width:520px;height:520px;left:-120px;top:-80px;background:#ff8fb8"></div>
+<div class="aura" style="width:560px;height:560px;right:-140px;top:120px;background:#b69cff"></div>
+<div class="aura" style="width:480px;height:480px;left:30%;bottom:-200px;background:#86efac"></div>
+<div class="aura" style="width:360px;height:360px;right:20%;bottom:-120px;background:#7dd3fc"></div>
+
+<div class="window">
+  <div class="titlebar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span>Direborn Studio</span></div>
+  <div class="body">
+    <aside class="side">
+      <div class="new">+ Pertandingan baru</div>
+      <div class="group">Siaran</div>
+      <nav class="nav">
+        <a href="#"><i class="ic" style="--c:var(--purple)"></i>Draft</a>
+        <a href="#"><i class="ic" style="--c:var(--pink)"></i>On air</a>
+        <a href="#" class="on"><i class="ic" style="--c:var(--green)"></i>Kamera</a>
+      </nav>
+      <div class="group">Turnamen</div>
+      <nav class="nav">
+        <a href="#"><i class="ic" style="--c:var(--blue)"></i>Tim</a>
+        <a href="#"><i class="ic" style="--c:var(--amber)"></i>Statistik</a>
+        <a href="#"><i class="ic" style="--c:var(--purple)"></i>Bracket</a>
+        <a href="#"><i class="ic" style="--c:var(--pink)"></i>Stat cards</a>
+      </nav>
+      <div class="foot"><b>Dire Battle Cup</b>Studio online · 192.168.0.25</div>
+    </aside>
+
+    <main>
+      <div class="hero">
+        <div>
+          <div class="mascot"></div>
+          <h1>Kamera</h1>
+          <div class="sub">Semua cam pemain, satu delay, siap untuk OBS.</div>
+          <div class="chips">
+            <span class="chip"><i class="blob" style="width:8px;height:8px;background:var(--green)"></i>LAN</span>
+            <span class="chip">Antariksa Club vs BeBeK KingDom</span>
+            <span class="chip">GSI terhubung</span>
+          </div>
+        </div>
+        <div class="actions"><button class="btn light">Cek cam</button><button class="btn">Bagikan PIN</button></div>
+      </div>
+
+      <div class="kpis">
+        <div><span>Kamera live</span><b>7/12</b></div>
+        <div><span>Delay</span><b>10.0s</b></div>
+        <div><span>Paket hilang</span><b>0</b></div>
+        <div><span>Bitrate total</span><b>31.5M</b></div>
+      </div>
+
+      <div class="two">
+        <div class="panel">
+          <h3>Delay <small>sama untuk semua kamera</small></h3>
+          <div class="delay"><div class="big">10.0<small>detik</small></div><div class="step"><button class="sq">−</button><button class="sq">+</button></div></div>
+          <div class="seg"><button>Tanpa delay</button><button class="on">10 dtk</button><button>DotaTV 2 mnt</button><button>15 mnt</button></div>
+          <div class="row"><button class="btn">Sinkron horn</button>Tekan saat horn live, tekan lagi saat horn di stream.</div>
+        </div>
+        <div class="panel">
+          <h3>Cam otomatis <small>udp :5000</small></h3>
+          <div class="auto">
+            <div>
+              <div class="name"><i class="blob" style="background:var(--green)"></i>Noobmaster</div>
+              <p>Mengikuti hero yang dipilih observer.</p>
+              <div class="seg"><button class="on">Ikut GSI</button><button>Manual</button><button>Mati</button></div>
+            </div>
+            <div class="cam"><div class="pic" style="background:linear-gradient(135deg,#a78bfa,#f472b6)"><i class="face"></i><span class="tag">LIVE</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section"><h2><i class="blob" style="background:var(--green)"></i>Antariksa Club</h2><span>Kiri · Radiant · :5001–5005</span></div>
+      <div class="grid" id="left"></div>
+      <div class="section"><h2><i class="blob" style="background:var(--pink)"></i>BeBeK KingDom</h2><span>Kanan · Dire · :5006–5010</span></div>
+      <div class="grid" id="right"></div>
+      <div class="section"><h2><i class="blob" style="background:var(--ink)"></i>Team cam</h2><span>:5011–5012</span></div>
+      <div class="grid" id="team"></div>
+    </main>
+  </div>
+</div>
+<div class="note">Mockup 2 v2 · app Studio · Gumloop × glass</div>
+
+<script>
+  const G = ['#60a5fa,#a78bfa', '#fb923c,#f472b6', '#4ade80,#38bdf8', '#a78bfa,#f472b6', '#f472b6,#fbbf24', '#38bdf8,#4ade80', '#fbbf24,#fb7185'];
+  const cam = (name, port, pin, st, i, team) => {
+    const live = st && st.live;
+    return `<div class="cam"><div class="pic ${live ? '' : 'wait'}" style="${live ? `background:linear-gradient(135deg,${G[i % G.length]})` : ''}">
+      ${live ? `<i class="face"></i><span class="tag">LIVE</span>${st.mic ? `<span class="mic"><span style="width:${st.mic}%"></span></span>` : ''}` : 'Menunggu cam'}</div>
+      <div class="meta"><b><i class="blob" style="width:9px;height:9px;background:${team}"></i>${name}</b><small><span>${live ? st.info : 'PIN ' + pin}</span><span>:${port}</span></small></div></div>`;
+  };
+  const L = [['Noobmaster', 3064, { live: 1, mic: 70, info: '30fps 4.5M' }], ['Monyet', 7797, { live: 1, mic: 35, info: '30fps 4.4M' }], ['sawako', 5678, { live: 1, info: '30fps no-mic' }], ['Ky-', 9585], ['Hikari', 1428, { live: 1, mic: 55, info: '30fps 4.5M' }]];
+  const R = [['Kiyotaka', 2137, { live: 1, mic: 20, info: '30fps 4.6M' }], ['Mordred', 5346, { live: 1, mic: 60, info: '30fps 4.5M' }], ['BeBeK', 1954], ['Kiseki', 4910, { live: 1, mic: 45, info: '29fps 4.3M' }], ['Alwaysempath', 8821]];
+  document.getElementById('left').innerHTML = L.map((c, i) => cam(c[0], 5001 + i, c[1], c[2], i, 'var(--green)')).join('');
+  document.getElementById('right').innerHTML = R.map((c, i) => cam(c[0], 5006 + i, c[1], c[2], i + 3, 'var(--pink)')).join('');
+  document.getElementById('team').innerHTML = cam('ATC TEAM', 5011, 7284, null, 0, 'var(--green)') + cam('BEB TEAM', 5012, 4111, null, 0, 'var(--pink)');
+</script>
+</body>
+</html>

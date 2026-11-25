@@ -6,12 +6,16 @@
    Load after /vendor/anime.umd.min.js, in <head>. Off for one OBS source: add ?anime=0 to its URL. */
 (function () {
   'use strict';
-  // Broadcast 2.0, phases 0-3: barebone look and no animation on every page (phase 4 brings the design back).
-  // Off for one page: ?barebone=0
+  // Broadcast 2.0: operator panels get the phase 4 design (ui/studio.css, on top of ui/panel.css);
+  // OBS overlays stay barebone with no animation until their own redesign. Off for one page: ?barebone=0
   if (!/[?&]barebone=0\b/.test(location.search)) {
-    const l = document.createElement('link');
-    l.rel = 'stylesheet'; l.href = '/ui/barebone.css';
-    (document.head || document.documentElement).appendChild(l);
+    const panel = /^\/(control|teams|stats|bracket|cards|mix|camcontrol|lihat|camdebug|login)?\/?(\.html)?$/.test(location.pathname);
+    const add = () => {
+      const l = document.createElement('link');
+      l.rel = 'stylesheet'; l.href = panel ? '/ui/studio.css' : '/ui/barebone.css';
+      (document.head || document.documentElement).appendChild(l);   // last in <head>: wins over the page's own CSS
+    };
+    if (panel && document.readyState === 'loading') document.addEventListener('DOMContentLoaded', add); else add();
     return;
   }
   const A = window.anime;
