@@ -1,0 +1,146 @@
+/* =====================================================================
+   DIREBORN SKETCH (phase 4): the OBS overlays in red / black / a little gold, screen-print grain, hand-cut edges.
+   Loaded by theme.js on top of themes/direborn.css for overlay pages when the Direborn design is active
+   (html[data-sketch] is set by ui/motion.js). Same look as /draft and /scenes.html.
+   Kept cheap for OBS: one static grain PNG on panels (no animated filters, no blend modes over the game).
+   ===================================================================== */
+@import url("https://fonts.googleapis.com/css2?family=Anton&family=Permanent+Marker&family=Poppins:wght@600;700;800;900&display=swap");
+@font-face { font-family: Oswald; src: url(/fonts/Oswald.woff) format("woff"); }
+
+html[data-sketch] {
+  --sk-red: #e3122d; --sk-red-dk: #8e0a1a; --sk-ink: #0d0b0c; --sk-ink2: #1a1416; --sk-paper: #f3ece4; --sk-gold: #c9a55c; --sk-gold-hi: #e6c784;
+  --sk-display: Anton, Oswald, Impact, sans-serif; --sk-hand: "Permanent Marker", "Segoe Print", cursive; --sk-body: Poppins, "Segoe UI", sans-serif;
+  /* ink panel: static grain + red halftone dots */
+  --sk-panel: url(/ui/grain.png) 0 0 / 256px, radial-gradient(circle, rgba(227,18,45,.28) 1.3px, transparent 1.8px) 0 0 / 8px 8px, var(--sk-ink);
+  --sk-line: inset 0 0 0 2px rgba(243,236,228,.55);
+  /* the old Direborn variables, re-pointed so v1 rules that use them follow */
+  --db-red: var(--sk-red); --db-red-dk: var(--sk-red-dk); --db-ink: var(--sk-paper); --db-gray: rgba(243,236,228,.62); --db-gold: var(--sk-gold); --db-paper: var(--sk-ink);
+}
+/* a hand-cut edge for panels */
+html[data-sketch] { --sk-cut: polygon(0 3px, 18% 0, 54% 2px, 100% 0, 100% 96%, 99% 100%, 40% 98%, 0 100%); }
+
+/* ---------------------------------------------------------------------
+   RUNNING TEXT (/ticker)
+   --------------------------------------------------------------------- */
+html[data-sketch][data-page="ticker"] { --text: var(--sk-paper); --muted: rgba(243,236,228,.62); --gold: var(--sk-gold-hi); --gold-hi: var(--sk-gold-hi); --teal: var(--sk-red); }
+html[data-sketch][data-page="ticker"] .track { background: var(--sk-panel) !important; border-top: 3px solid var(--sk-red) !important; clip-path: var(--sk-cut); }
+html[data-sketch][data-page="ticker"] .track::after { background: linear-gradient(90deg, var(--sk-ink), transparent) !important; }
+html[data-sketch][data-page="ticker"] .badge .b1 { background: var(--sk-red) !important; color: var(--sk-paper) !important; font-family: var(--sk-display) !important; letter-spacing: .06em; clip-path: polygon(0 0, 100% 6%, 96% 100%, 0 94%) !important; }
+html[data-sketch][data-page="ticker"] .badge .b2 { background: var(--sk-paper) !important; color: var(--sk-ink) !important; }
+html[data-sketch][data-page="ticker"] .badge .dot { background: var(--sk-paper) !important; }
+html[data-sketch][data-page="ticker"] .it, html[data-sketch][data-page="ticker"] .it * { font-family: var(--sk-body); }
+html[data-sketch][data-page="ticker"] .it b { color: var(--sk-paper) !important; font-family: var(--sk-display) !important; font-weight: 400 !important; letter-spacing: .03em; }
+html[data-sketch][data-page="ticker"] .it .lg { background: var(--sk-ink2) !important; border-color: rgba(243,236,228,.55) !important; color: var(--sk-paper) !important; }
+html[data-sketch][data-page="ticker"] .it .cdx { background: var(--sk-red) !important; color: var(--sk-paper) !important; }
+html[data-sketch][data-page="ticker"] .it .win { color: var(--sk-gold-hi) !important; }
+html[data-sketch][data-page="ticker"] .sep { color: var(--sk-red) !important; }
+
+/* ---------------------------------------------------------------------
+   NEXT MATCH (/nextmatch, /nextmatch-wide)
+   --------------------------------------------------------------------- */
+html[data-sketch][data-page^="nextmatch"] { --text: var(--sk-paper); --muted: rgba(243,236,228,.62); --gold: var(--sk-red); --gold-hi: var(--sk-red); --gold-lo: var(--sk-gold); --teal: var(--sk-red); }
+html[data-sketch][data-page^="nextmatch"] .card { background:
+    linear-gradient(135deg, var(--sk-red) 0 9%, transparent 9.2%) left top / 100% 100% no-repeat,
+    linear-gradient(315deg, var(--sk-red-dk) 0 12%, var(--sk-red) 12% 15%, transparent 15.2%) right bottom / 100% 100% no-repeat,
+    var(--sk-panel) !important; }
+html[data-sketch][data-page^="nextmatch"] .card::before { background-image: url(/assets/direborn-logo-white.png) !important; }
+html[data-sketch][data-page^="nextmatch"] .kick { color: var(--sk-gold-hi) !important; font-family: var(--sk-hand) !important; letter-spacing: .08em !important; text-transform: lowercase; }
+html[data-sketch][data-page^="nextmatch"] .plq > div { background: var(--sk-red) !important; clip-path: polygon(2% 10%, 30% 0, 70% 6%, 99% 0, 97% 52%, 100% 92%, 64% 100%, 30% 90%, 0 100%, 3% 50%) !important; }
+html[data-sketch][data-page^="nextmatch"] .plq h1 { -webkit-text-fill-color: var(--sk-paper) !important; color: var(--sk-paper) !important; font-family: var(--sk-display) !important; font-weight: 400 !important; letter-spacing: .04em; }
+html[data-sketch][data-page^="nextmatch"] .pill { background: var(--sk-paper) !important; color: var(--sk-ink) !important; border: 0 !important; clip-path: polygon(0 6%, 100% 0, 98% 100%, 2% 94%); font-weight: 800; }
+html[data-sketch][data-page^="nextmatch"] .lg .box { background: var(--sk-ink2) !important; border: 0 !important; box-shadow: var(--sk-line), 10px 10px 0 var(--sk-red) !important; }
+html[data-sketch][data-page^="nextmatch"] .lg .tagtxt { color: var(--sk-paper) !important; font-family: var(--sk-display) !important; }
+html[data-sketch][data-page^="nextmatch"] .lg .tbd { color: rgba(243,236,228,.3) !important; }
+html[data-sketch][data-page^="nextmatch"] .tname { color: var(--sk-paper) !important; font-family: var(--sk-display) !important; font-weight: 400 !important; letter-spacing: .02em; text-transform: uppercase; }
+html[data-sketch][data-page^="nextmatch"] .tsub { color: var(--sk-gold-hi) !important; font-family: var(--sk-hand) !important; }
+html[data-sketch][data-page^="nextmatch"] .vs b { -webkit-text-fill-color: var(--sk-red) !important; color: var(--sk-red) !important; font-family: var(--sk-display) !important; font-weight: 400 !important; font-style: normal !important; text-shadow: 5px 5px 0 var(--sk-ink); }
+html[data-sketch][data-page^="nextmatch"] .vs .score { color: var(--sk-gold-hi) !important; font-family: var(--sk-display) !important; }
+html[data-sketch][data-page^="nextmatch"] .dg span, html[data-sketch][data-page^="nextmatch"] .colon { -webkit-text-fill-color: var(--sk-gold-hi) !important; color: var(--sk-gold-hi) !important; font-family: var(--sk-display) !important; font-style: normal !important; font-weight: 400 !important; }
+html[data-sketch][data-page^="nextmatch"] .ulabel { color: rgba(243,236,228,.62) !important; }
+html[data-sketch][data-page^="nextmatch"] .big { color: var(--sk-paper) !important; font-family: var(--sk-display) !important; font-weight: 400 !important; text-shadow: 6px 6px 0 var(--sk-red-dk) !important; }
+html[data-sketch][data-page^="nextmatch"] .big.live { color: var(--sk-red) !important; }
+html[data-sketch][data-page^="nextmatch"] .when { color: var(--sk-paper) !important; }
+html[data-sketch][data-page^="nextmatch"] .when b { color: var(--sk-gold-hi) !important; }
+html[data-sketch][data-page^="nextmatch"] .nxt { background: var(--sk-ink2) !important; border: 0 !important; box-shadow: var(--sk-line); color: rgba(243,236,228,.7) !important; }
+html[data-sketch][data-page^="nextmatch"] .nxt b { color: var(--sk-paper) !important; }
+html[data-sketch][data-page^="nextmatch"] .foot::after { color: rgba(243,236,228,.5) !important; }
+
+/* ---------------------------------------------------------------------
+   STREAMING SOON COUNTDOWN (/countdown, sits on the start scene)
+   --------------------------------------------------------------------- */
+html[data-sketch][data-page="countdown"] .vs .kick { color: var(--sk-gold-hi); font: 400 24px/1 var(--sk-hand); letter-spacing: .06em; text-transform: lowercase; }
+html[data-sketch][data-page="countdown"] .team .nm { color: var(--sk-paper); font: 400 54px/1 var(--sk-display); letter-spacing: .02em; text-transform: uppercase; text-shadow: 4px 4px 0 var(--sk-red-dk); }
+html[data-sketch][data-page="countdown"] .team .lg span { color: var(--sk-paper); font-family: var(--sk-display); }
+html[data-sketch][data-page="countdown"] .vs .v { color: var(--sk-red); font: 400 64px/1 var(--sk-display); text-shadow: 4px 4px 0 var(--sk-ink); }
+html[data-sketch][data-page="countdown"] .cd .lab { color: rgba(243,236,228,.7); font: 600 22px/1 var(--sk-body); letter-spacing: .28em; }
+html[data-sketch][data-page="countdown"] .cd .t { color: var(--sk-gold-hi); font-family: var(--sk-display); font-weight: 400; text-shadow: 6px 6px 0 var(--sk-ink); }
+html[data-sketch][data-page="countdown"] .cd.done .lab { color: var(--sk-red); }
+
+/* ---------------------------------------------------------------------
+   BANNER (/banner) and CASTER NAMES (/caster)
+   --------------------------------------------------------------------- */
+html[data-sketch][data-page="banner"] { --bn-bg: var(--sk-panel); --bn-edge: var(--sk-red); --bn-text: var(--sk-paper); }
+html[data-sketch][data-page="banner"] .bar { box-shadow: inset 5px 0 0 var(--sk-red), inset 0 -2px 0 var(--sk-gold) !important; }
+html[data-sketch][data-page="banner"] .ln { font: 400 21px/1 var(--sk-display) !important; letter-spacing: .05em !important; text-shadow: none !important; }
+html[data-sketch][data-page="caster"] { --c-name: var(--sk-paper); }
+html[data-sketch][data-page="caster"] .nm { font-family: var(--sk-display); font-weight: 400; text-transform: uppercase; text-shadow: 3px 3px 0 var(--sk-red-dk), 0 2px 8px rgba(0,0,0,.6); }
+
+/* ---------------------------------------------------------------------
+   IN-GAME PLAYER LOWER THIRD (/ingame)
+   --------------------------------------------------------------------- */
+html[data-sketch][data-page="ingame"] .lt .plate { background: var(--sk-panel) !important; border-top: 4px solid var(--sk-red) !important; clip-path: var(--sk-cut); }
+html[data-sketch][data-page="ingame"] .lt .team { color: var(--sk-gold-hi) !important; font-family: var(--sk-hand) !important; }
+html[data-sketch][data-page="ingame"] .lt .pname { color: var(--sk-paper) !important; font-family: var(--sk-display) !important; font-weight: 400 !important; letter-spacing: .02em; }
+html[data-sketch][data-page="ingame"] .lt .pname .c { background: var(--sk-gold) !important; color: var(--sk-ink) !important; }
+html[data-sketch][data-page="ingame"] .lt .heroline { color: rgba(243,236,228,.8) !important; }
+html[data-sketch][data-page="ingame"] .lt .heroline .lvl { color: var(--sk-red) !important; }
+html[data-sketch][data-page="ingame"] .lt .stats { background: var(--sk-red) !important; }
+html[data-sketch][data-page="ingame"] .lt .stats span { color: rgba(243,236,228,.75) !important; }
+html[data-sketch][data-page="ingame"] .lt .stats b { color: var(--sk-paper) !important; font-family: var(--sk-display) !important; font-weight: 400 !important; }
+
+/* ---------------------------------------------------------------------
+   STAT CARDS (/statcards)
+   --------------------------------------------------------------------- */
+html[data-sketch][data-page="statcards"] { --gold: var(--sk-red); --gold-hi: var(--sk-red); --gold-lo: var(--sk-gold); --teal: var(--sk-red); --red: var(--sk-red); --text: var(--sk-paper); --muted: rgba(243,236,228,.62); --line: rgba(243,236,228,.22); }
+html[data-sketch][data-page="statcards"] .card { --pnl: rgba(26,20,22,.92); --green1: var(--sk-paper); --green2: rgba(243,236,228,.6); }
+html[data-sketch][data-page="statcards"] .card .bgl { background:
+    linear-gradient(135deg, var(--sk-red) 0 7%, transparent 7.2%) left top / 100% 100% no-repeat,
+    linear-gradient(315deg, var(--sk-red-dk) 0 9%, var(--sk-red) 9% 11%, transparent 11.2%) right bottom / 100% 100% no-repeat,
+    var(--sk-panel) !important; }
+html[data-sketch][data-page="statcards"] .kick { color: var(--sk-gold-hi) !important; font-family: var(--sk-hand) !important; letter-spacing: .06em !important; text-transform: lowercase; }
+html[data-sketch][data-page="statcards"] .plq > div { background: var(--sk-red) !important; clip-path: polygon(2% 10%, 30% 0, 70% 6%, 99% 0, 97% 52%, 100% 92%, 64% 100%, 30% 90%, 0 100%, 3% 50%) !important; }
+html[data-sketch][data-page="statcards"] .plq h1 { -webkit-text-fill-color: var(--sk-paper) !important; color: var(--sk-paper) !important; font-family: var(--sk-display) !important; font-weight: 400 !important; letter-spacing: .03em; }
+html[data-sketch][data-page="statcards"] .pill, html[data-sketch][data-page="statcards"] .chip { background: var(--sk-paper) !important; color: var(--sk-ink) !important; border: 0 !important; }
+html[data-sketch][data-page="statcards"] .pnl, html[data-sketch][data-page="statcards"] .fbody, html[data-sketch][data-page="statcards"] .pnl.big,
+html[data-sketch][data-page="statcards"] .key, html[data-sketch][data-page="statcards"] .note, html[data-sketch][data-page="statcards"] .brk .m, html[data-sketch][data-page="statcards"] .brk .lab {
+  background: rgba(26,20,22,.92) !important; border: 0 !important; box-shadow: var(--sk-line) !important; color: var(--sk-paper) !important; }
+html[data-sketch][data-page="statcards"] .st { background: var(--sk-ink2) !important; border: 0 !important; box-shadow: var(--sk-line) !important; }
+html[data-sketch][data-page="statcards"] .st.hl { background: rgba(227,18,45,.18) !important; box-shadow: inset 0 0 0 2px var(--sk-red) !important; }
+html[data-sketch][data-page="statcards"] .st .v, html[data-sketch][data-page="statcards"] .rec .n { -webkit-text-fill-color: var(--sk-gold-hi) !important; color: var(--sk-gold-hi) !important; font-family: var(--sk-display) !important; font-style: normal !important; font-weight: 400 !important; }
+html[data-sketch][data-page="statcards"] .txt b { color: var(--sk-red) !important; }
+html[data-sketch][data-page="statcards"] .bar .tr { background: rgba(243,236,228,.12) !important; }
+html[data-sketch][data-page="statcards"] .fl.gold { background: linear-gradient(90deg, var(--sk-red-dk), var(--sk-red)) !important; }
+html[data-sketch][data-page="statcards"] .fl.green { background: linear-gradient(90deg, rgba(243,236,228,.55), var(--sk-paper)) !important; }
+html[data-sketch][data-page="statcards"] .fl.red { background: linear-gradient(90deg, var(--sk-gold), var(--sk-gold-hi)) !important; }
+html[data-sketch][data-page="statcards"] .key .kl, html[data-sketch][data-page="statcards"] .badge.next, html[data-sketch][data-page="statcards"] .brk .lab.gf { background: var(--sk-red) !important; color: var(--sk-paper) !important; }
+html[data-sketch][data-page="statcards"] .note { box-shadow: var(--sk-line), inset 4px 0 0 var(--sk-red) !important; }
+html[data-sketch][data-page="statcards"] .brk .mh { background: var(--sk-red) !important; color: var(--sk-paper) !important; }
+html[data-sketch][data-page="statcards"] .brk .m.gf { box-shadow: inset 0 0 0 2px var(--sk-red), 6px 6px 0 var(--sk-red) !important; }
+html[data-sketch][data-page="statcards"] .brk .lines path { stroke: rgba(243,236,228,.25) !important; }
+html[data-sketch][data-page="statcards"] .brk .tr { color: rgba(243,236,228,.7) !important; }
+html[data-sketch][data-page="statcards"] .brk .tr.win { color: var(--sk-paper) !important; }
+html[data-sketch][data-page="statcards"] .brk .tr .sc { color: rgba(243,236,228,.5) !important; }
+html[data-sketch][data-page="statcards"] .brk .tr.win .sc { color: var(--sk-gold-hi) !important; }
+html[data-sketch][data-page="statcards"] span.tlogo { background: var(--sk-ink2) !important; border-color: rgba(243,236,228,.55) !important; color: var(--sk-paper) !important; }
+html[data-sketch][data-page="statcards"] .foot::after { color: rgba(243,236,228,.5) !important; }
+
+/* ---------------------------------------------------------------------
+   KARAKTER CHAT (/chatwalk) and MIX DRAW (/mixdraw): type only
+   --------------------------------------------------------------------- */
+html[data-sketch][data-page="chatwalk"] .nm { font-family: var(--sk-display); font-weight: 400; }
+html[data-sketch][data-page="chatwalk"] .say { border-radius: 0; background: var(--sk-paper); font-family: var(--sk-body); font-weight: 600; font-size: 17px; clip-path: none; }
+html[data-sketch][data-page="mixdraw"] { --gold: var(--sk-gold-hi); --gold-hi: var(--sk-gold-hi); --gold-lo: var(--sk-gold); --R: #f3ece4; --R2: #1a1416; }
+html[data-sketch][data-page="mixdraw"] .top h1, html[data-sketch][data-page="mixdraw"] .big, html[data-sketch][data-page="mixdraw"] .tname { font-family: var(--sk-display) !important; font-style: normal !important; font-weight: 400 !important; }
+
+/* the old draft overlay (/overlay) keeps v1's white Direborn look (the sketch draft is /draft): undo the re-pointed colours */
+html[data-sketch][data-page="overlay"] { --db-ink: #1d1d1f; --db-gray: #6d6d73; --db-paper: #ffffff; }

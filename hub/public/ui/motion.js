@@ -10,13 +10,21 @@
   // OBS overlays stay barebone with no animation until their own redesign. Off for one page: ?barebone=0
   if (!/[?&]barebone=0\b/.test(location.search)) {
     const panel = /^\/(control|teams|stats|bracket|cards|mix|camcontrol|lihat|camdebug|login)?\/?(\.html)?$/.test(location.pathname);
+    // phase 4: OBS overlays in the Direborn design get the sketch look back with their animations
+    // (theme.js loads themes/direborn.css + themes/direborn-sketch.css and reloads the page if the design changes)
+    let theme = ''; try { theme = new URLSearchParams(location.search).get('theme') || localStorage.getItem('dbTheme') || ''; } catch (e) {}
+    window.__dbOverlay = !panel;
+    window.__dbSketch = !panel && theme === 'direborn';
+    if (window.__dbSketch) document.documentElement.setAttribute('data-sketch', '');
     const add = () => {
       const l = document.createElement('link');
       l.rel = 'stylesheet'; l.href = panel ? '/ui/studio.css' : '/ui/barebone.css';
       (document.head || document.documentElement).appendChild(l);   // last in <head>: wins over the page's own CSS
     };
-    if (panel && document.readyState === 'loading') document.addEventListener('DOMContentLoaded', add); else add();
-    return;
+    if (!window.__dbSketch) {
+      if (panel && document.readyState === 'loading') document.addEventListener('DOMContentLoaded', add); else add();
+      return;
+    }
   }
   const A = window.anime;
   if (!A || !A.waapi || !A.waapi.animate || /[?&]anime=0\b/.test(location.search) || !Element.prototype.getAnimations) return;

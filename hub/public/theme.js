@@ -6,13 +6,19 @@
   function set(t, info) {
     t = forced || t || 'battlecup';
     if (t !== cur) {
+      // an overlay going in or out of the Direborn sketch design needs its other stylesheets (ui/motion.js): reload once
+      if (cur !== null && window.__dbOverlay && (cur === 'direborn') !== (t === 'direborn')) { try { localStorage.setItem(KEY, t); } catch (e) {} location.reload(); return; }
       cur = t;
       document.documentElement.setAttribute('data-theme', t);
       try { localStorage.setItem(KEY, t); } catch (e) {}
       var l = document.getElementById('db-theme-css');
       if (!l) { l = document.createElement('link'); l.id = 'db-theme-css'; l.rel = 'stylesheet'; (document.head || document.documentElement).appendChild(l); }
       // Broadcast 2.0 phases 0-3: no tournament design (barebone, see ui/barebone.css); ?barebone=0 restores it
-      if (/[?&]barebone=0\b/.test(location.search)) l.href = '/themes/' + t + '.css';
+      if (/[?&]barebone=0\b/.test(location.search) || window.__dbSketch) l.href = '/themes/' + t + '.css';
+      if (window.__dbSketch && t === 'direborn' && !document.getElementById('db-sketch-css')) {
+        var k = document.createElement('link'); k.id = 'db-sketch-css'; k.rel = 'stylesheet'; k.href = '/themes/direborn-sketch.css';
+        (document.head || document.documentElement).appendChild(k);
+      }
     }
     if (info) listeners.forEach(function (f) { try { f(info); } catch (e) {} });
   }
