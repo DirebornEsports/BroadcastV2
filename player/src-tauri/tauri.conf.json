@@ -6,7 +6,7 @@
   "build": { "frontendDist": "../ui" },
   "app": {
     "withGlobalTauri": true,
-    "windows": [{ "label": "main", "title": "Direborn Cam", "width": 520, "height": 640, "resizable": true }],
+    "windows": [{ "label": "main", "title": "Direborn Cam", "width": 520, "height": 720, "resizable": true }],
     "security": { "csp": null }
   },
   "bundle": {

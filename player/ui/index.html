@@ -2,63 +2,70 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Direborn Cam</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<h1>Direborn Cam</h1>
+<header class="top">
+  <div class="brand"><i class="mascot"></i>Direborn Cam</div>
+  <ol class="steps" id="steps"><li data-step="kamera">Kamera</li><li data-step="pin">PIN</li><li data-step="live">Live</li></ol>
+</header>
 
 <section id="cek" hidden>
-  <h2>Cek kebutuhan</h2>
-  <p id="cek-msg">Mengecek ffmpeg...</p>
+  <h1>Siap-siap dulu</h1>
+  <p class="sub" id="cek-msg">Mengecek ffmpeg…</p>
   <div id="cek-missing" hidden>
-    <p>Direborn Cam butuh <b>ffmpeg</b> untuk mengirim kamera ke studio, dan di PC ini belum ada. Klik tombol di bawah untuk memasang (lewat winget, butuh internet, kira-kira 1-3 menit).</p>
-    <button id="install">Install ffmpeg</button>
-    <button id="recheck">Cek lagi</button>
+    <div class="card note">Direborn Cam butuh <b>ffmpeg</b> untuk mengirim kamera ke studio, dan di PC ini belum ada. Pasang sekali saja (lewat winget, butuh internet, sekitar 1–3 menit).</div>
+    <div class="actions"><button class="primary" id="install">Pasang ffmpeg</button><button id="recheck">Cek lagi</button></div>
     <pre id="install-out" hidden></pre>
   </div>
 </section>
 
 <section id="kamera" hidden>
-  <h2>Kamera &amp; mic</h2>
-  <label>Kamera <select id="cam"></select></label>
-  <div id="preview"><video id="video" autoplay muted playsinline></video><span id="preview-msg"></span></div>
-  <label>Mic <select id="mic"></select></label>
-  <div class="meter"><div id="level"></div></div>
-  <p>Encoder: <span id="enc">mengecek...</span></p>
-  <button id="to-pin">Lanjut</button>
-  <button id="refresh-dev">Muat ulang daftar</button>
+  <h1>Kamera &amp; mic</h1>
+  <p class="sub">Pilih yang mau dikirim ke studio. Cek gambar dan suara di sini.</p>
+  <button class="quick" id="quick" hidden><span><b>Kirim lagi seperti terakhir</b><small id="quick-sub"></small></span><em>Mulai</em></button>
+  <div class="card">
+    <label class="field">Kamera<select id="cam"></select></label>
+    <div id="preview"><video id="video" autoplay muted playsinline></video><span id="preview-msg"></span></div>
+    <label class="field">Mic<select id="mic"></select></label>
+    <div class="meter"><div id="level"></div></div>
+    <div class="chips"><span class="chip"><i class="blob"></i><span id="enc">Mengecek encoder…</span></span><button class="link" id="refresh-dev">Muat ulang daftar</button></div>
+  </div>
+  <p class="err" id="cam-msg"></p>
+  <div class="actions end"><button class="primary" id="to-pin">Lanjut</button></div>
 </section>
 
 <section id="pin" hidden>
-  <h2>PIN</h2>
-  <label>PIN dari operator <input id="pin-in" inputmode="numeric" maxlength="4" autocomplete="off"></label>
-  <p id="studio-msg">Mencari studio...</p>
-  <label>IP studio <input id="addr" placeholder="mis. 192.168.1.10"></label>
-  <p class="small">Biasanya terisi sendiri. Kalau tidak, ketik IP PC studio (tanya operator).</p>
+  <h1>Masukkan PIN</h1>
+  <p class="sub">4 angka dari operator. Tekan Enter atau langsung terkirim setelah 4 angka.</p>
+  <div class="card">
+    <input id="pin-in" class="pin" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••" aria-label="PIN">
+    <p class="status" id="studio-msg">Mencari studio…</p>
+    <button class="link" id="edit-addr">Ubah alamat studio</button>
+    <div id="addr-box" hidden>
+      <label class="field">IP studio<input id="addr" placeholder="mis. 192.168.1.10"></label>
+      <button class="link" id="find">Cari otomatis lagi</button>
+    </div>
+  </div>
   <p id="pin-msg"></p>
-  <button id="go">Masuk &amp; kirim</button>
-  <button id="find">Cari studio lagi</button>
-  <button id="back-cam">Kembali</button>
+  <div class="actions between"><button id="back-cam">Kembali</button><button class="primary" id="go">Masuk &amp; kirim</button></div>
 </section>
 
 <section id="live" hidden>
-  <h2 id="who"></h2>
-  <p class="small">Yang sedang dikirim ke studio:</p>
-  <div id="mon"><img id="mon-img" alt=""><span id="mon-msg">Menunggu gambar...</span></div>
-  <div id="mic-row">Mic <div class="meter"><div id="mon-level"></div></div><span id="mic-none" hidden>tanpa mic</span></div>
-  <table>
-    <tr><td>Status</td><td><b id="state"></b></td></tr>
-    <tr><td>Frame</td><td id="frame">-</td></tr>
-    <tr><td>Bitrate / fps</td><td><span id="kbps">-</span> kbps · <span id="fps">-</span> fps</td></tr>
-    <tr><td>Encoder</td><td id="live-enc"></td></tr>
-    <tr><td>Studio</td><td id="live-addr"></td></tr>
-    <tr><td>Sambung ulang</td><td id="reconnects">0</td></tr>
-  </table>
+  <div class="who"><div><span class="k" id="team"></span><h1 id="who"></h1></div><span class="pill" id="state">-</span></div>
+  <div id="mon"><img id="mon-img" alt=""><span id="mon-msg">Menunggu gambar…</span><span class="tag">Yang dilihat studio</span></div>
+  <div id="mic-row"><span class="k">Mic</span><div class="meter"><div id="mon-level"></div></div><span id="mic-none" hidden>tanpa mic</span></div>
+  <div class="kpis">
+    <div><span>fps</span><b id="fps">-</b></div>
+    <div><span>kbps</span><b id="kbps">-</b></div>
+    <div><span>frame</span><b id="frame">-</b></div>
+    <div><span>sambung ulang</span><b id="reconnects">0</b></div>
+  </div>
+  <div class="meta"><span id="live-enc"></span><span id="live-addr"></span></div>
   <details><summary>Pesan ffmpeg terakhir</summary><pre id="log"></pre></details>
-  <button id="stop">Stop</button>
-  <button id="again" hidden>Kirim lagi</button>
-  <button id="back-pin" hidden>Kembali</button>
+  <div class="actions between"><button id="back-pin" hidden>Kembali</button><button class="danger" id="stop">Stop kirim</button><button class="primary" id="again" hidden>Kirim lagi</button></div>
 </section>
 
 <script src="app.js"></script>

@@ -8,6 +8,8 @@ let media = null;       // preview stream + audio context, released before ffmpe
 
 function show(id) {
   for (const s of document.querySelectorAll('section')) s.hidden = s.id !== id;
+  const order = ['kamera', 'pin', 'live'], at = order.indexOf(id);
+  for (const li of $('steps').children) { const i = order.indexOf(li.dataset.step); li.className = i === at ? 'on' : i < at ? 'done' : ''; }
 }
 const save = () => invoke('save_config', { json: JSON.stringify(cfg) });
 
@@ -49,6 +51,11 @@ async function cameras() {
   };
   fill($('cam'), d.cameras, d.cameras.length ? '' : '(tidak ada kamera)', cfg.camera);
   fill($('mic'), d.mics, 'tanpa mic', cfg.mic);
+  // returning player with a saved setup that still exists: offer one-click start
+  const ready = cfg.camera && cfg.pin && cfg.addr && d.cameras.includes(cfg.camera);
+  $('quick').hidden = !ready;
+  if (ready) $('quick-sub').textContent = `${cfg.camera} · PIN ${cfg.pin} · ${cfg.addr}`;
+  $('cam-msg').textContent = '';
   preview();
 }
 $('cam').onchange = $('mic').onchange = preview;
@@ -113,31 +120,42 @@ function meter(my, s) {
   tick();
 }
 
+$('quick').onclick = () => { release(); pinScreen(true); };
 $('to-pin').onclick = () => {
-  if (!$('cam').value) return alert('Pilih kamera dulu');
+  if (!$('cam').value) { $('cam-msg').textContent = 'Pilih kamera dulu'; return; }
   cfg.camera = $('cam').value; cfg.mic = $('mic').value; save();
   release();
   pinScreen();
 };
 
 // ---------- 3. PIN ----------
-function pinScreen() {
+function pinScreen(auto) {
   show('pin');
   $('pin-in').value = cfg.pin || '';
   $('addr').value = cfg.addr || '';
-  $('pin-msg').textContent = '';
+  $('addr-box').hidden = true; $('edit-addr').hidden = false;
+  $('pin-msg').textContent = ''; $('pin-msg').className = '';
+  $('pin-in').focus();
+  if (auto) return $('go').onclick();
   find();
 }
 async function find() {
-  $('studio-msg').textContent = 'Mencari studio...';
+  const m = $('studio-msg');
+  m.className = 'status'; m.textContent = 'Mencari studio di jaringan…';
   const a = await invoke('find_studio');
-  if (a) { $('addr').value = a; $('studio-msg').textContent = 'Studio ketemu: ' + a; }
-  else $('studio-msg').textContent = 'Studio tidak ketemu otomatis. Ketik IP studio di bawah.';
+  if (a) { $('addr').value = a; m.className = 'status ok'; m.textContent = 'Studio ketemu · ' + a; }
+  else if ($('addr').value) { m.className = 'status ok'; m.textContent = 'Pakai alamat terakhir · ' + $('addr').value; }
+  else { m.className = 'status bad'; m.textContent = 'Studio tidak ketemu otomatis. Isi IP studio.'; $('addr-box').hidden = false; $('edit-addr').hidden = true; }
 }
 $('find').onclick = find;
+$('edit-addr').onclick = () => { $('addr-box').hidden = false; $('edit-addr').hidden = true; $('addr').focus(); };
+$('pin-in').oninput = () => { const v = $('pin-in').value.replace(/\D/g, '').slice(0, 4); $('pin-in').value = v; if (v.length === 4) $('go').onclick(); };
+$('pin-in').onkeydown = $('addr').onkeydown = (e) => { if (e.key === 'Enter') $('go').onclick(); };
 $('back-cam').onclick = cameras;
 
+let checking = false;
 $('go').onclick = async () => {
+  if (checking) return;
   const pin = $('pin-in').value.trim();
   let addr = $('addr').value.trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
   const msg = $('pin-msg');
@@ -145,15 +163,17 @@ $('go').onclick = async () => {
   if (!/^\d{4}$/.test(pin)) { msg.textContent = 'PIN harus 4 angka'; return; }
   if (!addr) { msg.textContent = 'Isi IP studio'; return; }
   if (!/:\d+$/.test(addr)) addr += ':8787';
-  msg.className = ''; msg.textContent = 'Mengecek PIN...';
+  msg.className = ''; msg.textContent = 'Mengecek PIN…';
+  checking = $('go').disabled = true;
   try {
     const r = await fetch(`http://${addr}/pin/${pin}`, { signal: AbortSignal.timeout(4000) });
-    if (r.status === 404) { msg.className = 'err'; msg.textContent = 'PIN salah'; return; }
+    if (r.status === 404) { msg.className = 'err'; msg.textContent = 'PIN salah. Cek lagi ke operator.'; $('pin-in').select(); return; }
     if (!r.ok) throw new Error('HTTP ' + r.status);
     me = await r.json();
   } catch (e) {
-    msg.className = 'err'; msg.textContent = `Studio ${addr} tidak bisa dihubungi (${e.message || e})`; return;
-  }
+    msg.className = 'err'; msg.textContent = `Studio ${addr} tidak bisa dihubungi (${e.message || e})`;
+    $('addr-box').hidden = false; $('edit-addr').hidden = true; return;
+  } finally { checking = $('go').disabled = false; }
   cfg.pin = pin; cfg.addr = addr; save();
   live();
 };
@@ -162,10 +182,11 @@ $('go').onclick = async () => {
 const STATE = { connecting: 'Menyambung ke studio...', retry: 'Koneksi putus, sambung ulang dalam 3 detik...', stopped: 'Berhenti' };
 async function live() {
   show('live');
-  $('who').textContent = `Kamu: ${me.name} (${me.team})`;
+  $('who').textContent = me.name;
+  $('team').textContent = me.team || '';
   $('live-addr').textContent = cfg.addr;
   $('log').textContent = '';
-  $('state').textContent = 'Menyiapkan encoder...';
+  $('state').textContent = 'Menyiapkan encoder…'; $('state').className = 'pill';
   $('stop').hidden = false; $('again').hidden = $('back-pin').hidden = true;
   for (const id of ['frame', 'kbps', 'fps']) $(id).textContent = '-';
   $('mon-msg').hidden = false; $('mon-msg').textContent = 'Menunggu gambar...';
@@ -178,7 +199,7 @@ async function live() {
     if (m.kbps !== undefined) $('kbps').textContent = m.kbps;
     if (m.reconnects !== undefined) $('reconnects').textContent = m.reconnects;
     if (m.state === 'sending') { $('frame').textContent = m.frame; $('fps').textContent = m.fps.toFixed(1); }
-    if (m.state) $('state').textContent = m.state === 'sending' ? 'Mengirim' : STATE[m.state];
+    if (m.state) { $('state').textContent = m.state === 'sending' ? 'Live ke studio' : STATE[m.state]; $('state').className = 'pill ' + m.state; }
     if (m.state && m.state !== 'sending') $('fps').textContent = '-';
     if (m.state === 'stopped') {
       $('stop').hidden = true; $('again').hidden = $('back-pin').hidden = false;
@@ -198,7 +219,7 @@ async function live() {
     const enc = await invoke('start', { camera: cfg.camera, mic: cfg.mic, addr: cfg.addr, pin: cfg.pin, events: ch, preview: pv });
     $('live-enc').textContent = ENC_LABEL[enc] || enc;
   } catch (e) {
-    $('state').textContent = 'Gagal mulai: ' + e;
+    $('state').textContent = 'Gagal mulai: ' + e; $('state').className = 'pill retry';
     $('stop').hidden = true; $('again').hidden = $('back-pin').hidden = false;
   }
 }
