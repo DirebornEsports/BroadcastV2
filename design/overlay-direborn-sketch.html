@@ -128,6 +128,59 @@
 
   svg path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
 
+  /* band texture: red halftone bleeding down from the top edge, dark-red swirl rings (MTV-style), a few gold pencil strokes */
+  #band .ht { position: absolute; inset: 64px 0 0 0; clip-path: polygon(0 18px, 34% 0, 66% 0, 100% 18px, 100% 100%, 0 100%);
+    background: radial-gradient(circle, rgba(227,18,45,.75) 1.4px, transparent 1.9px) 0 0 / 7px 7px;
+    -webkit-mask-image: linear-gradient(180deg, #000, transparent 70%); mask-image: linear-gradient(180deg, #000, transparent 70%); }
+  #band svg.art { position: absolute; left: 0; top: 64px; width: 100%; height: 254px; clip-path: polygon(0 18px, 34% 0, 66% 0, 100% 18px, 100% 100%, 0 100%); }
+  #band .art .ring { stroke: #4a0a15; stroke-width: 14; }
+  #band .art .ring.hi { stroke: #6e0f1f; stroke-width: 6; }
+  #band .art .gold { stroke: var(--gold); stroke-width: 2.5; opacity: .55; }
+
+  /* ---------- pick environment: the whole screen reacts when a hero is locked ---------- */
+  #env { position: absolute; inset: 0; pointer-events: none; visibility: hidden; }
+  #env.go, #env.out { visibility: visible; }
+  #env::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle, rgba(227,18,45,.9) 2px, transparent 2.6px) 0 0 / 9px 9px; mix-blend-mode: multiply; opacity: 0; }
+  #env.go::before { animation: flash .45s steps(3); }
+  @keyframes flash { 0% { opacity: .9; } 100% { opacity: 0; } }
+  #shards { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  #shards g { transform-box: fill-box; transform: scale(0); }
+  #shards .fill { fill: var(--red); stroke: none; }
+  #shards .fill.dk { fill: var(--red-dk); }
+  #shards .fill.bk { fill: var(--ink); }
+  #shards .edge { stroke: var(--ink); stroke-width: 4; stroke-dasharray: 1; stroke-dashoffset: 1; }
+  #shards .sc { stroke: var(--gold-hi); stroke-width: 3; stroke-dasharray: 1; stroke-dashoffset: 1; }
+  #env.go #shards g { animation: grow .42s steps(5) var(--d) forwards; }
+  #env.go #shards .edge, #env.go #shards .sc { animation: draw .35s cubic-bezier(.3,.7,.4,1) calc(var(--d) + .1s) forwards; }
+  #env.out #shards g { transform: scale(1); animation: grow .3s steps(4) reverse forwards; }
+  #env.out #shards .edge, #env.out #shards .sc { stroke-dashoffset: 0; }
+  @keyframes grow { from { transform: scale(0); } to { transform: scale(1); } }
+
+  #env .hero { position: absolute; top: 96px; width: 600px; height: 640px; }
+  #env .hero.L { left: 120px; } #env .hero.R { right: 120px; }
+  #env .art { position: absolute; inset: 0 0 70px 0; overflow: hidden; background: var(--ink2);
+    clip-path: polygon(4% 3%, 96% 0, 100% 46%, 97% 100%, 52% 96%, 2% 100%, 0 52%); }
+  #env .art video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.6) brightness(1.08); }
+  #env .art .tint { position: absolute; inset: 0; background: linear-gradient(180deg, #ff2a40 35%, var(--red-dk)); mix-blend-mode: multiply; }
+  #env .art .dots { position: absolute; inset: 0; background: radial-gradient(circle, rgba(13,11,12,.9) 2.4px, transparent 3.1px) 0 0 / 10px 10px; mix-blend-mode: multiply; opacity: .6; }
+  #env.go .art { animation: reveal .6s steps(6) .15s both; }
+  @keyframes reveal { from { clip-path: polygon(4% 3%, 4% 3%, 4% 3%, 4% 3%, 2% 3%, 2% 3%, 0 3%); } }
+  #env .frame { position: absolute; left: -10px; top: -10px; width: 620px; height: 590px; overflow: visible; }
+  #env .frame path { stroke: var(--paper); stroke-width: 5; stroke-dasharray: 1; stroke-dashoffset: 1; }
+  #env.go .frame path { animation: draw .5s cubic-bezier(.3,.7,.4,1) .1s forwards; }
+  #env.out .frame path { stroke-dashoffset: 0; }
+  #env .big { position: absolute; left: -20px; right: -20px; bottom: 34px; font: 400 116px/0.9 var(--display); text-transform: uppercase; letter-spacing: .01em; color: var(--paper);
+    text-shadow: 5px 5px 0 var(--ink); transform: rotate(-3deg); opacity: 0; }
+  #env.go .big { animation: stampT .35s steps(4) .55s both; }
+  @keyframes stampT { 0% { transform: scale(1.6) rotate(-9deg); opacity: 0; } 100% { transform: rotate(-3deg); opacity: 1; } }
+  #env .lock { position: absolute; right: -10px; top: -30px; font: 400 40px var(--hand); color: var(--gold-hi); transform: rotate(8deg); opacity: 0; }
+  #env.go .lock { animation: stamp .3s steps(3) .85s both; }
+  #env .who { position: absolute; left: 0; bottom: 0; padding: 8px 18px; background: var(--paper); color: var(--ink); font: 800 26px var(--body); clip-path: polygon(0 6px, 100% 0, 98% 100%, 2% 100%); opacity: 0; }
+  #env.go .who { animation: stamp .3s steps(3) .7s both; }
+  #env.out .big, #env.out .lock, #env.out .who { opacity: 1; }
+  #env.out .hero { animation: leave .3s steps(4) forwards; }
+  @keyframes leave { to { opacity: 0; transform: translateY(30px); } }
+
   /* mockup controls, hidden in OBS */
   #ctl { position: fixed; right: 12px; bottom: 12px; display: flex; gap: 6px; font: 600 12px var(--body); z-index: 10; }
   #ctl button { padding: 6px 12px; border: 0; border-radius: 6px; background: #fff; cursor: pointer; font: inherit; }
@@ -158,8 +211,15 @@
   <div id="bug"><svg class="rough" viewBox="0 0 100 40" preserveAspectRatio="none"><path vector-effect="non-scaling-stroke" d="M1 3 L99 1 L98 38 L2 39 Z M3 2 L97 3"/></svg>
     <img src="../hub/public/assets/direborn-logo-white.png" alt=""><span>DRAFT</span><em>game 1</em></div>
 
+  <div id="env"><svg id="shards" viewBox="0 0 1920 1080" preserveAspectRatio="none"></svg>
+    <div class="hero"><div class="art"><video muted loop playsinline></video><div class="tint"></div><div class="dots"></div></div>
+      <svg class="frame rough" viewBox="-10 -10 620 590" preserveAspectRatio="none"><path pathLength="1" id="envFrame"/></svg>
+      <b class="big"></b><span class="lock">locked in!</span><span class="who"></span></div></div>
+
   <div id="band">
     <div class="base"></div>
+    <div class="ht"></div>
+    <svg class="art crayon" viewBox="0 0 1920 254" preserveAspectRatio="none" id="bandArt"></svg>
     <div class="slash s1 crayon"></div><div class="slash s2 crayon"></div>
     <div class="side left" id="L"><div class="turn">PICKING</div><div class="tname"><b>Direborn</b><small>radiant · first pick</small></div><div class="bans"></div><div class="picks"></div></div>
     <div class="side right" id="R"><div class="turn">PICKING</div><div class="tname"><b>Team B</b><small>dire</small></div><div class="bans"></div><div class="picks"></div></div>
@@ -227,6 +287,65 @@
       `<svg class="circle rough" viewBox="0 0 176 226"><path pathLength="1" d="${circle(176, 226)}"/></svg><span class="note">picking…</span></div>`).join('');
   }
 
+  // band art: rough concentric rings behind each team, like the swirls in the MTV ident, plus loose gold pencil strokes
+  function rings(cx, cy, n) {
+    let d = '';
+    for (let k = 1; k <= n; k++) {
+      const rx = 60 * k, ry = 26 * k; d += `M${cx + rx} ${cy}`;
+      for (let a = .3; a <= Math.PI * 2 + .3; a += .3) d += ` L${(cx + Math.cos(a) * rx * (1 + j(.05))).toFixed(0)} ${(cy + Math.sin(a) * ry * (1 + j(.08))).toFixed(0)}`;
+    }
+    return d;
+  }
+  document.getElementById('bandArt').innerHTML =
+    `<path class="ring" d="${rings(360, 200, 6)}"/><path class="ring hi" d="${rings(360, 200, 6)}"/><path class="ring" d="${rings(1560, 190, 6)}"/><path class="ring hi" d="${rings(1560, 190, 6)}"/>` +
+    `<path class="gold" d="M40 60 C300 30 520 70 640 40 M1280 44 C1420 70 1650 30 1880 58 M820 236 C900 226 1020 240 1100 228"/>`;
+
+  // pick environment: ink shards burst in from the screen edges (stop-motion), big halftone hero on the picking side
+  const env = document.getElementById('env');
+  document.getElementById('envFrame').setAttribute('d', sketchRect(600, 570));
+  function shard(x, y, ang, len, w) {   // a jagged spike with its base at (x, y), pointing at angle ang
+    const c = Math.cos(ang), s = Math.sin(ang), px = -s, py = c, P = (a, b) => `${(x + c * a + px * b).toFixed(0)} ${(y + s * a + py * b).toFixed(0)}`;
+    return `M${P(0, -w / 2)} L${P(len * .45, -w * .32 + j(w * .2))} L${P(len * .5, -w * .12)} L${P(len, j(w * .1))} L${P(len * .62, w * .2)} L${P(len * .4, w * .38 + j(w * .2))} L${P(0, w / 2)} Z`;
+  }
+  function buildShards(side) {
+    let html = '', d = 0;
+    const R = (a, b) => a + Math.random() * (b - a);
+    const add = (x, y, ang, len, w, origin, cls) => {
+      const path = shard(x, y, ang, len, w);
+      html += `<g style="--d:${(d += .025).toFixed(3)}s;transform-origin:${origin}"><path class="fill ${cls}" d="${path}"/><path class="edge" pathLength="1" d="${path}"/></g>`;
+    };
+    // the picking side gets the big burst, the other side a few small spikes
+    for (const edge of ['L', 'R']) {
+      const big = edge === side, n = big ? 9 : 4;
+      for (let i = 0; i < n; i++) {
+        const y = R(40, 740), x = edge === 'L' ? -10 : 1930, ang = (edge === 'L' ? 0 : Math.PI) + R(-.5, .5);
+        add(x, y, ang, big ? R(180, 460) : R(90, 220), big ? R(70, 150) : R(40, 80), edge === 'L' ? '0% 50%' : '100% 50%', ['', 'dk', 'bk'][i % 3]);
+      }
+    }
+    for (let i = 0; i < 7; i++) {   // from the top of the band, up into the game view
+      const x = side === 'L' ? R(60, 900) : R(1020, 1860);
+      add(x, 770, -Math.PI / 2 + R(-.35, .35), R(120, 300), R(50, 100), '50% 100%', ['dk', '', 'bk'][i % 3]);
+    }
+    for (let i = 0; i < 3; i++) {   // from the top edge
+      const x = side === 'L' ? R(80, 800) : R(1120, 1840);
+      add(x, -10, Math.PI / 2 + R(-.3, .3), R(100, 220), R(40, 80), '50% 0%', 'bk');
+    }
+    // gold pencil swoosh across the burst
+    const sx = side === 'L' ? 80 : 1840, dir = side === 'L' ? 1 : -1;
+    html += `<path class="sc" style="--d:.2s" pathLength="1" d="M${sx} 700 C${sx + dir * 300} 600 ${sx + dir * 520} 720 ${sx + dir * 760} 560 M${sx + dir * 40} 730 C${sx + dir * 280} 650 ${sx + dir * 560} 760 ${sx + dir * 800} 600"/>`;
+    document.getElementById('shards').innerHTML = html;
+  }
+  let envT = 0;
+  function pickEnv(side, hero, name, player) {
+    clearTimeout(envT);
+    buildShards(side);
+    const box = env.querySelector('.hero'); box.className = 'hero ' + side;
+    const v = box.querySelector('video'); v.src = `../hub/public/heroes-anim/${hero}.webm`; v.play().catch(() => {});
+    box.querySelector('.big').textContent = name; box.querySelector('.who').textContent = player;
+    env.className = ''; void env.offsetWidth; env.className = 'go';   // restart the CSS animations
+    envT = setTimeout(() => { env.className = 'out'; envT = setTimeout(() => { env.className = ''; v.removeAttribute('src'); v.load(); }, 320); }, 2600);
+  }
+
   // Captains Mode order (bans and picks, first pick = left), cut to the 24 steps
   const ORDER = [['L','b'],['L','b'],['R','b'],['R','b'],['L','b'],['R','b'],['R','b'],['L','p'],['R','p'],['L','b'],['L','b'],['R','b'],['R','p'],['L','p'],['L','p'],['R','p'],['R','p'],['L','p'],['L','b'],['R','b'],['R','b'],['L','b'],['L','p'],['R','p']];
   const HEROES = ['antimage','arc_warden','pudge','invoker','tinker','rubick','faceless_void','juggernaut','crystal_maiden','sniper','techies','meepo','lina','earthshaker','mars','phoenix','dark_willow','tidehunter','zuus','lion','spectre','slark','windrunner','enigma'];
@@ -249,17 +368,18 @@
     const cur = SL[step]; if (!cur) return stop();
     const e = el(cur), h = HEROES[step], v = e.querySelector('video');
     v.src = `../hub/public/heroes-anim/${h}.webm`; v.play().catch(() => {});
-    if (cur.t === 'p') e.querySelector('.hname').textContent = NAME(h);
+    if (cur.t === 'p') { e.querySelector('.hname').textContent = NAME(h); pickEnv(cur.s, h, NAME(h), PLAYERS[cur.s][cur.i]); }
     e.classList.add('on');
     step++; mark();
+    timer = setTimeout(fill, SL[step - 1].t === 'p' ? 3400 : 1500);   // picks hold longer so the environment can play
   }
   function reset() {
     stop(); step = 0;
     document.querySelectorAll('.ban, .pick').forEach((e) => { e.classList.remove('on'); const v = e.querySelector('video'); v.removeAttribute('src'); v.load(); });
     mark(); start();
   }
-  function start() { timer = setInterval(fill, 1700); tick = setInterval(() => { clock = Math.max(0, clock - 1); document.getElementById('clock').textContent = `0:${String(clock).padStart(2, '0')}`; }, 1000); }
-  function stop() { clearInterval(timer); clearInterval(tick); timer = null; }
+  function start() { timer = setTimeout(fill, 1500); tick = setInterval(() => { clock = Math.max(0, clock - 1); document.getElementById('clock').textContent = `0:${String(clock).padStart(2, '0')}`; }, 1000); }
+  function stop() { clearTimeout(timer); clearInterval(tick); timer = null; }
   document.getElementById('play').onclick = reset;
   document.getElementById('pause').onclick = (e) => { if (timer) { stop(); e.target.textContent = 'Lanjut'; } else { start(); e.target.textContent = 'Jeda'; } };
   reset();
