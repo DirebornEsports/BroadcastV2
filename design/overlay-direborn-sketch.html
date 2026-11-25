@@ -27,12 +27,12 @@
   body.obs #fakegame { display: none; }
 
   /* ---------- texture: grain (a noise tile drawn once, moved in steps) ---------- */
-  .grain { position: absolute; inset: 0; pointer-events: none; background-image: var(--noise); background-size: 256px 256px; mix-blend-mode: overlay; opacity: .55; animation: grain .5s steps(1) infinite; }
+  .grain { position: absolute; inset: 0; pointer-events: none; background-image: var(--noise); background-size: 256px 256px; opacity: .3; animation: grain .5s steps(1) infinite; }
   @keyframes grain { 0% { background-position: 0 0; } 25% { background-position: -83px 41px; } 50% { background-position: 57px -112px; } 75% { background-position: -140px -60px; } }
   .speck { position: absolute; inset: 0; pointer-events: none; background-image: var(--speck); background-size: 512px 512px; opacity: .9; animation: grain .7s steps(1) infinite reverse; }
 
   /* ---------- pencil / grease: rough edges that boil (3 displacement seeds swapped ~10 fps) ---------- */
-  .rough { filter: url(#r1); animation: boil .3s steps(1) infinite; }
+  svg.circle.rough { filter: url(#r1); animation: boil .3s steps(1) infinite; }   /* boil only on the active slot: filters are CPU work in OBS */
   @keyframes boil { 0% { filter: url(#r1); } 33% { filter: url(#r2); } 66% { filter: url(#r3); } }
   .crayon { filter: url(#crayon); }
 
@@ -155,6 +155,10 @@
   #env.out #shards g { transform: scale(1); animation: grow .3s steps(4) reverse forwards; }
   #env.out #shards .edge, #env.out #shards .sc { stroke-dashoffset: 0; }
   @keyframes grow { from { transform: scale(0); } to { transform: scale(1); } }
+  #shards g.cr { transform: scaleY(0); }
+  #env.go #shards g.cr { animation-name: growY; }
+  #env.out #shards g.cr { transform: scaleY(1); animation-name: growY; }
+  @keyframes growY { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 
   #env .hero { position: absolute; top: 96px; width: 600px; height: 640px; }
   #env .hero.L { left: 120px; } #env .hero.R { right: 120px; }
@@ -322,16 +326,26 @@
         add(x, y, ang, big ? R(180, 460) : R(90, 220), big ? R(70, 150) : R(40, 80), edge === 'L' ? '0% 50%' : '100% 50%', ['', 'dk', 'bk'][i % 3]);
       }
     }
-    for (let i = 0; i < 7; i++) {   // from the top of the band, up into the game view
-      const x = side === 'L' ? R(60, 900) : R(1020, 1860);
-      add(x, 770, -Math.PI / 2 + R(-.35, .35), R(120, 300), R(50, 100), '50% 100%', ['dk', '', 'bk'][i % 3]);
+    // a torn ink crown rising out of the band on the picking side: tallest at the screen edge, lower toward the centre
+    const crown = (maxH, step) => {
+      const x0 = side === 'L' ? -20 : 1940, x1 = side === 'L' ? 940 : 980, n = Math.round(Math.abs(x1 - x0) / step), B = 900;
+      let d = `M${x0} ${B + 40}`;
+      for (let k = 0; k <= n; k++) {
+        const f = k / n, x = x0 + (x1 - x0) * f, h = maxH * (1 - .75 * f);
+        d += ` L${x.toFixed(0)} ${(B - (k % 2 ? R(.08, .25) : R(.55, 1)) * h).toFixed(0)}`;
+      }
+      return d + ` L${x1} ${B + 40} Z`;
+    };
+    for (const [h, st, cls] of [[330, 46, 'dk'], [210, 38, '']]) {
+      const path = crown(h, st);
+      html += `<g class="cr" style="--d:${(d += .05).toFixed(3)}s;transform-origin:50% 100%"><path class="fill ${cls}" d="${path}"/><path class="edge" pathLength="1" d="${path}"/></g>`;
     }
     for (let i = 0; i < 3; i++) {   // from the top edge
       const x = side === 'L' ? R(80, 800) : R(1120, 1840);
       add(x, -10, Math.PI / 2 + R(-.3, .3), R(100, 220), R(40, 80), '50% 0%', 'bk');
     }
     // gold pencil swoosh across the burst
-    const sx = side === 'L' ? 80 : 1840, dir = side === 'L' ? 1 : -1;
+    const sx = side === 'L' ? -20 : 1940, dir = side === 'L' ? 1 : -1;
     html += `<path class="sc" style="--d:.2s" pathLength="1" d="M${sx} 700 C${sx + dir * 300} 600 ${sx + dir * 520} 720 ${sx + dir * 760} 560 M${sx + dir * 40} 730 C${sx + dir * 280} 650 ${sx + dir * 560} 760 ${sx + dir * 800} 600"/>`;
     document.getElementById('shards').innerHTML = html;
   }
@@ -367,7 +381,8 @@
   function fill() {
     const cur = SL[step]; if (!cur) return stop();
     const e = el(cur), h = HEROES[step], v = e.querySelector('video');
-    v.src = `../hub/public/heroes-anim/${h}.webm`; v.play().catch(() => {});
+    v.src = `../hub/public/heroes-anim/${h}.webm`;
+    if (cur.t === 'p') { v.play().catch(() => {}); setTimeout(() => v.pause(), 1500); } else v.currentTime = 1;   // one video decoding at a time, cards keep a still
     if (cur.t === 'p') { e.querySelector('.hname').textContent = NAME(h); pickEnv(cur.s, h, NAME(h), PLAYERS[cur.s][cur.i]); }
     e.classList.add('on');
     step++; mark();

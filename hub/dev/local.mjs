@@ -61,7 +61,7 @@ const ASSETS = {
     let p = decodeURIComponent(u.pathname);
     // Broadcast 2.0 phases 0-3 (barebone): decorative art (frames, clouds, theme cut-outs) becomes an empty
     // image; content stays (hero portraits, team logos, player photos). BAREBONE=0 turns this off.
-    if (process.env.BAREBONE !== '0' && /^\/(assets|themes)\/.*\.(png|jpe?g|webp|svg|gif)$/i.test(p)) return new Response(EMPTY_PNG, { headers: { 'content-type': 'image/png' } });
+    if (process.env.BAREBONE !== '0' && /^\/(assets|themes)\/.*\.(png|jpe?g|webp|svg|gif)$/i.test(p) && !/\/direborn-(logo|mark)/.test(p)) return new Response(EMPTY_PNG, { headers: { 'content-type': 'image/png' } });
     const cands = p.endsWith('/') ? [p + 'index.html'] : [p, p + '.html'];
     for (const c of cands) {
       const f = path.normalize(path.join(PUB, c));

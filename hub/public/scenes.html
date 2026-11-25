@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Direborn scenes</title>
+<!-- Direborn stream pack (phase 4 sketch design): full-screen OBS scenes as one browser source, 1920x1080.
+     ?s=start   streaming soon + countdown (operator: On air > Countdown) + next match
+     ?s=intro   logo reveal, plays once each time the source loads (OBS: "Refresh browser when scene becomes active")
+     ?s=cams    player cam: 6 small + 1 main          ?s=vs  team vs team (names, logos, score from Draft control)
+     ?s=pick    hero pick: main + 1 cam (&cams=2 for 2) ?s=tech  technical issue   ?s=end  thanks for watching   ?s=bg  background only
+     Cam holes are transparent: put the cam media sources BELOW this browser source in OBS.
+     &names=A,B,C,... labels the small cams in order (left column top-down, then right). &demo=1 shows grey stand-ins for the cams. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Permanent+Marker&family=Poppins:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: Oswald; src: url(/fonts/Oswald.woff) format("woff"); }   /* offline fallback for Anton */
+  :root { --red: #e3122d; --red-dk: #8e0a1a; --ink: #0d0b0c; --ink2: #1a1416; --paper: #f3ece4; --gold: #c9a55c; --gold-hi: #e6c784;
+    --display: Anton, Oswald, Impact, sans-serif; --hand: "Permanent Marker", "Segoe Print", cursive; --body: Poppins, "Segoe UI", sans-serif; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: transparent; }
+  #stage { position: absolute; inset: 0; color: var(--paper); font-family: var(--body); }
+  .scene { position: absolute; inset: 0; display: none; }
+  .scene.on { display: block; }
+  svg path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* background: ink with a cam-shaped hole punched out per scene (mask), red halftone shards at the sides, rings, gold pencil lines */
+  #bg { position: absolute; inset: 0; background: var(--ink); }
+  #bg, .grain, .speck { -webkit-mask: var(--holes, none); mask: var(--holes, none); }   /* the cams stay clean */
+  #bg svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #bg .ht { position: absolute; inset: 0; background: radial-gradient(circle, rgba(227,18,45,.55) 1.5px, transparent 2px) 0 0 / 8px 8px;
+    -webkit-mask-image: radial-gradient(ellipse 60% 70% at 50% 50%, transparent 40%, #000 90%); mask-image: radial-gradient(ellipse 60% 70% at 50% 50%, transparent 40%, #000 90%); }
+  .ring { stroke: #4a0a15; stroke-width: 16; } .ring.hi { stroke: #6e0f1f; stroke-width: 6; }
+  .fill { fill: var(--red); stroke: none; } .fill.dk { fill: var(--red-dk); } .fill.bk { fill: #241a1c; }
+  .edge { stroke: var(--ink); stroke-width: 4; }
+  .goldline { stroke: var(--gold); stroke-width: 2.5; opacity: .6; }
+  .grain { position: absolute; inset: 0; pointer-events: none; background-image: var(--noise); background-size: 256px; opacity: .3; animation: grain .5s steps(1) infinite; }
+  @keyframes grain { 0% { background-position: 0 0; } 25% { background-position: -83px 41px; } 50% { background-position: 57px -112px; } 75% { background-position: -140px -60px; } }
+  .speck { position: absolute; inset: 0; pointer-events: none; background-image: var(--speck); background-size: 512px; animation: grain .7s steps(1) infinite reverse; }
+  @keyframes boil { 0% { filter: url(#r1); } 33% { filter: url(#r2); } 66% { filter: url(#r3); } }
+  .crayon { filter: url(#crayon); }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  @keyframes stamp { 0% { transform: scale(1.6) rotate(-6deg); opacity: 0; } 100% { opacity: 1; } }
+  @keyframes rise { from { opacity: 0; transform: translateY(24px); } }
+
+  /* cam frame: transparent hole, pencil box, red crayon corner tabs, paper name plate */
+  .cam { position: absolute; }
+  .cam .demo { position: absolute; inset: 0; background: #555 repeating-linear-gradient(135deg, #5a5a5a 0 14px, #505050 14px 28px); display: none; }
+  body.demo .cam .demo { display: block; }
+  .cam svg { position: absolute; inset: -8px; width: calc(100% + 16px); height: calc(100% + 16px); overflow: visible; }
+  .cam .box { stroke: var(--paper); stroke-width: 3; stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw .7s cubic-bezier(.3,.7,.4,1) .2s forwards; }
+  .cam .tab { fill: var(--red); stroke: none; }
+  .cam .plate { position: absolute; left: -6px; bottom: -40px; min-width: 58%; max-width: 100%; padding: 4px 18px 4px 14px; background: var(--paper); color: var(--ink);
+    font: 800 20px var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; clip-path: polygon(0 4px, 100% 0, 94% 100%, 0 100%); animation: rise .4s steps(4) .6s both; }
+  .cam .plate:empty { display: none; }
+  .cam.big .plate { font-size: 24px; }
+
+  /* titles */
+  .tag { position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: stretch; animation: stamp .4s steps(4) .1s both; }
+  .tag b { font: 400 64px/1 var(--display); letter-spacing: .03em; padding: 10px 26px 8px; }
+  .tag .p { color: var(--ink); background: var(--paper); clip-path: polygon(3% 6%, 100% 0, 100% 100%, 0 94%); }
+  .tag .r { color: var(--paper); background: var(--red); clip-path: polygon(0 0, 97% 8%, 100% 92%, 2% 100%); }
+  .logo { position: absolute; background: url(/assets/direborn-logo-white.png) center / contain no-repeat; }
+  .hand { font: 400 30px var(--hand); color: var(--gold-hi); }
+  .big1 { font: 400 190px/0.9 var(--display); letter-spacing: .01em; color: var(--paper); text-shadow: 8px 8px 0 var(--red-dk); }
+  .brush { display: inline-block; padding: 6px 40px 0; background: var(--red); clip-path: polygon(2% 10%, 30% 0, 70% 6%, 99% 0, 97% 52%, 100% 92%, 64% 100%, 30% 90%, 0 100%, 3% 50%); }
+  .center { position: absolute; left: 0; right: 0; text-align: center; }
+
+  /* start */
+  #s-start .clock { font: 400 150px/1 var(--display); color: var(--gold-hi); letter-spacing: .04em; }
+  #s-start .lbl { font: 600 22px var(--body); letter-spacing: .3em; text-transform: uppercase; color: rgba(243,236,228,.7); }
+  #s-start .nm { display: inline-flex; align-items: center; gap: 26px; margin-top: 18px; padding: 12px 26px; background: rgba(13,11,12,.85); border: 2px solid rgba(243,236,228,.25); }
+  #s-start .nm b { font: 400 40px var(--display); letter-spacing: .03em; } #s-start .nm i { font: 400 30px var(--hand); color: var(--red); font-style: normal; }
+  #s-start .nm small { font: 600 16px var(--body); color: rgba(243,236,228,.6); letter-spacing: .1em; text-transform: uppercase; }
+  #s-start .nm:empty { display: none; }
+
+  /* vs */
+  #s-vs .team { position: absolute; top: 300px; width: 520px; text-align: center; }
+  #s-vs .team.a { left: 170px; } #s-vs .team.b { right: 170px; }
+  #s-vs .lg { position: relative; height: 380px; display: grid; place-items: center; }
+  #s-vs .lg img { max-width: 300px; max-height: 300px; filter: drop-shadow(6px 6px 0 rgba(0,0,0,.5)); }
+  #s-vs .lg span { font: 400 150px var(--display); color: var(--paper); }
+  #s-vs .lg svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  #s-vs .tn { font: 400 58px/1 var(--display); letter-spacing: .02em; margin-top: 22px; text-transform: uppercase; animation: rise .4s steps(4) .5s both; }
+  #s-vs .vs { position: absolute; left: 50%; top: 420px; transform: translateX(-50%); font: 400 220px/1 var(--display); color: var(--red); text-shadow: 6px 6px 0 var(--ink); animation: stamp .45s steps(4) .3s both; }
+  #s-vs .sc { position: absolute; left: 0; right: 0; top: 690px; text-align: center; font: 400 80px var(--display); color: var(--gold-hi); }
+
+  /* end */
+  #s-end .soc { position: absolute; left: 0; right: 0; bottom: 70px; display: flex; justify-content: center; gap: 54px; font: 800 26px var(--body); letter-spacing: .02em; }
+  #s-end .soc span::before { content: attr(data-k); font: 400 20px var(--hand); color: var(--gold-hi); margin-right: 10px; }
+
+  /* intro: ring draws, mark stamps in, shards burst, wordmark rises, then holds */
+  #s-intro .ring2 { position: absolute; left: 580px; top: 160px; width: 760px; height: 760px; overflow: visible; }
+  #s-intro .ring2 path { stroke: var(--red); stroke-width: 12; stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.2s cubic-bezier(.3,.7,.4,1) .3s forwards; }
+  #s-intro .ring2 path + path { stroke: var(--gold); stroke-width: 4; animation-delay: .7s; }
+  #s-intro .mk { position: absolute; left: 540px; top: 420px; width: 840px; height: 238px; background: url(/assets/direborn-logo-white.png) center / contain no-repeat; animation: stamp .5s steps(5) 1.2s both; }
+  #s-intro .burst g { transform-box: fill-box; transform: scale(0); animation: grow .45s steps(5) var(--d) forwards; }
+  @keyframes grow { to { transform: scale(1); } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <filter id="r1" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="2"/><feDisplacementMap in="SourceGraphic" scale="5"/></filter>
+  <filter id="r2" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="5"/></filter>
+  <filter id="r3" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="13"/><feDisplacementMap in="SourceGraphic" scale="5"/></filter>
+  <filter id="crayon" x="-10%" y="-10%" width="120%" height="120%">
+    <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="1" seed="4" result="tooth"/>
+    <feColorMatrix in="tooth" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.2 1.5" result="holes"/>
+    <feComposite in="SourceGraphic" in2="holes" operator="in" result="eaten"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".04" numOctaves="2" seed="9" result="wob"/>
+    <feDisplacementMap in="eaten" in2="wob" scale="4"/>
+  </filter>
+</defs></svg>
+
+<div id="stage">
+  <div id="bg"><div class="ht"></div><svg viewBox="0 0 1920 1080" preserveAspectRatio="none" class="crayon" id="bgArt"></svg></div>
+
+  <section class="scene" id="s-start">
+    <div class="logo" style="left:760px;top:90px;width:400px;height:113px"></div>
+    <div class="center" style="top:250px"><div class="big1">STREAMING</div><div class="brush"><span class="big1" style="text-shadow:none">SOON</span></div></div>
+    <div class="center" style="top:690px"><div class="lbl" id="cdLabel">Live dalam</div><div class="clock" id="cd">--:--</div><div id="nm" class="nm"></div></div>
+  </section>
+
+  <section class="scene" id="s-intro"><svg class="burst" id="burst" viewBox="0 0 1920 1080" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%"></svg>
+    <svg class="ring2 rough" viewBox="0 0 760 760"><path pathLength="1" id="ir1"/><path pathLength="1" id="ir2"/></svg>
+    <div class="mk"></div></section>
+
+  <section class="scene" id="s-cams"><div class="tag" style="top:36px"><b class="r">PLAYER CAM</b></div></section>
+
+  <section class="scene" id="s-vs">
+    <div class="logo" style="left:810px;top:70px;width:300px;height:85px"></div>
+    <div class="team a"><div class="lg" id="lgA"></div><div class="tn" id="tnA"></div></div>
+    <div class="vs">VS</div><div class="sc" id="vsScore"></div>
+    <div class="team b"><div class="lg" id="lgB"></div><div class="tn" id="tnB"></div></div>
+  </section>
+
+  <section class="scene" id="s-pick"><div class="logo" style="left:70px;top:44px;width:300px;height:85px"></div><div class="tag" style="top:30px"><b class="p">HERO</b><b class="r">PICK</b></div></section>
+
+  <section class="scene" id="s-tech">
+    <div class="logo" style="left:760px;top:120px;width:400px;height:113px"></div>
+    <svg viewBox="0 0 160 140" class="rough" style="position:absolute;left:880px;top:280px;width:160px;height:140px"><path d="M80 8 L152 132 L8 132 Z M80 50 L80 96 M80 112 L80 116" stroke="#e6c784" stroke-width="9"/></svg>
+    <div class="center" style="top:440px"><div class="big1">TECHNICAL</div><div class="brush"><span class="big1" style="text-shadow:none">ISSUE</span></div></div>
+    <div class="center hand" style="top:900px;font-size:40px">sorry for the interruption, we'll be right back</div>
+  </section>
+
+  <section class="scene" id="s-end">
+    <div class="logo" style="left:760px;top:120px;width:400px;height:113px"></div>
+    <div class="center" style="top:330px"><div class="big1">THANKS FOR</div><div class="brush"><span class="big1" style="text-shadow:none">WATCHING</span></div></div>
+    <div class="soc"><span data-k="ig">DIREBORNESPORTS</span><span data-k="web">DIREBORN.TEAM</span><span data-k="discord">S.ID/DIREBORN_COMM</span><span data-k="yt">DIREBORN.ESPORTS</span></div>
+  </section>
+
+  <section class="scene" id="s-bg"></section>
+
+  <div class="grain"></div><div class="speck"></div>
+</div>
+
+<script>
+(function () {
+  const q = new URLSearchParams(location.search), $ = (id) => document.getElementById(id);
+  const S = ({ start: 1, intro: 1, cams: 1, vs: 1, pick: 1, tech: 1, end: 1, bg: 1 })[q.get('s')] ? q.get('s') : 'bg';
+  if (q.has('demo')) document.body.classList.add('demo');
+  $('s-' + S).classList.add('on');
+  const NAMES = (q.get('names') || '').split(',');
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  // ---------- textures and hand-drawn shapes (same recipe as design/overlay-direborn-sketch.html) ----------
+  function tile(n, paint) { const c = document.createElement('canvas'); c.width = c.height = n; paint(c.getContext('2d'), n); return `url(${c.toDataURL()})`; }
+  const st = $('stage').style;
+  st.setProperty('--noise', tile(256, (g, n) => { const d = g.createImageData(n, n); for (let i = 0; i < d.data.length; i += 4) { d.data[i] = d.data[i + 1] = d.data[i + 2] = Math.random() * 255; d.data[i + 3] = 70; } g.putImageData(d, 0, 0); }));
+  st.setProperty('--speck', tile(512, (g, n) => {
+    for (let i = 0; i < 90; i++) { g.fillStyle = Math.random() < .5 ? 'rgba(243,236,228,.5)' : 'rgba(13,11,12,.6)'; g.fillRect(Math.random() * n, Math.random() * n, 1 + Math.random() * 2, 1 + Math.random() * 2); }
+    g.strokeStyle = 'rgba(243,236,228,.16)'; g.lineWidth = .7;
+    for (let i = 0; i < 4; i++) { const x = Math.random() * n, y = Math.random() * n; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (Math.random() - .5) * 60, y + 20 + Math.random() * 90); g.stroke(); }
+  }));
+  const j = (a) => (Math.random() - .5) * a, R = (a, b) => a + Math.random() * (b - a);
+  const sketchRect = (w, h) => { const p = (x, y) => `${(x + j(3)).toFixed(1)} ${(y + j(3)).toFixed(1)}`; return `M${p(-4, 2)} L${p(w + 3, -1)} L${p(w + 1, h + 4)} L${p(-2, h + 1)} L${p(1, -5)} M${p(6, 1)} L${p(w - 2, 3)}`; };
+  function shard(x, y, ang, len, w) {
+    const c = Math.cos(ang), s = Math.sin(ang), P = (a, b) => `${(x + c * a - s * b).toFixed(0)} ${(y + s * a + c * b).toFixed(0)}`;
+    return `M${P(0, -w / 2)} L${P(len * .45, -w * .32 + j(w * .2))} L${P(len * .5, -w * .12)} L${P(len, j(w * .1))} L${P(len * .62, w * .2)} L${P(len * .4, w * .38 + j(w * .2))} L${P(0, w / 2)} Z`;
+  }
+  function rings(cx, cy, n, sx, sy) {
+    let d = '';
+    for (let k = 1; k <= n; k++) { d += `M${cx + sx * k} ${cy}`; for (let a = .3; a <= Math.PI * 2 + .3; a += .25) d += ` L${(cx + Math.cos(a) * sx * k * (1 + j(.05))).toFixed(0)} ${(cy + Math.sin(a) * sy * k * (1 + j(.07))).toFixed(0)}`; }
+    return d;
+  }
+  // background art: rings behind the corners, red / dark / black shards from both side edges, gold pencil lines
+  let art = `<path class="ring" d="${rings(160, 980, 7, 90, 60)}"/><path class="ring hi" d="${rings(160, 980, 7, 90, 60)}"/><path class="ring" d="${rings(1760, 100, 7, 90, 60)}"/><path class="ring hi" d="${rings(1760, 100, 7, 90, 60)}"/>`;
+  for (const side of [0, 1]) for (let i = 0; i < 8; i++) {
+    const y = 60 + i * 130 + j(60), x = side ? 1935 : -15, ang = (side ? Math.PI : 0) + j(.8), p = shard(x, y, ang, R(120, 300), R(60, 130));
+    art += `<path class="fill ${['', 'dk', 'bk'][i % 3]}" d="${p}"/><path class="edge" d="${p}"/>`;
+  }
+  art += `<path class="goldline" d="M0 300 C200 260 260 420 520 380 M1920 760 C1700 800 1640 660 1400 700 M300 1040 C700 1000 1200 1060 1620 1010"/>`;
+  $('bgArt').innerHTML = art;
+
+  // ---------- cam holes: transparent rectangles cut out of the background (mask), framed in pencil ----------
+  const LAYOUT = {
+    cams: { main: [432, 196, 1056, 594], small: [[60, 150], [60, 450], [60, 750], [1524, 150], [1524, 450], [1524, 750]], sw: 336, sh: 189 },
+    pick: { main: [90, 196, 1376, 774], small: Number(q.get('cams')) === 2 ? [[1524, 196], [1524, 520]] : [[1524, 196]], sw: 336, sh: 189 },
+  }[S];
+  if (LAYOUT) {
+    const rects = [[...LAYOUT.main, 'big', q.get('main') || ''], ...LAYOUT.small.map(([x, y], i) => [x, y, LAYOUT.sw, LAYOUT.sh, '', NAMES[i] || ''])];
+    let holes = '';
+    for (const [x, y, w, h, cls, name] of rects) {
+      holes += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="black"/>`;
+      const d = document.createElement('div');
+      d.className = 'cam ' + cls; d.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
+      const t = Math.min(w, h) * .2;   // red corner tabs, like the old pack
+      d.innerHTML = `<div class="demo"></div><svg viewBox="-8 -8 ${w + 16} ${h + 16}" class="rough">` +
+        `<path class="tab crayon" d="M-8 ${t} L-8 -8 L${t} -8 L${t * .6} 2 L2 ${t * .6} Z M${w + 8} ${h - t} L${w + 8} ${h + 8} L${w - t} ${h + 8} L${w - t * .6} ${h - 2} L${w - 2} ${h - t * .6} Z"/>` +
+        `<path class="box" pathLength="1" d="${sketchRect(w, h)}"/></svg><div class="plate">${esc(name)}</div>`;
+      $('s-' + S).appendChild(d);
+    }
+    const m = `<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"><rect width="1920" height="1080" fill="white"/>${holes}</svg>`;
+    $('stage').style.setProperty('--holes', `url("data:image/svg+xml,${encodeURIComponent(m)}") 0 0 / 1920px 1080px`);
+  }
+
+  // ---------- intro: shard burst from all edges + ring ----------
+  if (S === 'intro') {
+    let h = '', d = .9;
+    for (let i = 0; i < 26; i++) {
+      const e = i % 4, x = [-15, 1935, R(0, 1920), R(0, 1920)][e], y = [R(0, 1080), R(0, 1080), -15, 1095][e], ang = [0, Math.PI, Math.PI / 2, -Math.PI / 2][e] + j(.7);
+      const o = ['0% 50%', '100% 50%', '50% 0%', '50% 100%'][e], p = shard(x, y, ang, R(160, 420), R(70, 150));
+      h += `<g style="--d:${(d += .03).toFixed(2)}s;transform-origin:${o}"><path class="fill ${['', 'dk', 'bk'][i % 3]}" d="${p}"/><path class="edge" d="${p}"/></g>`;
+    }
+    $('burst').innerHTML = h;
+    const circ = (r) => { let s = `M${380 + r} 380`; for (let a = .2; a < Math.PI * 2.15; a += .2) s += ` L${(380 + Math.cos(a) * r * (1 + j(.03))).toFixed(1)} ${(380 + Math.sin(a) * r * (1 + j(.03))).toFixed(1)}`; return s; };
+    $('ir1').setAttribute('d', circ(330)); $('ir2').setAttribute('d', circ(352));
+  }
+
+  // ---------- live data from the hub (Draft control / On air) ----------
+  if (S === 'vs' || S === 'start') {
+    let offset = 0, C = null, sig = '';
+    const logo = (el, t) => { el.innerHTML = `<svg viewBox="0 0 520 380" preserveAspectRatio="none" class="rough"><path d="${sketchRect(520, 380)}" stroke="#f3ece4" stroke-width="3"/></svg>`;
+      if (t.logo) { const i = new Image(); i.alt = ''; i.src = t.logo; i.onerror = () => { i.remove(); el.insertAdjacentHTML('beforeend', `<span>${esc(t.tag)}</span>`); }; el.appendChild(i); }
+      else el.insertAdjacentHTML('beforeend', `<span>${esc(t.tag)}</span>`); };
+    const tick = () => {
+      if (S !== 'start') return;
+      const left = C && C.endsAt ? Math.max(0, C.endsAt - (Date.now() + offset)) : 0;
+      const s = Math.ceil(left / 1000);
+      // no countdown set, or it ran out: just "starting soon", like the old pack's last frame
+      $('cd').textContent = s > 0 ? `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}` : '';
+      $('cdLabel').textContent = s > 0 ? (C.label || 'Live dalam') : 'Live stream segera dimulai';
+    };
+    setInterval(tick, 250);
+    async function nextMatch() {
+      try {
+        const D = await (await fetch('/api/nextmatch', { cache: 'no-store' })).json();
+        $('nm').innerHTML = D.none || !D.a ? '' : `<small>${esc([D.round, D.bo ? 'BO' + D.bo : ''].filter(Boolean).join(' · '))}</small><b>${esc(D.a.name)}</b><i>vs</i><b>${esc(D.b.name)}</b>`;
+      } catch {}
+    }
+    (function connect() {
+      const es = new EventSource('/events');
+      es.onmessage = (e) => {
+        const D = JSON.parse(e.data);
+        offset = (D.serverNow || Date.now()) - Date.now(); C = D.countdown || null; tick();
+        if (S === 'vs') {
+          const k = JSON.stringify([D.teams.left.name, D.teams.left.logo, D.teams.right.name, D.teams.right.logo]);
+          if (k !== sig) { sig = k; logo($('lgA'), D.teams.left); logo($('lgB'), D.teams.right); $('tnA').textContent = D.teams.left.name; $('tnB').textContent = D.teams.right.name; }
+          $('vsScore').textContent = `${D.teams.left.score || 0} – ${D.teams.right.score || 0}`;
+        } else {
+          const k = JSON.stringify(D.nextMatch) + D.statsVersion;
+          if (k !== sig) { sig = k; nextMatch(); }
+        }
+      };
+      es.onerror = () => { es.close(); setTimeout(connect, 2000); };
+    })();
+  }
+})();
+</script>
+</body>
+</html>
