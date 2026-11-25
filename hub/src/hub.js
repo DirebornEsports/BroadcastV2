@@ -2198,6 +2198,10 @@ function processGsi(body) {
   const players = parseGsiPlayers(body);
   if (players) gsiPlayers = players;
   let dirty = !!players && autoTeamsFromGsi();             // sides first, so the draft below lands on the right team
+  if (typeof body?.map?.daytime === 'boolean') {           // in-game day/night panel
+    const night = !body.map.daytime || !!body.map.nightstalker_night;
+    if (state.night !== night) { state.night = night; dirty = true; }
+  }
   if (state.mode === 'gsi' && applyGsi(body)) dirty = true;
   snapshotDraft(body);
   if (players && state.mode === 'gsi' && !draftPickCount(body) && fillPicksFromHeroes(players)) { gsiDiag.heroFallback = true; dirty = true; }

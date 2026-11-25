@@ -7,3 +7,4 @@ studio/logs/
 studio-data/
 .dev.vars
 .wrangler/
+hub/public/themes/uprising2/gen/raw/

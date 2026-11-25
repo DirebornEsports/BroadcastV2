@@ -73,6 +73,46 @@
   @keyframes rise   { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: none; } }
   @keyframes widen  { from { opacity: 0; letter-spacing: .4em; } to { opacity: 1; letter-spacing: .01em; } }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* ---------- team names beside Dota's top bar (Radiant left, Dire right) ---------- */
+  .tn { position: absolute; top: var(--nt, 2px); height: 44px; display: flex; align-items: center; padding: 0 22px;
+    font: 900 26px/1 var(--font); letter-spacing: .02em; text-transform: uppercase; white-space: nowrap; color: #fff;
+    text-shadow: 0 2px 6px rgba(0,0,0,.8); opacity: 0; transition: opacity .4s; }
+  .tn.l { right: calc(1920px - var(--nl, 572px)); background: linear-gradient(90deg, transparent, rgba(5,10,20,.78) 30%); }
+  .tn.r { left: var(--nr, 1348px); background: linear-gradient(270deg, transparent, rgba(5,10,20,.78) 30%); }
+  .tn.on { opacity: 1; }
+
+  /* ---------- day/night panel beside the shop: the sun sets and the moon rises with Dota's clock ---------- */
+  .dn { position: absolute; left: var(--dx, 1222px); top: var(--dy, 986px); width: var(--dw, 236px); height: var(--dh, 94px);
+    overflow: hidden; border-radius: 6px; border: 1px solid rgba(var(--c-rgb), .55); box-shadow: 0 4px 14px rgba(0,0,0,.5); background: #0b1430; }
+  .dn .sky { position: absolute; inset: 0; transition: opacity 1.8s; }
+  .dn .sky.day { background: linear-gradient(180deg, #4f9fdc, #9fd0f0 60%, #f6d38a); }
+  .dn .sky.night { background: linear-gradient(180deg, #070d24, #1d2c5e); opacity: 0; }
+  .dn .stars { position: absolute; inset: 0; opacity: 0; transition: opacity 1.8s; background-image:
+    radial-gradient(1.5px 1.5px at 12% 30%, #fff, transparent), radial-gradient(1px 1px at 28% 62%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 44% 18%, #fff, transparent), radial-gradient(1px 1px at 70% 40%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 86% 22%, #fff, transparent), radial-gradient(1px 1px at 92% 70%, #fff, transparent);
+    animation: twinkle 3s ease-in-out infinite; }
+  @keyframes twinkle { 50% { filter: brightness(.5); } }
+  .dn .wheel { position: absolute; left: 50%; top: calc(100% + 24px); width: 150px; height: 150px; margin: -75px 0 0 -75px;
+    transition: transform 1.8s cubic-bezier(.6,0,.3,1); }
+  .dn .wheel i { position: absolute; left: 50%; width: 38px; height: 38px; margin-left: -19px; border-radius: 50%; }
+  .dn .sun { top: 0; background: radial-gradient(circle at 40% 40%, #fff6c8, #ffc94a 60%, #f39a1e); box-shadow: 0 0 22px #ffd36a; }
+  .dn .moon { bottom: 0; transform: rotate(180deg); background: radial-gradient(circle at 35% 35%, #ffffff, #d9e2f2 60%, #a9b8d6); box-shadow: 0 0 18px #bcd0ff; }
+  .dn .moon::after { content: ""; position: absolute; left: 9px; top: 7px; width: 26px; height: 26px; border-radius: 50%; background: rgba(120,140,180,.35); }
+  .dn b { position: absolute; left: 10px; bottom: 7px; font: 900 13px/1 var(--font); letter-spacing: .25em; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.7); }
+  .dn.night .sky.day { opacity: 0; } .dn.night .sky.night, .dn.night .stars { opacity: 1; }
+  .dn.night .wheel { transform: rotate(180deg); }
+  .dn.off { display: none; }
+
+  /* ---------- frame + name for the cropped player cam (the cam itself is the Studio auto cam source in OBS, under this hole) ---------- */
+  .camf { position: absolute; left: var(--cx, 312px); top: var(--cy, 872px); width: var(--cw, 250px); height: var(--ch, 208px);
+    border: 2px solid rgba(var(--c-rgb), .9); box-shadow: 0 0 0 1px rgba(0,0,0,.6), 0 6px 18px rgba(0,0,0,.5); opacity: 0; transition: opacity .3s; }
+  .camf.on { opacity: 1; }
+  .camf .cn { position: absolute; left: -2px; bottom: 100%; height: 28px; display: flex; align-items: center; gap: 8px; padding: 0 12px;
+    background: rgba(8,14,24,.92); border: 2px solid rgba(var(--c-rgb), .9); border-bottom: 0; white-space: nowrap; }
+  .camf .cn b { font: 800 15px/1 var(--font); color: #fff; }
+  .camf .cn span { font: 800 11px/1 var(--font); letter-spacing: .14em; color: rgb(var(--c-rgb)); }
 </style>
 </head>
 <body>
@@ -86,6 +126,10 @@
     </div>
     <div class="photo" id="photo"></div>
   </div>
+  <div class="tn l" id="tnL"></div><div class="tn r" id="tnR"></div>
+  <div class="dn" id="dn"><div class="sky day"></div><div class="sky night"></div><div class="stars"></div>
+    <div class="wheel"><i class="sun"></i><i class="moon"></i></div><b id="dnTxt">SIANG</b></div>
+  <div class="camf" id="camf"><div class="cn"><b id="camName"></b><span id="camTag"></span></div></div>
 </div>
 <script src="/sfx.js"></script>
 <script>
@@ -128,7 +172,38 @@
     } else st.classList.add('none');
   }
 
+  // positions on the 1920x1080 canvas, set in the OBS source URL to match the caster's HUD layout:
+  // ?names=<left name ends at x>,<right name starts at x>,<top>  ?dn=x,y,w,h  (?dn=0 hides the day/night panel)
+  // the cam frame follows the Player cam panel's position
+  const root = document.documentElement.style;
+  const nums = (k) => (qs.get(k) || '').split(',').map(Number).filter((n) => Number.isFinite(n));
+  { const [l, r, t] = nums('names'); if (l) root.setProperty('--nl', l + 'px'); if (r) root.setProperty('--nr', r + 'px'); if (t != null) root.setProperty('--nt', t + 'px'); }
+  { const v = nums('dn'); if (v.length === 4) ['--dx', '--dy', '--dw', '--dh'].forEach((n, i) => root.setProperty(n, v[i] + 'px')); }
+  if (qs.get('dn') === '0') $('dn').classList.add('off');
+
+  function applyExtras(S) {
+    const rad = S.radiantSide === 'right' ? 'right' : 'left', dire = rad === 'left' ? 'right' : 'left';
+    for (const [id, side] of [['tnL', rad], ['tnR', dire]]) {   // Dota's top bar: Radiant left, Dire right
+      const n = (S.teams && S.teams[side] && S.teams[side].name) || '';
+      if ($(id).textContent !== n) $(id).textContent = n;
+      $(id).classList.toggle('on', !!n);
+    }
+    const night = !!S.night;
+    $('dn').classList.toggle('night', night);
+    $('dnTxt').textContent = night ? 'MALAM' : 'SIANG';
+    const pc = S.playerCam || {};                                // same box as the Player cam panel (x, y, w, aspect)
+    if (pc.w) {
+      const [aw, ah] = String(pc.aspect || '16:9').split(':').map(Number);
+      root.setProperty('--cx', pc.x + 'px'); root.setProperty('--cy', pc.y + 'px');
+      root.setProperty('--cw', pc.w + 'px'); root.setProperty('--ch', Math.round(pc.w * (ah || 9) / (aw || 16)) + 'px');
+    }
+    const cs = S.camSel;
+    $('camf').classList.toggle('on', !!(cs && cs.name));
+    if (cs && cs.name) { $('camName').textContent = cs.name; $('camTag').textContent = cs.tag || cs.team || ''; }
+  }
+
   function apply(S) {
+    applyExtras(S);
     SFX.config(S.sfx, false);
     const lt = $('lt');
     const ic = S.ingameCard || {};

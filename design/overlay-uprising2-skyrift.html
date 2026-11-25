@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uprising 2 — Sky Rift draft (mockup)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Saira:wght@500;700;800&family=Saira+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#121c3f; --navy2:#1d2c5e; --ivory:#f1e6cc; --jade:#3de0c4; --ice:#9fb6e0;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#05070d;overflow:hidden}
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;font-family:Saira,sans-serif;color:var(--ivory)}
+/* fake game behind (preview only; ?clean hides it) */
+#game{position:absolute;inset:0;background:
+  radial-gradient(60% 50% at 30% 40%,#2c3b22 0,transparent 70%),
+  radial-gradient(50% 60% at 75% 35%,#3a2a1c 0,transparent 70%),
+  linear-gradient(160deg,#1b2416,#24291b 40%,#151a12)}
+#game::after{content:"GAME";position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);font:800 120px Saira;color:#ffffff0d;letter-spacing:.2em}
+body.clean #game{display:none}
+
+/* ---------- band ---------- */
+#band{position:absolute;left:0;bottom:0;width:1920px;height:266px}
+#band svg.frame{position:absolute;inset:0;overflow:visible}
+.fill{fill:url(#panel);opacity:0;transition:opacity .6s .9s}
+.edge{fill:none;stroke:var(--ice);stroke-width:1.5;stroke-opacity:.75;stroke-dasharray:2600;stroke-dashoffset:2600;transition:stroke-dashoffset 1.3s var(--ease)}
+.gem{fill:var(--jade);opacity:0;transition:opacity .3s 1.1s}
+.on .fill{opacity:.9}.on .edge{stroke-dashoffset:0}.on .gem{opacity:1}
+/* drifting mist on the band's top edge: cheap gradients, transform only */
+.mist{position:absolute;left:-400px;top:-40px;width:2720px;height:120px;pointer-events:none;opacity:.35;
+  background:radial-gradient(180px 40px at 10% 60%,#c9d6f2 0,transparent 70%),radial-gradient(260px 50px at 35% 50%,#c9d6f2 0,transparent 70%),
+  radial-gradient(200px 36px at 62% 65%,#c9d6f2 0,transparent 70%),radial-gradient(280px 46px at 88% 55%,#c9d6f2 0,transparent 70%);
+  animation:drift 60s linear infinite}
+@keyframes drift{to{transform:translateX(400px)}}
+
+.side{position:absolute;top:40px;width:690px;height:226px;padding:14px 25px 0;opacity:0;transform:translateY(10px);transition:.5s var(--ease) 1s}
+.side.l{left:0}.side.r{right:0}
+.on .side{opacity:1;transform:none}
+.team{display:flex;align-items:center;gap:10px;height:26px;font:700 20px 'Saira Condensed';letter-spacing:.08em;text-transform:uppercase}
+.r .team{justify-content:flex-end}
+.team i{width:6px;height:6px;transform:rotate(45deg);background:var(--ice);transition:.3s}
+.side.turn .team i{background:var(--jade);box-shadow:0 0 10px var(--jade)}
+.team small{font:600 13px 'Saira Condensed';color:var(--ice);letter-spacing:.2em}
+
+.picks{display:flex;gap:10px;margin-top:8px}
+.slot{position:relative;width:120px;height:128px;overflow:hidden;
+  clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.slot::before{content:"";position:absolute;inset:0;border:1px solid #9fb6e055;clip-path:inherit;z-index:3;pointer-events:none}
+.slot video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.15);transition:opacity .35s .15s,transform .9s var(--ease) .15s}
+.slot.picked video{opacity:1;transform:scale(1.7) translateY(14%)} /* heroes-anim has empty space around the hero */
+.slot.picked{background:radial-gradient(80% 70% at 50% 35%,#2b5a7c,#101a3d)}
+.slot .nm{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:18px 8px 5px;font:700 14px 'Saira Condensed';letter-spacing:.06em;text-transform:uppercase;
+  background:linear-gradient(transparent,#0b1230ee);opacity:0;transition:opacity .3s .5s}
+.slot.picked .nm{opacity:1}
+/* empty slot = dim crystal; the pieces fly apart on pick */
+.crystal{position:absolute;inset:0;background:linear-gradient(160deg,#20335f,#141f45)}
+.shard{position:absolute;inset:0;background:linear-gradient(150deg,#2e6f86 0,#1b3d68 45%,#162a55);opacity:.55;transition:transform .6s var(--ease),opacity .5s}
+.shard:nth-child(1){clip-path:polygon(50% 18%,62% 40%,50% 50%)}
+.shard:nth-child(2){clip-path:polygon(50% 18%,38% 40%,50% 50%)}
+.shard:nth-child(3){clip-path:polygon(38% 40%,50% 50%,40% 70%,34% 55%)}
+.shard:nth-child(4){clip-path:polygon(62% 40%,50% 50%,60% 70%,66% 55%)}
+.shard:nth-child(5){clip-path:polygon(50% 50%,40% 70%,50% 84%,60% 70%)}
+.slot:not(.picked) .shard{animation:glint 4s ease-in-out infinite}
+@keyframes glint{50%{opacity:.8}}
+.picked .crystal{opacity:0;transition:opacity .4s .25s}
+.picked .shard{animation:none;opacity:0}
+.picked .shard:nth-child(1){transform:translate(14px,-60px) rotate(40deg)}
+.picked .shard:nth-child(2){transform:translate(-30px,-50px) rotate(-50deg)}
+.picked .shard:nth-child(3){transform:translate(-60px,10px) rotate(-30deg)}
+.picked .shard:nth-child(4){transform:translate(60px,4px) rotate(35deg)}
+.picked .shard:nth-child(5){transform:translate(8px,60px) rotate(25deg)}
+/* jade sweep across the card right after the shatter */
+.slot::after{content:"";position:absolute;inset:-20% -60%;z-index:2;pointer-events:none;transform:translateX(-100%) skewX(-20deg);
+  background:linear-gradient(90deg,transparent 40%,#3de0c4aa 50%,transparent 60%)}
+.slot.flash::after{animation:sweep .7s var(--ease) .2s}
+@keyframes sweep{to{transform:translateX(100%) skewX(-20deg)}}
+/* active slot: breathing jade outline */
+.slot.active::before{border-color:var(--jade);animation:breathe 1.2s ease-in-out infinite}
+.slot.active .crystal{background:linear-gradient(160deg,#21456d,#152650)}
+@keyframes breathe{50%{border-color:#3de0c444}}
+
+.bans{display:flex;gap:8px;margin-top:8px}
+.ban{position:relative;width:84px;height:30px;overflow:hidden;background:#0e1736;border:1px solid #9fb6e033}
+.ban video{width:100%;height:100%;object-fit:cover;transform:scale(2.6) translateY(22%);filter:grayscale(1) brightness(.6);opacity:0;transition:opacity .3s}
+.ban.on video{opacity:1}
+.ban::after{content:"";position:absolute;left:-4px;right:-4px;top:50%;height:1.5px;background:var(--ivory);transform:rotate(-14deg) scaleX(0);transition:transform .35s var(--ease) .2s;box-shadow:0 0 6px #0008}
+.ban.on::after{transform:rotate(-14deg) scaleX(1)}
+.ban.active{border-color:var(--jade);animation:breathe2 1.2s ease-in-out infinite}
+@keyframes breathe2{50%{border-color:#3de0c444}}
+
+/* ---------- center ---------- */
+#center{position:absolute;left:690px;top:0;width:540px;height:266px;text-align:center;opacity:0;transition:opacity .5s 1.1s}
+.on #center{opacity:1}
+#crest{position:absolute;left:50%;top:-96px;width:112px;transform:translateX(-50%);filter:drop-shadow(0 6px 14px #000a)}
+#crest.old{filter:grayscale(1) sepia(.25) brightness(1.55) drop-shadow(0 6px 14px #000a)} /* placeholder until crest-2.png (Uprising II logo) is added */
+.pill{display:inline-flex;align-items:center;gap:8px;margin-top:30px;padding:3px 14px;border:1px solid #9fb6e088;
+  font:600 12px 'Saira Condensed';letter-spacing:.3em;color:var(--ice);clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)}
+.pill b{color:var(--jade);font-weight:700}
+#stagenm{font:800 40px/1 Saira;letter-spacing:.04em;margin-top:8px}
+#bo{font:600 13px 'Saira Condensed';letter-spacing:.4em;color:var(--ice);margin-top:4px}
+.score{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin-top:14px;padding:0 26px}
+.score .n{font:800 66px/1 Saira;letter-spacing:.02em;padding:0 18px}
+.score .n span{color:var(--ice);opacity:.6;padding:0 6px}
+.tm{display:flex;flex-direction:column;gap:2px}
+.tm.l{align-items:flex-end}.tm.r{align-items:flex-start}
+.tm label{font:600 11px 'Saira Condensed';letter-spacing:.3em;color:var(--ice)}
+.tm b{font:700 28px/1 Saira;font-variant-numeric:tabular-nums}
+.tm.turn label{color:var(--jade)}
+.tm.turn b{color:var(--jade)}
+
+/* pick environment: a light rift climbs out of the slot, a jade crack runs along the band edge */
+.rift{position:absolute;width:80px;height:220px;pointer-events:none;overflow:visible}
+.rift path{fill:none;stroke:var(--jade);stroke-width:2;stroke-dasharray:400;stroke-dashoffset:400;filter:drop-shadow(0 0 6px #3de0c4);animation:rift 1.1s var(--ease) forwards}
+@keyframes rift{60%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:0;opacity:0}}
+.crack{position:absolute;height:2px;width:900px;pointer-events:none;background:linear-gradient(90deg,transparent,var(--jade) 45%,#fff 50%,var(--jade) 55%,transparent);
+  transform:translateX(-50%) scaleX(0);animation:crack .9s var(--ease) forwards;box-shadow:0 0 12px var(--jade)}
+@keyframes crack{60%{transform:translateX(-50%) scaleX(1);opacity:1}100%{transform:translateX(-50%) scaleX(1);opacity:0}}
+.bit{position:absolute;width:7px;height:7px;background:var(--jade);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);pointer-events:none;animation:bit 1s ease-out forwards}
+@keyframes bit{to{transform:translate(var(--x),var(--y)) rotate(180deg);opacity:0}}
+
+
+/* ---------- richness layers (round 2) ---------- */
+.edge2{fill:none;stroke:var(--ice);stroke-width:1;stroke-dasharray:1 6;opacity:0;transition:opacity .6s 1.2s}
+.on .edge2{opacity:.55}
+/* sky texture inside the band: swirl clouds + rays + specks, screen-blended so the hairlines stay on top */
+.sky{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:0;transition:opacity .8s 1s;
+  clip-path:polygon(0 52px,12px 40px,690px 40px,712px 0,1208px 0,1230px 40px,1908px 40px,1920px 52px,1920px 266px,0 266px)}
+.on .sky{opacity:1}
+.sky .clouds{position:absolute;inset:0;background:url(../hub/public/themes/uprising2/sky.jpg) center/1100px auto repeat-x;opacity:.28}
+.sky .rays{position:absolute;inset:0;background:
+  conic-gradient(from 180deg at 50% 0,transparent 0 150deg,#9fb6e014 155deg,transparent 160deg 170deg,#3de0c418 176deg,transparent 182deg 190deg,#9fb6e012 196deg,transparent 202deg)}
+.sky .glow{position:absolute;inset:0;background:
+  radial-gradient(420px 160px at 50% 0,#3de0c430,transparent 70%),
+  radial-gradient(360px 180px at 0 100%,#3de0c41c,transparent 70%),
+  radial-gradient(360px 180px at 100% 100%,#9fb6e01c,transparent 70%)}
+.sky .specks{position:absolute;inset:0;opacity:.6;background-image:
+  radial-gradient(1.5px 1.5px at 7% 40%,#fff,transparent),radial-gradient(1px 1px at 19% 78%,#fff,transparent),
+  radial-gradient(1.5px 1.5px at 33% 30%,#c9f5ec,transparent),radial-gradient(1px 1px at 47% 88%,#fff,transparent),
+  radial-gradient(1.5px 1.5px at 61% 22%,#fff,transparent),radial-gradient(1px 1px at 72% 70%,#c9f5ec,transparent),
+  radial-gradient(1.5px 1.5px at 86% 36%,#fff,transparent),radial-gradient(1px 1px at 95% 84%,#fff,transparent)}
+.wm{position:absolute;bottom:-18px;font:800 120px/1 Saira;letter-spacing:.02em;color:#f1e6cc;opacity:.045;white-space:nowrap;pointer-events:none;text-transform:uppercase}
+.l .wm{left:20px}.r .wm{right:20px}
+.slot.picked::before{border-color:#f1e6cc99}
+.slot .nm::before{content:"";display:inline-block;width:5px;height:5px;margin:0 6px 2px 0;background:var(--jade);transform:rotate(45deg)}
+
+/* crest: halo ring + jade beam, like the ring in the poster */
+.halo{position:absolute;left:50%;top:-58px;width:330px;height:74px;transform:translateX(-50%) rotate(-6deg);border-radius:50%;
+  border:1.5px solid #f1e6cc55;box-shadow:0 0 18px #3de0c433,inset 0 0 14px #3de0c422;opacity:0;transition:opacity .6s 1.3s}
+.halo::after{content:"";position:absolute;inset:-1.5px;border-radius:50%;border:2px solid transparent;border-top-color:#3de0c4;filter:drop-shadow(0 0 6px #3de0c4);animation:orbit 5s linear infinite}
+@keyframes orbit{to{transform:rotate(360deg)}}
+.beam{position:absolute;left:50%;top:-230px;width:180px;height:240px;transform:translateX(-50%);pointer-events:none;opacity:0;transition:opacity .8s 1.3s;
+  background:radial-gradient(50% 100% at 50% 100%,#3de0c455,transparent 70%);animation:flick 4s ease-in-out infinite}
+@keyframes flick{50%{filter:brightness(1.4)}}
+.on .halo,.on .beam{opacity:1}
+
+/* floating islands/rocks above the band, bobbing */
+.rock{position:absolute;pointer-events:none;opacity:0;transition:opacity .8s 1.4s;animation:bob 7s ease-in-out infinite}
+.on .rock{opacity:1}
+.rock path.b{fill:#16234b;stroke:#9fb6e077;stroke-width:1.2}
+.rock path.t{fill:none;stroke:#f1e6cc;stroke-width:1.4;opacity:.7}
+.rock path.c{fill:#3de0c4;filter:drop-shadow(0 0 5px #3de0c4)}
+.rock path.v{fill:none;stroke:#3de0c4;stroke-width:1.6;filter:drop-shadow(0 0 4px #3de0c4)}
+@keyframes bob{50%{transform:translateY(-10px) rotate(2deg)}}
+.mote{position:absolute;width:3px;height:3px;border-radius:50%;background:#bff7ec;box-shadow:0 0 6px #3de0c4;pointer-events:none;opacity:0;animation:rise linear infinite}
+@keyframes rise{10%{opacity:.9}100%{transform:translateY(-170px);opacity:0}}
+
+
+/* ---------- Uprising 1 art, recolored (hub/tools/uprising2-assets.py) ---------- */
+.gemi{position:absolute;width:26px;transform:translate(-50%,-50%);opacity:0;transition:opacity .3s 1.1s;filter:drop-shadow(0 0 6px #3de0c4aa)}
+.on .gemi{opacity:1}
+.orn{position:absolute;pointer-events:none;opacity:0;transition:opacity .8s 1.3s;animation:bob 8s ease-in-out infinite}
+.on .orn{opacity:1}
+.orn.flip{scale:-1 1}
+
+/* ---------- pick environment: the sky tears open over the picking side ---------- */
+#env{position:absolute;inset:0;pointer-events:none}
+#env::before{content:"";position:absolute;inset:0;background:linear-gradient(to top,#070d24ee,#070d2466 55%,transparent 85%);opacity:0;transition:opacity .4s}
+#env.dim::before{opacity:1}
+.pe{position:absolute;bottom:226px;width:640px;height:760px;transform:translateX(-50%);pointer-events:none}
+.pe .tear{position:absolute;inset:0;overflow:visible;transform-origin:50% 100%;animation:tear 3s var(--ease) forwards}
+@keyframes tear{0%{transform:scale(.15,0)}14%{transform:scale(1,1)}80%{transform:scale(1,1);opacity:1}100%{transform:scale(0,.9);opacity:0}}
+.pe .rim{fill:none;stroke:var(--jade);stroke-width:3;stroke-linejoin:bevel;filter:drop-shadow(0 0 10px #3de0c4);stroke-dasharray:2600;stroke-dashoffset:2600;animation:rimdraw .6s ease-out .05s forwards}
+@keyframes rimdraw{to{stroke-dashoffset:0}}
+.pe .glare{animation:glare 3s linear forwards}
+@keyframes glare{0%{opacity:.9}30%{opacity:0}}
+.pe video{position:absolute;left:-60px;bottom:-40px;width:760px;height:760px;object-fit:contain;filter:drop-shadow(0 0 30px #3de0c466);animation:hin 3s var(--ease) forwards}
+@keyframes hin{0%{transform:translateY(140px) scale(.8);opacity:0}16%{transform:none;opacity:1}76%{transform:scale(1.05);opacity:1}100%{transform:translate(var(--hx),330px) scale(.2);opacity:0}}
+.pe .cl{position:absolute;bottom:-50px;width:380px;animation:clin 3s var(--ease) forwards}
+.pe .cl.a{left:-230px;--d:-120px}.pe .cl.b{right:-230px;--d:120px;scale:-1 1}
+@keyframes clin{0%{translate:var(--d) 0;opacity:0}18%{translate:0 0;opacity:1}80%{opacity:1}100%{translate:calc(var(--d) * 1.6) 20px;opacity:0}}
+.pe .tx{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);text-align:center;white-space:nowrap;animation:txin 3s var(--ease) forwards}
+.pe .tx small{display:inline-block;padding:3px 14px;border:1px solid #3de0c4aa;background:#070d24cc;font:700 15px 'Saira Condensed';letter-spacing:.3em;color:var(--jade)}
+.pe .tx b{display:block;font:800 88px/1 Saira;letter-spacing:.01em;text-transform:uppercase;color:var(--ivory);text-shadow:0 4px 24px #070d24,0 0 2px #070d24}
+@keyframes txin{0%{opacity:0;transform:translate(-50%,40px)}20%{opacity:1;transform:translate(-50%,0)}78%{opacity:1}100%{opacity:0;transform:translate(-50%,-20px)}}
+.bit.big{width:16px;height:28px;background:linear-gradient(#e8fff9,#3de0c4 40%,#0f6f66);clip-path:polygon(50% 0,100% 40%,50% 100%,0 40%)}
+
+
+/* ---------- effects ported to plain CSS/JS from Motion Primitives / React Bits ideas (no React in overlays) ---------- */
+/* Text Shimmer / Shiny Text */
+.shine{background:linear-gradient(110deg,var(--ivory) 42%,#ffffff 47%,var(--jade) 50%,var(--ivory) 56%) 0 0/300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 5s linear infinite}
+@keyframes shine{from{background-position:100% 0}to{background-position:-50% 0}}
+/* Border Trail / Star Border: a light runs around the active slot */
+@property --a{syntax:'<angle>';inherits:false;initial-value:0deg}
+.trail{position:absolute;inset:0;z-index:4;padding:2px;pointer-events:none;opacity:0;
+  background:conic-gradient(from var(--a),transparent 0 70%,#3de0c4 88%,#ffffff 94%,transparent 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.active .trail{opacity:1;animation:trail 1.6s linear infinite}
+@keyframes trail{to{--a:360deg}}
+.slot.active::before{animation:none;border-color:#3de0c455}
+.ban.active{animation:none}
+/* Light Rays inside the sky tear */
+.pe .rays{position:absolute;inset:0;transform-origin:50% 100%;animation:tear 3s var(--ease) forwards;mix-blend-mode:screen;overflow:hidden}
+.pe .rays::before{content:"";position:absolute;left:-380px;top:60px;width:1400px;height:1400px;animation:spin 7s linear infinite;
+  background:repeating-conic-gradient(from 0deg,#e8fff92e 0 3deg,transparent 3deg 14deg)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+
+/* ---------- pick focus box: the picks row opens from the slot into one wide card, then folds back into it ---------- */
+.focus{position:absolute;top:48px;left:25px;width:640px;height:128px;z-index:5;overflow:hidden;border:1px solid #3de0c4aa;
+  background:linear-gradient(90deg,#2b5a7c,#1d2c5e 45%,#0b1430)}
+.focus.R{background:linear-gradient(270deg,#2b5a7c,#1d2c5e 45%,#0b1430)}
+.focus::before{content:"";position:absolute;inset:0;background:url(../hub/public/themes/uprising2/sky.jpg) center/760px auto;opacity:.35;mix-blend-mode:screen}
+.focus video{position:absolute;bottom:-46px;width:250px;height:250px;object-fit:contain;filter:drop-shadow(0 0 16px #3de0c466)}
+.focus.L video{left:-14px}.focus.R video{right:-14px}
+.focus .ft{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.focus.L .ft{padding-left:190px}.focus.R .ft{padding-right:190px}
+.focus .ft small{font:700 15px 'Saira Condensed';letter-spacing:.45em;color:var(--jade)}
+.focus .ft b{font:800 54px/1 Saira;text-transform:uppercase;white-space:nowrap;color:var(--ivory);text-shadow:0 2px 14px #070d24}
+.focus .trail{opacity:1;animation:trail 1.6s linear infinite}
+
+
+/* ---------- generated art (hub/tools/uprising2-gen.py) + GSAP-driven pick environment ---------- */
+.isle{position:absolute;pointer-events:none;opacity:0;transition:opacity .8s 1.4s;filter:drop-shadow(0 0 12px #3de0c433)}
+.on .isle{opacity:1}
+.pe .tear,.pe .rays,.pe .rim,.pe .glare,.pe video,.pe .cl,.pe .tx{animation:none !important}
+.pe .rim{stroke-dasharray:2600;stroke-dashoffset:2600}
+.pe .pi{position:absolute;pointer-events:none;opacity:0;filter:drop-shadow(0 0 14px #3de0c455)}
+.pe .pi.a{left:-250px;top:250px;width:230px}
+.pe .pi.b{right:-240px;top:170px;width:200px}
+.pe .pi.c{left:190px;top:140px;width:260px}
+.pe .pi.d{left:40px;top:220px;width:560px}
+.pe .tx b{perspective:500px}
+
+#hint{position:fixed;right:12px;bottom:10px;font:500 12px Saira;color:#9fb6e0aa;z-index:9}
+body.clean #hint{display:none}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="game"></div>
+  <div id="env"></div>
+  <div id="band">
+    <div class="mist"></div>
+    <svg class="frame" width="1920" height="266" viewBox="0 0 1920 266">
+      <defs>
+        <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#1d2c5e"/><stop offset="1" stop-color="#0c1430"/>
+        </linearGradient>
+      </defs>
+      <path class="fill" d="M0 52 L12 40 H690 L712 0 H1208 L1230 40 H1908 L1920 52 V266 H0 Z"/>
+      <path class="edge2" d="M16 47 H686 L707 7 H1213 L1234 47 H1904"/>
+      <path class="edge" d="M0 52 L12 40 H690 L712 0 H1208 L1230 40 H1908 L1920 52"/>
+    </svg>
+
+    <img class="gemi" src="../hub/public/themes/uprising2/gem.png" style="left:690px;top:40px" alt=""><img class="gemi" src="../hub/public/themes/uprising2/gem.png" style="left:1230px;top:40px" alt=""><img class="gemi" src="../hub/public/themes/uprising2/gem.png" style="left:12px;top:46px" alt=""><img class="gemi" src="../hub/public/themes/uprising2/gem.png" style="left:1908px;top:46px" alt="">
+    <img class="orn" src="../hub/public/themes/uprising2/cloud-ornament.png" style="left:600px;top:-62px;width:150px" alt=""><img class="orn flip" src="../hub/public/themes/uprising2/cloud-ornament.png" style="left:1170px;top:-62px;width:150px;animation-delay:-3s" alt=""><img class="orn" src="../hub/public/themes/uprising2/cloud-dark.png" style="left:-90px;top:-74px;width:240px;animation-delay:-5s" alt=""><img class="orn flip" src="../hub/public/themes/uprising2/cloud-dark.png" style="left:1770px;top:-74px;width:240px;animation-delay:-1s" alt="">
+    <div class="sky"><div class="clouds"></div><div class="rays"></div><div class="glow"></div><div class="specks"></div></div>
+    <img class="isle" src="../hub/public/themes/uprising2/gen/island-1.png" style="left:500px;top:-178px;width:150px" alt=""><img class="isle" src="../hub/public/themes/uprising2/gen/island-3.png" style="left:1280px;top:-196px;width:130px" alt=""><img class="isle" src="../hub/public/themes/uprising2/gen/island-2.png" style="left:40px;top:-120px;width:84px" alt=""><img class="isle" src="../hub/public/themes/uprising2/gen/island-2.png" style="left:1800px;top:-132px;width:72px;scale:-1 1" alt="">
+    <div class="side l" id="L"><div class="wm">Sabun Reborn</div>
+      <div class="team"><i></i><span class="tn">Sabun Reborn</span> <small>RADIANT</small></div>
+      <div class="picks"></div><div class="bans"></div>
+    </div>
+    <div class="side r" id="R"><div class="wm">Galweeh+7</div>
+      <div class="team"><small>DIRE</small> <span class="tn">Galweeh+7</span> <i></i></div>
+      <div class="picks"></div><div class="bans"></div>
+    </div>
+
+    <div class="beam"></div><div class="halo"></div>
+    <div id="center">
+      <img id="crest" src="../hub/public/themes/uprising/crest-2.png" alt="" onerror="this.onerror=null;this.className='old';this.src='../hub/public/themes/uprising/crest.png'">
+      <div class="pill"><b>▸</b> FIRST PICK · SABUN REBORN</div>
+      <div id="stagenm" class="shine">PLAYOFFS</div>
+      <div id="bo">BEST OF 3 · GAME 1</div>
+      <div class="score">
+        <div class="tm l" id="tL"><label>RESERVE</label><b>2:00</b></div>
+        <div class="n shine">0 : 0</div>
+        <div class="tm r" id="tR"><label>RESERVE</label><b>2:00</b></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="hint">mockup · demo loop · ?clean untuk OBS</div>
+
+<script src="../hub/public/vendor/gsap/gsap.min.js"></script>
+<script src="../hub/public/vendor/gsap/SplitText.min.js"></script>
+<script src="../hub/public/vendor/gsap/ScrambleTextPlugin.min.js"></script>
+<script src="../hub/public/vendor/gsap/CustomEase.min.js"></script>
+<script>
+const H = '../hub/public/heroes-anim/';
+const stage = document.getElementById('stage'), band = document.getElementById('band');
+if (location.search.includes('clean')) document.body.classList.add('clean');
+const fit = () => stage.style.transform = `scale(${Math.min(innerWidth / 1920, innerHeight / 1080)})`;
+addEventListener('resize', fit); fit();
+
+const sides = { L: document.getElementById('L'), R: document.getElementById('R') };
+for (const s of Object.values(sides)) {
+  s.querySelector('.picks').innerHTML = Array(5).fill(
+    '<div class="slot"><div class="crystal">' + '<i class="shard"></i>'.repeat(5) + '</div><video muted loop playsinline preload="none"></video><div class="nm"></div><i class="trail"></i></div>').join('');
+  s.querySelector('.bans').innerHTML = Array(7).fill('<div class="ban"><video muted playsinline preload="none"></video><i class="trail"></i></div>').join('');
+}
+// Captains Mode order (7.3x): b b b b b b b(…) p p … simplified for the demo
+const ORDER = [
+  ['L','ban','pudge'],['R','ban','invoker'],['L','ban','tinker'],['R','ban','faceless_void'],
+  ['L','pick','dark_willow'],['R','pick','ringmaster'],
+  ['L','ban','meepo'],['R','ban','sniper'],['L','ban','tidehunter'],
+  ['R','pick','earth_spirit'],['L','pick','largo'],['R','pick','mars'],['L','pick','disruptor'],
+  ['R','ban','rubick'],['L','ban','enigma'],['R','ban','slark'],['L','ban','windrunner'],
+  ['R','pick','juggernaut'],['L','pick','puck'],['R','pick','lion'],['L','pick','medusa'],['R','pick','snapfire'],
+];
+const pretty = h => h.replace(/_/g, ' ');
+const tL = document.getElementById('tL'), tR = document.getElementById('tR');
+let step = 0, clock = 30, timer;
+
+function slotFor(side, kind) {
+  const list = sides[side].querySelectorAll(kind === 'pick' ? '.slot' : '.ban');
+  return [...list].find(e => !e.classList.contains('picked') && !e.classList.contains('on'));
+}
+// GSAP (hub/public/vendor/gsap, free incl. plugins): SplitText + ScrambleText replace the hand-rolled text effects
+gsap.registerPlugin(SplitText, ScrambleTextPlugin, CustomEase);
+CustomEase.create('rift', 'M0,0 C0.08,0.9 0.18,1.12 0.42,1 0.62,0.94 0.8,1 1,1');
+const GEN = '../hub/public/themes/uprising2/gen/';
+const scramble = (el, text = el.textContent) => gsap.to(el, { duration: .6, scrambleText: { text, chars: 'upperCase', speed: .6 } });
+const tick = el => gsap.from(el, { yPercent: -45, opacity: 0, duration: .26, ease: 'power3.out' });
+function setClock(el, txt) { if (el.textContent !== txt) { el.textContent = txt; tick(el); } }
+function markActive() {
+  document.querySelectorAll('.active').forEach(e => e.classList.remove('active'));
+  const nx = ORDER[step]; if (!nx) return;
+  const el = slotFor(nx[0], nx[1]); el && el.classList.add('active');
+  for (const k of ['L','R']) sides[k].classList.toggle('turn', k === nx[0]);
+  tL.classList.toggle('turn', nx[0] === 'L'); tR.classList.toggle('turn', nx[0] === 'R');
+  const t = nx[0] === 'L' ? tL : tR, o = nx[0] === 'L' ? tR : tL;
+  t.querySelector('label').textContent = nx[1] === 'pick' ? 'PICK' : 'BAN';
+  o.querySelector('label').textContent = 'RESERVE'; setClock(o.querySelector('b'), '2:00');
+  clock = 30; setClock(t.querySelector('b'), '0:30');
+}
+function pickEnv(el) {
+  const r = el.getBoundingClientRect(), b = band.getBoundingClientRect(), k = b.width / 1920;
+  const x = (r.left + r.width / 2 - b.left) / k, y = (r.top - b.top) / k;
+  const rift = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  rift.setAttribute('class', 'rift'); rift.setAttribute('viewBox', '0 0 80 220');
+  rift.style.cssText = `left:${x - 40}px;top:${y - 220}px`;
+  rift.innerHTML = '<path d="M40 220 L46 180 L32 150 L50 112 L36 80 L48 44 L40 0"/>';
+  const crack = Object.assign(document.createElement('div'), { className: 'crack' });
+  crack.style.cssText = `left:${x}px;top:39px`;
+  band.append(rift, crack);
+  for (let i = 0; i < 10; i++) {
+    const bit = Object.assign(document.createElement('div'), { className: 'bit' });
+    const a = Math.random() * Math.PI * 2, d = 50 + Math.random() * 90;
+    bit.style.cssText = `left:${x}px;top:${y + 60}px;--x:${Math.cos(a) * d}px;--y:${Math.sin(a) * d - 40}px`;
+    band.append(bit); setTimeout(() => bit.remove(), 1000);
+  }
+  setTimeout(() => { rift.remove(); crack.remove(); }, 1200);
+}
+const envEl = document.getElementById('env'), TEAM = { L: 'Sabun Reborn', R: 'Galweeh+7' };
+const TEAR = '320,0 372,96 344,150 430,236 396,304 508,420 462,486 584,610 640,760 0,760 58,628 168,548 124,470 236,382 204,300 286,206 258,118';
+let envN = 0;
+function bigEnv(side, hero, slot) {
+  const x = side === 'L' ? 470 : 1450, id = 'tc' + (++envN);
+  const b = band.getBoundingClientRect(), k = b.width / 1920, r = slot.getBoundingClientRect();
+  const hx = ((r.left + r.width / 2 - b.left) / k - x) + 'px';
+  const pe = Object.assign(document.createElement('div'), { className: 'pe' });
+  pe.style.left = x + 'px';
+  pe.innerHTML = `<svg class="tear" viewBox="0 0 640 760" width="640" height="760">
+      <defs><clipPath id="${id}"><polygon points="${TEAR}"/></clipPath>
+        <linearGradient id="${id}g" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#3de0c4" stop-opacity=".55"/><stop offset=".5" stop-color="#1d2c5e" stop-opacity="0"/></linearGradient></defs>
+      <g clip-path="url(#${id})"><rect width="640" height="760" fill="#121c3f"/>
+        <image href="${GEN}sky.jpg" x="-260" y="-40" width="1160" height="1160" preserveAspectRatio="xMidYMid slice"/>
+        <rect width="640" height="760" fill="url(#${id}g)"/><rect class="glare" width="640" height="760" fill="#e8fff9"/></g>
+      <polygon class="rim" points="${TEAR}"/></svg>
+    <div class="rays" style="clip-path:polygon(${TEAR.split(' ').map(q => q.replace(',', 'px ') + 'px').join(',')})"></div>
+    <img class="pi c" src="${GEN}crystal.png" alt="">
+    <img class="cl a" src="../hub/public/themes/uprising2/cloud-dark.png" alt=""><img class="cl b" src="../hub/public/themes/uprising2/cloud-dark.png" alt="">
+    <video muted playsinline autoplay src="${H + hero}.webm"></video>
+    <img class="pi a" src="${GEN}island-2.png" alt=""><img class="pi b" src="${GEN}island-3.png" alt="">
+    <img class="pi d" src="${GEN}shards.png" alt="">
+    <div class="tx"><small>PICK · ${TEAM[side].toUpperCase()}</small><b>${pretty(hero)}</b></div>`;
+  envEl.append(pe);
+  const q = sel => pe.querySelector(sel), sky = [q('.tear'), q('.rays')], label = q('.tx small');
+  const split = SplitText.create(q('.tx b'), { type: 'chars' });
+  gsap.timeline({ onComplete: () => { split.revert(); pe.remove(); } })
+    .call(() => envEl.classList.add('dim'), null, 0)
+    // open: the sky tears up out of the band, art and hero arrive
+    .fromTo(sky, { scaleX: .15, scaleY: 0 }, { scaleX: 1, scaleY: 1, duration: .55, ease: 'rift', transformOrigin: '50% 100%' }, 0)
+    .to(q('.rim'), { strokeDashoffset: 0, duration: .6, ease: 'power2.out' }, .05)
+    .fromTo(q('.glare'), { opacity: .9 }, { opacity: 0, duration: .8 }, 0)
+    .fromTo(q('.pi.d'), { scale: .3, rotation: -25, opacity: 0 }, { scale: 1.3, rotation: 8, opacity: 1, duration: .8, ease: 'expo.out' }, .08)
+    .to(q('.pi.d'), { opacity: 0, duration: .6 }, .7)
+    .fromTo(q('.pi.c'), { y: 220, scale: .6, opacity: 0 }, { y: 0, scale: 1, opacity: .9, duration: .7, ease: 'power3.out' }, .1)
+    .fromTo(q('video'), { y: 160, scale: .8, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: .6, ease: 'back.out(1.6)' }, .15)
+    .fromTo(q('.pi.a'), { x: -260, y: 90, rotation: -14, opacity: 0 }, { x: 0, y: 0, rotation: 0, opacity: 1, duration: .9, ease: 'power3.out' }, .2)
+    .fromTo(q('.pi.b'), { x: 260, y: 70, rotation: 14, opacity: 0 }, { x: 0, y: 0, rotation: 0, opacity: 1, duration: .9, ease: 'power3.out' }, .25)
+    .fromTo(q('.cl.a'), { x: -140, opacity: 0 }, { x: 0, opacity: 1, duration: .6, ease: 'power2.out' }, .1)
+    .fromTo(q('.cl.b'), { x: 140, opacity: 0 }, { x: 0, opacity: 1, duration: .6, ease: 'power2.out' }, .1)
+    .from(label, { opacity: 0, y: 16, duration: .3 }, .3)
+    .to(label, { duration: .6, scrambleText: { text: label.textContent, chars: 'upperCase', speed: .6 } }, .3)
+    .from(split.chars, { y: 70, rotationX: -90, opacity: 0, stagger: .035, duration: .5, ease: 'back.out(2)' }, .35)
+    // hold: slow drift
+    .to(q('video'), { scale: 1.05, duration: 1.4, ease: 'none' }, .8)
+    .to([q('.pi.a'), q('.pi.b')], { y: -16, duration: 1.4, ease: 'sine.inOut' }, .9)
+    // close: the hero dives into its slot, the sky folds shut
+    .addLabel('out', 2.2)
+    .call(() => envEl.classList.remove('dim'), null, 'out')
+    .to(split.chars, { y: -50, opacity: 0, stagger: .02, duration: .3, ease: 'power2.in' }, 'out')
+    .to(label, { opacity: 0, duration: .2 }, 'out')
+    .to(q('video'), { x: hx, y: 330, scale: .2, opacity: 0, duration: .55, ease: 'power3.in' }, 'out')
+    .to(sky, { scaleX: 0, scaleY: .9, opacity: 0, duration: .5, ease: 'power3.in' }, 'out+=.05')
+    .to([q('.pi.a'), q('.cl.a')], { x: '-=220', opacity: 0, duration: .6, ease: 'power2.in' }, 'out')
+    .to([q('.pi.b'), q('.cl.b')], { x: '+=220', opacity: 0, duration: .6, ease: 'power2.in' }, 'out')
+    .to(q('.pi.c'), { y: 140, opacity: 0, duration: .5, ease: 'power2.in' }, 'out');
+  for (let i = 0; i < 14; i++) {
+    const bit = Object.assign(document.createElement('div'), { className: 'bit' + (i % 2 ? ' big' : '') });
+    const a = -Math.PI * Math.random(), d = 200 + Math.random() * 420;
+    bit.style.cssText = `left:${x}px;top:${1080 - 240}px;--x:${Math.cos(a) * d}px;--y:${Math.sin(a) * d}px;animation-duration:1.4s`;
+    envEl.append(bit); setTimeout(() => bit.remove(), 1500);
+  }
+}
+function focusBox(side, hero, slot) {
+  const i = [...sides[side].querySelectorAll('.slot')].indexOf(slot), L = i * 130, R = 640 - L - 120, from = `inset(0px ${R}px 0px ${L}px)`;
+  const f = Object.assign(document.createElement('div'), { className: 'focus ' + side });
+  f.innerHTML = `<video muted playsinline autoplay src="${H + hero}.webm"></video><div class="ft"><small>PICK</small><b>${pretty(hero)}</b></div><i class="trail"></i>`;
+  sides[side].append(f);
+  const split = SplitText.create(f.querySelector('b'), { type: 'chars' });
+  gsap.timeline({ onComplete: () => f.remove() })
+    .fromTo(f, { clipPath: from }, { clipPath: 'inset(0px 0px 0px 0px)', duration: .4, ease: 'power3.out' })
+    .to(f.querySelector('small'), { duration: .5, scrambleText: { text: 'PICK', chars: 'upperCase' } }, .1)
+    .from(split.chars, { y: 40, opacity: 0, stagger: .03, duration: .4, ease: 'back.out(2)' }, .15)
+    .fromTo(f.querySelector('video'), { x: side === 'L' ? -90 : 90, opacity: 0 }, { x: 0, opacity: 1, duration: .5, ease: 'power3.out' }, .1)
+    .to(f, { clipPath: from, duration: .4, ease: 'power3.in' }, 2);
+}
+function next() {
+  const s = ORDER[step]; if (!s) return setTimeout(reset, 4000);
+  const [side, kind, hero] = s, el = slotFor(side, kind), v = el.querySelector('video');
+  v.src = H + hero + '.webm';
+  if (kind === 'pick') {
+    el.querySelector('.nm').textContent = pretty(hero);
+    bigEnv(side, hero, el); focusBox(side, hero, el);  // big environment first; the slot fills when the hero flies back down into it
+    setTimeout(() => { v.play().catch(() => {}); el.classList.add('picked', 'flash'); pickEnv(el); }, 2350);
+  } else { v.addEventListener('loadeddata', () => v.currentTime = .4, { once: true }); v.load(); el.classList.add('on'); }
+  step++; markActive();
+  setTimeout(next, kind === 'pick' ? 4200 : 1100);
+}
+function reset() {
+  band.classList.remove('on');
+  setTimeout(() => {
+    document.querySelectorAll('.slot,.ban').forEach(e => { e.className = e.className.split(' ')[0]; const v = e.querySelector('video'); v.pause(); v.removeAttribute('src'); v.load(); e.querySelector('.nm') && (e.querySelector('.nm').textContent = ''); });
+    step = 0; start();
+  }, 800);
+}
+function start() {
+  setTimeout(() => document.querySelectorAll('.tn').forEach(e => scramble(e)), 1000);
+  setTimeout(() => band.classList.add('on'), 50); // not rAF: it never fires in a hidden tab
+  markActive(); setTimeout(next, 2200);
+}
+clearInterval(timer);
+timer = setInterval(() => {
+  const nx = ORDER[step]; if (!nx || clock <= 0) return;
+  clock--; setClock((nx[0] === 'L' ? tL : tR).querySelector('b'), `0:${String(clock).padStart(2, '0')}`);
+}, 1000);
+for (let i = 0; i < 16; i++) {
+  const m = Object.assign(document.createElement('div'), { className: 'mote' });
+  m.style.cssText = `left:${Math.random() * 1920}px;top:${60 + Math.random() * 200}px;animation-duration:${6 + Math.random() * 6}s;animation-delay:${-Math.random() * 10}s`;
+  band.append(m);
+}
+gsap.to('.isle', { y: -12, rotation: 2, duration: 'random(3,5)', yoyo: true, repeat: -1, ease: 'sine.inOut', stagger: .7 });
+start();
+</script>
+</body>
+</html>
