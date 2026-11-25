@@ -167,15 +167,35 @@ async function live() {
   $('log').textContent = '';
   $('state').textContent = 'Menyiapkan encoder...';
   $('stop').hidden = false; $('again').hidden = $('back-pin').hidden = true;
+  for (const id of ['frame', 'kbps', 'fps']) $(id).textContent = '-';
+  $('mon-msg').hidden = false; $('mon-msg').textContent = 'Menunggu gambar...';
+  $('mic-none').hidden = !!cfg.mic; $('mon-level').parentNode.hidden = !cfg.mic; $('mon-level').style.width = '0';
   const lines = [];
   const ch = new Channel();
   ch.onmessage = (m) => {
     if (m.log) { lines.push(m.log); $('log').textContent = lines.slice(-8).join('\n'); }
-    if (m.state) $('state').textContent = m.state === 'sending' ? `Mengirim (frame ${m.frame})` : STATE[m.state];
-    if (m.state === 'stopped') { $('stop').hidden = true; $('again').hidden = $('back-pin').hidden = false; }
+    if (m.mic) $('mon-level').style.width = Math.min(100, m.mic.peak * 100) + '%';
+    if (m.kbps !== undefined) $('kbps').textContent = m.kbps;
+    if (m.reconnects !== undefined) $('reconnects').textContent = m.reconnects;
+    if (m.state === 'sending') { $('frame').textContent = m.frame; $('fps').textContent = m.fps.toFixed(1); }
+    if (m.state) $('state').textContent = m.state === 'sending' ? 'Mengirim' : STATE[m.state];
+    if (m.state && m.state !== 'sending') $('fps').textContent = '-';
+    if (m.state === 'stopped') {
+      $('stop').hidden = true; $('again').hidden = $('back-pin').hidden = false;
+      $('mon-msg').hidden = false; $('mon-msg').textContent = 'Berhenti';
+    }
+  };
+  // what ffmpeg sends, as small JPEGs (~4 a second): the camera itself is held by ffmpeg
+  const pv = new Channel();
+  let url = '';
+  pv.onmessage = (buf) => {
+    const u = URL.createObjectURL(new Blob([buf], { type: 'image/jpeg' }));
+    $('mon-img').src = u; $('mon-msg').hidden = true;
+    if (url) URL.revokeObjectURL(url);
+    url = u;
   };
   try {
-    const enc = await invoke('start', { camera: cfg.camera, mic: cfg.mic, addr: cfg.addr, pin: cfg.pin, events: ch });
+    const enc = await invoke('start', { camera: cfg.camera, mic: cfg.mic, addr: cfg.addr, pin: cfg.pin, events: ch, preview: pv });
     $('live-enc').textContent = ENC_LABEL[enc] || enc;
   } catch (e) {
     $('state').textContent = 'Gagal mulai: ' + e;

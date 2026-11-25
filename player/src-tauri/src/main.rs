@@ -122,14 +122,15 @@ fn find_studio() -> Option<String> {
 }
 
 #[tauri::command(async)]
-fn start(app: State<App>, camera: String, mic: String, addr: String, pin: String, events: Channel<Value>) -> Result<String, String> {
+#[allow(clippy::too_many_arguments)]
+fn start(app: State<App>, camera: String, mic: String, addr: String, pin: String, events: Channel<Value>, preview: Channel) -> Result<String, String> {
     app.stop();
     let enc = encoder(app.clone())?;
     // with a PIN the studio knows who this is, so the name never travels (kanji / emoji names broke the ffmpeg call)
     let url = format!("http://{addr}/whip/cam?pin={}", sender::escape(&pin));
-    let args = sender::send_args(&enc, &camera, &mic, &url, sender::KBPS, sender::SIZE, sender::FPS);
     let live = Arc::new(sender::Live::default());
-    live.run(app.ffmpeg()?, args, events);
+    let args = |mon| sender::send_args(&enc, &camera, &mic, &url, sender::KBPS, sender::SIZE, sender::FPS, mon);
+    live.run(app.ffmpeg()?, args, events, preview).map_err(|e| e.to_string())?;
     *app.live.lock().unwrap() = Some(live);
     Ok(enc)
 }

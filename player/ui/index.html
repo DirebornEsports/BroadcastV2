@@ -24,7 +24,7 @@
   <label>Kamera <select id="cam"></select></label>
   <div id="preview"><video id="video" autoplay muted playsinline></video><span id="preview-msg"></span></div>
   <label>Mic <select id="mic"></select></label>
-  <div id="meter"><div id="level"></div></div>
+  <div class="meter"><div id="level"></div></div>
   <p>Encoder: <span id="enc">mengecek...</span></p>
   <button id="to-pin">Lanjut</button>
   <button id="refresh-dev">Muat ulang daftar</button>
@@ -44,10 +44,18 @@
 
 <section id="live" hidden>
   <h2 id="who"></h2>
-  <p>Status: <b id="state"></b></p>
-  <p>Encoder: <span id="live-enc"></span> · Studio: <span id="live-addr"></span></p>
-  <p class="small">Pesan ffmpeg terakhir:</p>
-  <pre id="log"></pre>
+  <p class="small">Yang sedang dikirim ke studio:</p>
+  <div id="mon"><img id="mon-img" alt=""><span id="mon-msg">Menunggu gambar...</span></div>
+  <div id="mic-row">Mic <div class="meter"><div id="mon-level"></div></div><span id="mic-none" hidden>tanpa mic</span></div>
+  <table>
+    <tr><td>Status</td><td><b id="state"></b></td></tr>
+    <tr><td>Frame</td><td id="frame">-</td></tr>
+    <tr><td>Bitrate / fps</td><td><span id="kbps">-</span> kbps · <span id="fps">-</span> fps</td></tr>
+    <tr><td>Encoder</td><td id="live-enc"></td></tr>
+    <tr><td>Studio</td><td id="live-addr"></td></tr>
+    <tr><td>Sambung ulang</td><td id="reconnects">0</td></tr>
+  </table>
+  <details><summary>Pesan ffmpeg terakhir</summary><pre id="log"></pre></details>
   <button id="stop">Stop</button>
   <button id="again" hidden>Kirim lagi</button>
   <button id="back-pin" hidden>Kembali</button>
