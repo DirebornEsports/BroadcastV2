@@ -270,6 +270,18 @@ export async function studioRoute(req, url, body) {
     pinsSent = ''; await onlineTick();
     return [200, 'application/json', JSON.stringify({ on: onlineOn(), url: online.url, hasKey: !!online.key, error: onlineError, cams: remote.length })];
   }
+  // OBS Replay Buffer files (hundreds of MB each, see hub ui/replay.js): keep the newest 5 next to the one just saved.
+  // Only from Draft control on this PC, and only files OBS names "Replay…"
+  if (p === '/studio/replay-clean' && req.method === 'POST') {
+    if (!isLocal(req) || !/^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(req.headers.origin || '')) return [403, 'text/plain', 'forbidden'];
+    const REPLAY = /^Replay.*\.(mkv|mp4|mov|flv|ts)$/i, f = String(JSON.parse(body || '{}').path || '');
+    if (!path.isAbsolute(f) || !REPLAY.test(path.basename(f))) return [400, 'text/plain', 'not an OBS replay file'];
+    const dir = path.dirname(f);
+    const old = fs.readdirSync(dir).filter((n) => REPLAY.test(n)).map((n) => ({ n, t: fs.statSync(path.join(dir, n)).mtimeMs }))
+      .sort((a, b) => b.t - a.t).slice(5);
+    for (const o of old) { try { fs.unlinkSync(path.join(dir, o.n)); } catch {} }
+    return [200, 'application/json', JSON.stringify({ removed: old.length })];
+  }
   if (p === '/studio/pins/sync' && req.method === 'POST') return [200, 'application/json', JSON.stringify(await syncPins())];
   if (p === '/studio/restart' && req.method === 'POST') {
     const s = slots.find((x) => x.slot === JSON.parse(body || '{}').slot);

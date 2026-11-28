@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Replay label</title>
+<!-- OBS: browser source 1920x1080 in the Replay scene, above the replay Media Source (Draft control → On air → Replay).
+     Direborn sketch look: red brush tag, rewind marks that stutter, grain. Transparent everywhere else. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: transparent; }
+  #stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+  .tag { position: absolute; left: 56px; top: 48px; display: flex; align-items: center; gap: 18px; padding: 14px 34px 12px 26px;
+    background: #e3122d; color: #f3ece4; clip-path: polygon(2% 10%, 30% 0, 70% 6%, 99% 0, 97% 52%, 100% 94%, 64% 100%, 30% 90%, 0 100%, 3% 50%);
+    animation: in .45s steps(4) both; }
+  .tag::after { content: ""; position: absolute; inset: 0; background: url(/ui/grain.png) 0 0 / 256px 256px; opacity: .35; mix-blend-mode: multiply;
+    animation: grain .5s steps(1) infinite; }
+  .tag b { font: 400 64px/1 "Anton", Impact, sans-serif; letter-spacing: .06em; }
+  .rw { display: flex; }
+  .rw i { width: 0; height: 0; border-top: 20px solid transparent; border-bottom: 20px solid transparent; border-right: 28px solid #f3ece4; margin-right: -6px;
+    animation: blink .8s steps(1) infinite; }
+  .rw i:nth-child(2) { animation-delay: .2s; }
+  .note { position: absolute; left: 70px; top: 152px; font: 400 26px/1 "Permanent Marker", cursive; color: #f3ece4; transform: rotate(-3deg);
+    text-shadow: 0 2px 8px rgba(0,0,0,.7); animation: in .45s .2s steps(4) both; }
+  @keyframes in { from { opacity: 0; transform: translateX(-40px) rotate(-2deg); } to { opacity: 1; transform: none; } }
+  @keyframes blink { 50% { opacity: .25; } }
+  @keyframes grain { 25% { background-position: -83px 41px; } 50% { background-position: 57px -112px; } 75% { background-position: -140px -60px; } }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="tag"><span class="rw"><i></i><i></i></span><b>REPLAY</b></div>
+  <div class="note">tadi nih…</div>
+</div>
+<script>
+  const fit = () => { document.getElementById('stage').style.transform = `scale(${Math.min(innerWidth / 1920, innerHeight / 1080)})`; };
+  addEventListener('resize', fit); fit();
+</script>
+</body>
+</html>

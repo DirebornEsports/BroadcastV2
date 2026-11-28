@@ -76,6 +76,7 @@
       panes[0].parentElement.appendChild(div);
     }
     draftTab(); mergeTabs(); teamPickers(); netMode();
+    const rp = document.createElement('script'); rp.src = '/ui/replay.js'; document.head.appendChild(rp);   // Replay card (OBS Replay Buffer)
   }
 
   // Draft + Persiapan are one page (draft first, setup below); On air opens from the sidebar (/control#air)
