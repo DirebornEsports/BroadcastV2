@@ -9,7 +9,7 @@ use bytes::Bytes;
 use rtc::rtcp::payload_feedbacks::picture_loss_indication::PictureLossIndication;
 use rtc::rtp::codec::h264::H264Packet;
 use rtc::rtp::packetizer::Depacketizer;
-use std::collections::VecDeque;
+use std::collections::{BTreeMap, VecDeque};
 use std::io::BufRead;
 use std::process::{Child, Command, Stdio};
 use std::sync::{Arc, Mutex};
@@ -190,6 +190,51 @@ pub fn rtp_bytes(pt: u8, marker: bool, seq: u16, ts: u32, ssrc: u32, payload: &[
     v.extend_from_slice(&ssrc.to_be_bytes());
     v.extend_from_slice(payload);
     v.into()
+}
+
+// ───────────────────────────── RTP reorder ─────────────────────────────
+
+/// Puts RTP packets back in sequence order and waits up to `wait` s for a missing one. Over the internet (online
+/// cams via Cloudflare) packets arrive out of order and lost ones come back after a NACK; without this, every one
+/// of those was counted as a loss and froze the cam until the next keyframe.
+pub struct Reorder<T> {
+    q: BTreeMap<u64, T>,
+    next: Option<u64>, // extended sequence number expected next
+    gap_since: Option<f64>,
+    wait: f64,
+}
+
+impl<T> Reorder<T> {
+    pub fn new(wait: f64) -> Self {
+        Self { q: BTreeMap::new(), next: None, gap_since: None, wait }
+    }
+    /// Add one packet; returns the packets that can go on now, in order (a skipped gap shows as a sequence jump).
+    pub fn push(&mut self, seq: u16, p: T, now: f64) -> Vec<T> {
+        let next = *self.next.get_or_insert((1u64 << 32) | seq as u64);
+        let e = next as i64 + seq.wrapping_sub(next as u16) as i16 as i64;
+        if (e as u64) < next {
+            return Vec::new(); // older than what already went on: duplicate, or resent too late
+        }
+        self.q.insert(e as u64, p);
+        let mut out = Vec::new();
+        loop {
+            let n = self.next.unwrap();
+            if let Some(p) = self.q.remove(&n) {
+                out.push(p);
+                self.next = Some(n + 1);
+                self.gap_since = None;
+                continue;
+            }
+            let Some(&first) = self.q.keys().next() else { break };
+            let since = *self.gap_since.get_or_insert(now);
+            if now - since < self.wait && self.q.len() < 2000 {
+                break; // still hoping the missing packet arrives
+            }
+            self.next = Some(first); // give up on the gap
+            self.gap_since = None;
+        }
+        out
+    }
 }
 
 // ───────────────────────────── RTP -> access units ─────────────────────────────
@@ -557,6 +602,7 @@ async fn session(cfg: &Config, shared: &Arc<Mutex<Shared>>, t0: Instant) -> Res<
 async fn receive(track: Arc<dyn TrackRemote>, shared: &Arc<Mutex<Shared>>, t0: Instant, snapshot: Option<&str>) -> Res<()> {
     let ssrc = *track.ssrcs().await.first().ok_or("track without ssrc")?;
     let mut ing = Ingest::default();
+    let mut order = Reorder::new(0.25); // long enough for a NACK round trip to Cloudflare, short next to the cam delay
     shared.lock().unwrap().buf.loss(); // a new stream starts at its first keyframe
     let (mut need_key, mut last_pli) = (true, f64::NEG_INFINITY);
     eprintln!("[pull] connected");
@@ -571,6 +617,7 @@ async fn receive(track: Arc<dyn TrackRemote>, shared: &Arc<Mutex<Shared>>, t0: I
             _ => continue,
         };
         let now = t0.elapsed().as_secs_f64();
+        for p in order.push(p.header.sequence_number, p, now) {
         let (lost, frame) = ing.rtp(p.header.sequence_number, p.header.timestamp, p.header.marker, &p.payload, now);
         {
             let mut s = shared.lock().unwrap();
@@ -598,6 +645,7 @@ async fn receive(track: Arc<dyn TrackRemote>, shared: &Arc<Mutex<Shared>>, t0: I
                 }
                 s.buf.push(f);
             }
+        }
         }
         if need_key && now - last_pli >= 1.0 {
             // ask for a keyframe (at start / after a loss), at most once a second
@@ -675,6 +723,23 @@ pub fn run(cfg: Config) -> Res<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn reorder_fixes_order_and_waits_for_resends() {
+        let mut r = Reorder::new(0.25);
+        assert_eq!(r.push(65534, 65534u16, 0.0), vec![65534]);
+        // swapped pair across the wrap: held, then both go on in order
+        assert_eq!(r.push(0, 0, 0.01), Vec::<u16>::new());
+        assert_eq!(r.push(65535, 65535, 0.02), vec![65535, 0]);
+        // 1 missing: 2 waits; the resent 1 arrives within the wait
+        assert_eq!(r.push(2, 2, 0.03), Vec::<u16>::new());
+        assert_eq!(r.push(1, 1, 0.10), vec![1, 2]);
+        // a duplicate / too-late packet is dropped
+        assert_eq!(r.push(1, 1, 0.11), Vec::<u16>::new());
+        // 3 never comes: after the wait the gap is skipped (Ingest then sees the jump and counts 1 lost)
+        assert_eq!(r.push(4, 4, 0.20), Vec::<u16>::new());
+        assert_eq!(r.push(5, 5, 0.46), vec![4, 5]);
+    }
 
     fn f(t: f64, key: bool) -> Frame {
         Frame { t, data: Bytes::from(vec![t as u8]), key }
