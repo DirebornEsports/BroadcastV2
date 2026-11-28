@@ -208,7 +208,7 @@
     'Export Excel': 'Ekspor Excel', 'Link selected': 'Tautkan yang dipilih', 'Save': 'Simpan',
     'On air in OBS': 'Tayang di OBS', 'Nothing on screen': 'Tidak ada di layar', 'Prev': 'Sebelumnya', 'Next': 'Berikutnya',
     'Hide': 'Sembunyikan', 'Reload cards': 'Muat ulang kartu', 'Save bracket': 'Simpan bracket', 'Unsaved changes': 'Belum disimpan',
-    'Show test popup': 'Tes popup', 'Switch to Auto (GSI)': 'Pindah ke Otomatis (GSI)', 'Download last GSI data': 'Unduh data GSI terakhir', 'Anti-snipe delay': 'Delay anti-snipe', 'Receiving from Dota': 'Data dari Dota', 'Upload…': 'Upload…', 'Title': 'Judul', 'Format': 'Format', 'First pick': 'First pick', 'Name': 'Nama', 'Score': 'Skor', 'Color': 'Warna', 'Now': 'Sekarang', 'reserve': 'cadangan', 'Pause': 'Jeda', 'All': 'Semua',
+    'Show test popup': 'Tes popup', 'Switch to Auto (GSI)': 'Pindah ke Otomatis (GSI)', 'Download last GSI data': 'Unduh data GSI terakhir', 'Anti-snipe delay': 'Delay anti-snipe', 'Receiving from Dota': 'Data dari Dota', 'Upload…': 'Upload…', 'Title': 'Judul', 'Format': 'Format', 'First pick': 'First pick', 'Name': 'Nama', 'Score': 'Skor', 'Color': 'Warna', 'Now': 'Sekarang', 'reserve': 'cadangan', 'All': 'Semua',
     'auto-restart clock each step': 'jam mulai ulang tiap langkah', 'Swap sides ': 'Tukar sisi', 'Link players — stats accounts → your rosters': 'Tautkan pemain: akun statistik → roster', 'Draw': 'Undian', 'Bracket & rundown': 'Bracket & rundown', 'Copy OBS URL': 'Copy URL OBS', 'Logout': 'Keluar', 'Preview': 'Pratinjau', 'Show': 'Tampilkan',
   };
   const CONFIRM = { 'Clear all picks, bans and player assignments?': 'Hapus semua pick, ban dan pemain di draft ini?' };
@@ -220,7 +220,7 @@
       const p = n.parentElement;
       if (!p || !p.closest('h1, h2, h3, legend, button, label, th, .pill, .tabs, .seg, .next, .reserves') || p.closest('#uxdock, select, option')) continue;
       const t = n.nodeValue.trim(), id = ID[t] || (t.startsWith('Tournament stats') ? t.replace('Tournament stats', 'Statistik turnamen') : '');
-      if (id) n.nodeValue = n.nodeValue.replace(t, id);
+      if (id && id !== t) n.nodeValue = n.nodeValue.replace(t, id);   // same text: writing it again would re-trigger the observer forever
     }
   }
 

@@ -18,7 +18,8 @@
     --display: "Anton", "Oswald", Impact, sans-serif; --hand: "Permanent Marker", "Segoe Print", cursive; --body: Poppins, "Segoe UI", sans-serif;
   }
   * { box-sizing: border-box; margin: 0; }
-  html, body { width: 100%; height: 100%; overflow: hidden; background: #2a2a2e; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: transparent; }
+  body:not(.obs) { background: #2a2a2e; }   /* preview only: OBS needs html and body transparent */
   body.obs { background: transparent; }
 
   /* 1920x1080 stage, scaled to fit the window when not in OBS */
@@ -29,6 +30,8 @@
   body.obs #fakegame { display: none; }
 
   /* ---------- texture: grain (a noise tile drawn once, moved in steps) ---------- */
+  /* only on the band (same shape as #band .base): the game and cams above stay clean */
+  .grain, .speck { top: auto !important; height: 254px; clip-path: polygon(0 18px, 34% 0, 66% 0, 100% 18px, 100% 100%, 0 100%); }
   .grain { position: absolute; inset: 0; pointer-events: none; background-image: var(--noise); background-size: 256px 256px; opacity: .3; animation: grain .5s steps(1) infinite; }
   @keyframes grain { 0% { background-position: 0 0; } 25% { background-position: -83px 41px; } 50% { background-position: 57px -112px; } 75% { background-position: -140px -60px; } }
   .speck { position: absolute; inset: 0; pointer-events: none; background-image: var(--speck); background-size: 512px 512px; opacity: .9; animation: grain .7s steps(1) infinite reverse; }
