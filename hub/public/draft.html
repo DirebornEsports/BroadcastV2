@@ -73,9 +73,19 @@
   .picks { position: absolute; top: 102px; display: flex; gap: 10px; }
   .left .picks { left: 0; } .right .picks { right: 0; flex-direction: row-reverse; }
   .pick { position: relative; width: 144px; height: 190px; }
-  .pick .img { position: absolute; inset: 0; overflow: hidden; background: var(--ink2); clip-path: inset(100% 0 0 0); }
-  /* halftone duotone: grey hero, red multiplied in, blue in the shadows, a dot screen on top */
-  .pick video { position: absolute; inset: -6px; width: calc(100% + 12px); height: calc(100% + 12px); object-fit: cover; }
+  /* the card is a red halftone backdrop that pulses; the hero (natural colours, transparent background) stands on it
+     and pokes out over the frame a little for depth */
+  .pick .img { position: absolute; inset: 0; overflow: hidden; clip-path: inset(100% 0 0 0);
+    background: radial-gradient(120% 90% at 50% 72%, #ff2a40 0, #b30f24 45%, #3a0610 100%); }
+  .pick .img::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle, rgba(13,11,12,.35) 1.6px, transparent 2.2px) 0 0 / 7px 7px; }
+  .pick .img::after { content: ""; position: absolute; inset: 0; background: radial-gradient(80% 60% at 50% 66%, rgba(255,214,220,.75), transparent 70%); opacity: 0; }
+  .pick.on .img::after { animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .6; } }
+  .pick .pop { position: absolute; left: -30px; right: -30px; bottom: 0; height: 230px; z-index: 2; pointer-events: none; clip-path: inset(100% 30px 0 30px); }
+  .pick .pop video { width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; }
+  .pick.on .pop { animation: popin .55s steps(7) .35s forwards; }
+  @keyframes popin { to { clip-path: inset(-20px 16px 0 16px); } }
+  .pick .hname, .pick .plate { z-index: 3; }
   .pick.on .img { animation: wipe .55s steps(7) .35s forwards; }
   @keyframes wipe { to { clip-path: inset(0 0 0 0); } }
   .pick svg.frame { position: absolute; inset: -5px; width: calc(100% + 10px); height: calc(100% + 10px); overflow: visible; pointer-events: none; }
@@ -285,7 +295,7 @@
       `<svg class="x crayon" viewBox="-4 -4 82 50"><path pathLength="1" d="${scribbleX(74, 42).split(' M')[0]}"/><path pathLength="1" d="M${scribbleX(74, 42).split(' M')[1]}"/></svg>` +
       `<svg class="circle rough" viewBox="0 0 106 78"><path pathLength="1" d="${circle(106, 78)}"/></svg><span class="note">ban!</span></div>`).join('');
     side.querySelector('.picks').innerHTML = PLAYERS[s].map((p, i) =>
-      `<div class="pick"><div class="img"><video muted loop playsinline preload="none"></video></div>` +
+      `<div class="pick"><div class="img"></div><div class="pop"><video muted loop playsinline preload="none"></video></div>` +
       `<svg class="hatch rough" viewBox="0 0 144 190" preserveAspectRatio="none"><path d="${hatch(144, 190)}" stroke="rgba(243,236,228,.07)" stroke-width="1.5"/></svg>` +
       `<span class="slot">P${i + 1}</span><span class="hname"></span>` +
       `<svg class="frame rough" viewBox="-5 -5 154 200"><path pathLength="1" d="${sketchRect(144, 190)}"/></svg>` +
@@ -391,7 +401,7 @@
     const v = e.querySelector('video');
     e.querySelector('.hname').textContent = h ? h.name : '';
     if (!h) { e.classList.remove('on'); v.removeAttribute('src'); v.load(); return false; }
-    v.onerror = () => { v.onerror = null; v.src = `/heroes-anim/${h.slug}.webm`; };   // shortcut: a hero newer than heroes-card shows unfiltered; rerun hub/tools/hero-cards.mjs
+    v.onerror = () => { v.onerror = null; v.src = `/heroes-anim/${h.slug}.webm`; };   // a hero newer than heroes-card: the big original (rerun hub/tools/hero-cards.mjs)
     v.src = `/heroes-card/${h.slug}.webm`;
     v.play().catch(() => {});
     e.classList.remove('on'); void e.offsetWidth; e.classList.add('on');
